@@ -199,7 +199,7 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
           top: 0; left: 0; right: 0; bottom: 0;
           background: rgba(0,0,0,0.5);
           backdrop-filter: blur(4px);
-          z-index: 100;
+          z-index: 9999;
           display: flex;
           align-items: flex-end;
         }
@@ -209,7 +209,7 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
           border-top-left-radius: 24px;
           border-top-right-radius: 24px;
           padding: 24px;
-          padding-bottom: calc(24px + env(safe-area-inset-bottom, 20px));
+          padding-bottom: calc(60px + env(safe-area-inset-bottom, 20px));
           max-height: 90vh;
           overflow-y: auto;
         }
