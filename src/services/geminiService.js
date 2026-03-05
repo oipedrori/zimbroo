@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA } from '../utils/categories';
 
-// Lendo a chave de um arquivo .env para evitar vazamentos
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+// Lendo a chave de um arquivo .env para evitar vazamentos, com fallback direto para a chave atual informada para resolver problemas de cache.
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyDEThSbhNYqYn_imgQktAiu_NoqpqT_0GQ";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const analyzeTextWithGemini = async (text, transactions = [], conversationContext = null) => {

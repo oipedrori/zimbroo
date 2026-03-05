@@ -135,8 +135,10 @@ const AiPanel = ({ isActive, onClose, onOpenManualModal, onListeningChange }) =>
 
             try {
                 const result = await analyzeTextWithGemini(textToProcess, transactions, conversationContext);
+                console.log("GEMINI RAW RESULT:", result); // DEBUGS
 
                 if (result.error) {
+                    console.error("Gemini returned an error flag:", result.error);
                     setAiMessage(result.error);
                     setTranscript('');
                     transcriptRef.current = '';
