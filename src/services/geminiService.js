@@ -35,60 +35,47 @@ ${conversationContext ? JSON.stringify(conversationContext) : "Nenhuma pendênci
 REGRAS ESTRITAS:
 Você DEVE retornar APENAS um ÚNICO objeto JSON válido. NÃO inclua marcações markdown (\`\`\`json), nem texto antes ou depois. APENAS o JSON puro.
 
-Selecione APENAS UMA das 4 estruturas abaixo de acordo com a intenção do usuário:
+Você APENAS PODE RESPONDER com um objeto JSON puro. NÃO INCLUA \`\`\`json ou markdown. Seu JSON deve obrigatoriamente seguir um destes modelos abaixo baseado no objetivo da fala:
 
-2. ADICIONAR TRANSAÇÃO (Quando tem todos os dados ou ao finalizar uma conversa pendente):
-ATENÇÃO PARCELAMENTOS: O campo "amount" no JSON é o valor numérico de CADA PARCELA. Divida o valor total pelo número de parcelas (installments).
-"type" deve ser "expense" ou "income".
-"date" deve ser no formato "YYYY-MM-DD" ou vazio "".
-"repeatType" deve ser "none" ou "recurring" ou "installment".
+MODELO 1: ADICIONAR NOVA TRANSAÇÃO
 {
-  "isValid": true,
-  "type": "expense",
-  "amount": 4.55,
-  "description": "Resumo curto",
-  "category": "alimentacao",
-  "date": "2026-03-04",
-  "repeatType": "installment",
-  "installments": 10
-}
-
-3. DÚVIDAS E DEPENDÊNCIAS (Contexto Conversacional):
-IMPORTANTE: Se a intenção era adicionar despesa mas faltou dado crítico, NÃO RETORNE A TRANSAÇÃO. Retorne uma pergunta.
-Regra A: Se parcelou mas NÃO DISSE em quantas vezes.
-Regra B: Se a categoria deduzida for "moradia" (aluguel, luz), "apps_software" (netflix, spotify), "servicos" ou "educacao" (faculdade, curso) E o usuário NÃO especificou se é recorrente nem a quantidade de vezes, VOCÊ DEVE OBRIGATORIAMENTE PERGUNTAR se é um gasto recorrente mensal.
-Exemplo da Regra B:
-{
-  "action": "need_info",
-  "message": "É um gasto fixo mensal recorrente?",
-  "pendingData": {
-    "type": "expense",
-    "amount": 100,
-    "description": "Resumo",
-    "category": "alimentacao",
-    "date": "",
-    "repeatType": "installment",
-    "installments": null
+  "action": "add",
+  "transaction": {
+    "type": "expense", // ou "income"
+    "amount": 10.50, // Deve ser um NÚMERO FLOAT. Use PONTO (.) decimal. NUNCA TEXTO. Se for parcelado, calcule o valor CADA parcela.
+    "description": "Nome curto do local (ex: Pão de Açúcar)",
+    "category": "ID_DA_CATEGORIA_CORRESPONDENTE", // Use as listas providas
+    "date": "2026-03-04", // SEMPRE no formato YYYY-MM-DD
+    "repeatType": "none", // ou "recurring", ou "installment"
+    "installments": 1 // Quantidade de vezes. null/1 se não for installment.
   }
 }
-!! Use o JSON do "CONVERSA PENDENTE ANTERIOR" acima. Se houver uma conversa pendente, combine a pendência com a resposta ATUAL do usuário ("Sim", "10 vezes") para finalizar e retornar OBRIGATORIAMENTE a Estrutura 2 (Adicionar Transação), definindo o repeatType como "recurring", "installment" ou "none"!
 
-4. REMOVER TRANSAÇÃO:
-"targetId" é o ID_ENCONTRADO_NO_CONTEXTO.
+MODELO 2: PEDIR MAIS INFORMAÇÕES (Falta de dados como Categoria, Se é Recorrente/Parcelado ou Valor)
 {
-  "action": "delete",
-  "targetId": "xyz123",
-  "message": "A transação X foi apagada."
+  "action": "need_info",
+  "message": "Ficou faltando o valor! Quanto custou?",
+  "pendingData": { // Dados já preenchidos para salvar no contexto
+     "type": "expense",
+     "description": "Spotify"
+  }
 }
 
-5. ANÁLISE / CONSELHO:
+MODELO 3: DELETAR UMA TRANSAÇÃO
+{
+  "action": "delete",
+  "targetId": "ID_DA_TRANSACAO_NA_LISTA_RECENTE",
+  "message": "Ok, apaguei o Spotify do seu registro."
+}
+
+MODELO 4: ANÁLISE GENÉRICA / DICAS FINACEIRAS
 {
   "action": "analysis",
-  "message": "Seu texto de análise amigável."
+  "message": "Seu resumo e dicas sobre o texto."
 }
 
 Mensagem do usuário: "${text}"
-        `;
+`;
 
     const result = await model.generateContent(prompt);
     let responseText = result.response.text();
