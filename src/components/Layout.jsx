@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import AiPanel from './AiPanel';
+import DynamicIslandHint from './DynamicIslandHint';
 import TransactionModal from './TransactionModal';
 import './Layout.css';
 
@@ -13,61 +14,56 @@ const Layout = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const queryParams = new URLSearchParams(location.search);
-        if (queryParams.get('action') === 'voice') {
+        // iOS PWA shortcuts sometimes strip query params, so we use hash #voice
+        if (location.hash === '#voice') {
             setIsAiActive(true);
-            // Remove the query param so it doesn't trigger again on reload
-            navigate(location.pathname, { replace: true });
+            // Remove hash cleanly without triggering a reload
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
         }
-    }, [location.search, navigate]);
+    }, [location.hash]);
 
     const handleAiClick = () => {
         setIsAiActive(!isAiActive);
     };
 
-    // Swipe Navigation Logic tracking finger
-    const [touchStart, setTouchStart] = useState({ x: null, y: null });
+    // Swipe Navigation Logic tracking finger vertically
+    const [touchStart, setTouchStart] = useState(null);
     const [currentPull, setCurrentPull] = useState(0);
     const [isAnimating, setIsAnimating] = useState(false);
     const [disableTransition, setDisableTransition] = useState(false);
 
-    const minSwipeDistance = 80;
+    const minSwipeDistance = 120; // threshold for navigating
 
     const onTouchStart = (e) => {
         if (isAnimating) return;
-        setTouchStart({
-            x: e.targetTouches[0].clientX,
-            y: e.targetTouches[0].clientY
-        });
+        setTouchStart(e.targetTouches[0].clientY);
     };
 
     const onTouchMove = (e) => {
-        if (!touchStart.x || isAnimating) return;
+        if (!touchStart || isAnimating) return;
 
-        const currentX = e.targetTouches[0].clientX;
         const currentY = e.targetTouches[0].clientY;
-        const dx = currentX - touchStart.x;
-        const dy = currentY - touchStart.y;
+        const dy = currentY - touchStart;
 
-        // If scrolling vertically more than horizontally, cancel horizontal swipe
-        if (Math.abs(dy) > Math.abs(dx)) return;
+        // Block pull down if the user is scrolling down a list, only allow if at the very top
+        const isAtTop = e.currentTarget.scrollTop <= 0;
 
-        if (location.pathname === '/' && dx < 0) {
-            // Home -> Stats (Swipe Left)
-            setCurrentPull(dx);
-        } else if (location.pathname === '/statistics' && dx > 0) {
-            // Stats -> Home (Swipe Right)
-            setCurrentPull(dx);
+        if (location.pathname === '/' && dy > 0 && isAtTop) {
+            // No Home, puxar pra baixo
+            setCurrentPull(dy * 0.6);
+        } else if (location.pathname === '/statistics' && dy < 0) {
+            // Nos Graficos, puxar pra cima
+            setCurrentPull(dy * 0.6);
         }
     };
 
     const onTouchEnd = () => {
-        if (!touchStart.x || isAnimating) return;
+        if (!touchStart || isAnimating) return;
 
-        if (location.pathname === '/' && currentPull < -minSwipeDistance) {
-            triggerNavigation('/statistics', -window.innerWidth);
-        } else if (location.pathname === '/statistics' && currentPull > minSwipeDistance) {
-            triggerNavigation('/', window.innerWidth);
+        if (location.pathname === '/' && currentPull > minSwipeDistance) {
+            triggerNavigation('/statistics', window.innerHeight);
+        } else if (location.pathname === '/statistics' && currentPull < -minSwipeDistance) {
+            triggerNavigation('/', -window.innerHeight);
         } else {
             // Snap back
             setIsAnimating(true);
@@ -76,7 +72,7 @@ const Layout = () => {
                 setIsAnimating(false);
             }, 250);
         }
-        setTouchStart({ x: null, y: null });
+        setTouchStart(null);
     };
 
     const triggerNavigation = (path, exitPull) => {
@@ -99,39 +95,14 @@ const Layout = () => {
         }, 200);
     };
 
-    const mainTransitionStyle = disableTransition || (touchStart.x !== null && !isAnimating && currentPull !== 0)
+    const mainTransitionStyle = disableTransition || (touchStart !== null && !isAnimating && currentPull !== 0)
         ? 'none'
         : 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)';
 
     return (
         <div className="app-container" style={{ overflow: 'hidden', position: 'relative' }}>
 
-            {/* Visual Pagination Indicator (Dots) */}
-            <div style={{
-                position: 'absolute',
-                top: 'env(safe-area-inset-top, 10px)',
-                left: 0, right: 0,
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '8px',
-                zIndex: 50,
-                pointerEvents: 'none'
-            }}>
-                <div style={{
-                    width: location.pathname === '/' ? '16px' : '8px',
-                    height: '8px',
-                    borderRadius: '4px',
-                    background: location.pathname === '/' ? 'var(--primary-color)' : 'var(--glass-border)',
-                    transition: 'all 0.3s ease'
-                }} />
-                <div style={{
-                    width: location.pathname === '/statistics' ? '16px' : '8px',
-                    height: '8px',
-                    borderRadius: '4px',
-                    background: location.pathname === '/statistics' ? 'var(--primary-color)' : 'var(--glass-border)',
-                    transition: 'all 0.3s ease'
-                }} />
-            </div>
+            <DynamicIslandHint />
 
             {/* O conteúdo das páginas (Home, Stats) será renderizado aqui */}
             <main
@@ -140,7 +111,7 @@ const Layout = () => {
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
                 style={{
-                    transform: `translateX(${currentPull}px)`,
+                    transform: `translateY(${currentPull}px)`,
                     transition: mainTransitionStyle,
                     willChange: 'transform'
                 }}
