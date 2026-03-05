@@ -38,7 +38,7 @@ const DynamicIslandHint = () => {
     }, [isVisible]);
 
     const isHome = location.pathname === '/';
-    const message = isHome ? "Deslize para acessar estatísticas" : "Deslize para voltar para a home";
+    const message = isHome ? "Estatísticas" : "Home";
     const Icon = isHome ? ChevronDown : ChevronUp;
 
     return (

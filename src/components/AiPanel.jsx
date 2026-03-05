@@ -163,22 +163,23 @@ const AiPanel = ({ isActive, onClose, onOpenManualModal, onListeningChange }) =>
                     setTranscript('');
                     transcriptRef.current = '';
                     // We don't auto-close the panel on analysis so the user has time to read it.
-                } else if (result.isValid) {
-                    const finalDate = result.date ? result.date : format(new Date(), 'yyyy-MM-dd');
+                } else if (result.action === 'add') {
+                    const tx = result.transaction;
+                    const finalDate = tx.date ? tx.date : format(new Date(), 'yyyy-MM-dd');
 
                     await addTx({
-                        type: result.type,
-                        amount: parseFloat(result.amount),
-                        description: result.description,
-                        category: result.category,
+                        type: tx.type,
+                        amount: parseFloat(tx.amount),
+                        description: tx.description,
+                        category: tx.category,
                         date: finalDate,
-                        repeatType: result.repeatType,
-                        installments: result.installments || 1
+                        repeatType: tx.repeatType,
+                        installments: tx.installments || 1
                     });
 
                     // Confirmação de Sucesso Polida e Curta
-                    const tipoTexto = result.type === 'income' ? 'Adicionado com sucesso' : 'Gasto registrado';
-                    setAiMessage(`Tudo certo! ${tipoTexto}: ${result.description} (R$ ${result.amount}).`);
+                    const tipoTexto = tx.type === 'income' ? 'Adicionado com sucesso' : 'Gasto registrado';
+                    setAiMessage(`Tudo certo! ${tipoTexto}: ${tx.description} (R$ ${tx.amount}).`);
 
                     setTranscript('');
                     transcriptRef.current = '';
