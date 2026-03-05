@@ -89,7 +89,7 @@ const Home = () => {
                 {/* Glow effect */}
                 <div style={{ position: 'absolute', top: '-50%', right: '-20%', width: '200px', height: '200px', background: 'rgba(255,255,255,0.1)', filter: 'blur(30px)', borderRadius: '50%' }}></div>
 
-                <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '8px' }}>Saldo Mensal Projetado</p>
+                <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '8px' }}>Saldo Mensal</p>
                 <h2 style={{ fontSize: 'clamp(1.8rem, 8vw, 2.5rem)', marginBottom: '24px', fontWeight: '700', letterSpacing: '-1px', wordBreak: 'break-word' }}>{formatCurrency(balance)}</h2>
 
                 <div style={{ display: 'flex', gap: '24px', opacity: 0.9 }}>
@@ -124,7 +124,7 @@ const Home = () => {
                         <p style={{ color: 'var(--text-muted)' }}>Nenhuma movimentação neste mês.</p>
                     </div>
                 ) : (
-                    <div className="glass-panel" style={{ padding: '0 16px' }}>
+                    <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
                         {transactions.map((t, i) => {
                             const catTheme = getCategoryTheme(t.category, t.type);
                             const isLast = i === transactions.length - 1;
@@ -138,7 +138,7 @@ const Home = () => {
 
                             return (
                                 <SwipeableItem key={t.id} onDelete={() => deleteTx(t.id)} onEdit={() => handleEditTx(t)}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: isLast ? 'none' : '1px solid var(--glass-border)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: isLast ? 'none' : '1px solid var(--glass-border)' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                                             {/* Badge redondinho colorido com a inicial da categoria */}
                                             <div style={{
@@ -159,7 +159,7 @@ const Home = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '2px', marginRight: '16px' }}>
+                                        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '2px', marginRight: 0 }}>
                                             <p style={{ fontWeight: '600', color: isIncome ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '0.95rem', margin: 0 }}>
                                                 {isIncome ? '+' : '-'} {formatCurrency(t.amount)}
                                             </p>

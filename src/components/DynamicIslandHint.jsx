@@ -7,18 +7,15 @@ const DynamicIslandHint = () => {
     const location = useLocation();
 
     useEffect(() => {
-        // Reset visibility when route changes
         setIsVisible(false);
 
-        // Show hint after 3 seconds of being on a page
         const timer = setTimeout(() => {
             setIsVisible(true);
-        }, 3000);
+        }, 10000); // Demora 10s para aparecer
 
-        // Hide hint after 8 seconds total
         const hideTimer = setTimeout(() => {
             setIsVisible(false);
-        }, 8000);
+        }, 15000); // Fica 5s na tela e some
 
         return () => {
             clearTimeout(timer);
@@ -26,7 +23,6 @@ const DynamicIslandHint = () => {
         };
     }, [location.pathname]);
 
-    // Listen to scroll/touch to immediately hide the banner
     useEffect(() => {
         const handleInteraction = () => {
             if (isVisible) setIsVisible(false);
@@ -41,10 +37,8 @@ const DynamicIslandHint = () => {
         };
     }, [isVisible]);
 
-    if (!isVisible) return null;
-
     const isHome = location.pathname === '/';
-    const message = isHome ? "Deslize para baixo" : "Deslize para cima";
+    const message = isHome ? "Deslize para acessar estatísticas" : "Deslize para voltar para a home";
     const Icon = isHome ? ChevronDown : ChevronUp;
 
     return (
@@ -52,31 +46,28 @@ const DynamicIslandHint = () => {
             position: 'absolute',
             top: 'env(safe-area-inset-top, 16px)',
             left: '50%',
-            transform: 'translateX(-50%)',
             background: 'var(--surface-color)',
             border: '1px solid var(--glass-border)',
             borderRadius: '100px',
-            padding: '8px 16px',
+            padding: '10px 20px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
             zIndex: 100,
             pointerEvents: 'none',
             fontSize: '0.85rem',
             color: 'var(--text-main)',
-            fontWeight: '500',
-            animation: 'dynamicIslandDrop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+            fontWeight: '600',
+            transform: isVisible ? 'translate(-50%, 0) scale(1)' : 'translate(-50%, -150%) scale(0.9)',
+            opacity: isVisible ? 1 : 0,
+            transition: 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
         }}>
-            {isHome && <Icon size={16} color="var(--primary-color)" style={{ animation: 'bounceUpDown 2s infinite' }} />}
+            {isHome && <Icon size={16} color="var(--primary-color)" style={{ animation: isVisible ? 'bounceUpDown 2s infinite' : 'none' }} />}
             <span>{message}</span>
-            {!isHome && <Icon size={16} color="var(--primary-color)" style={{ animation: 'bounceUpDown 2s infinite' }} />}
+            {!isHome && <Icon size={16} color="var(--primary-color)" style={{ animation: isVisible ? 'bounceUpDown 2s infinite' : 'none' }} />}
 
             <style>{`
-                @keyframes dynamicIslandDrop {
-                    0% { transform: translate(-50%, -150%) scale(0.8); opacity: 0; }
-                    100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
-                }
                 @keyframes bounceUpDown {
                     0%, 100% { transform: translateY(0); }
                     50% { transform: translateY(4px); }

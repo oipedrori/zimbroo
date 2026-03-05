@@ -68,17 +68,7 @@ const Statistics = () => {
 
     return (
         <div className="page-container animate-fade-in" style={{ paddingBottom: '100px', animation: 'fadeIn 0.4s forwards' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-                <button
-                    onClick={() => navigate('/')}
-                    style={{ background: 'rgba(0,0,0,0.05)', borderRadius: '12px', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '0.85rem', cursor: 'pointer', border: 'none' }}
-                >
-                    <ChevronUp size={16} />
-                    <span>Deslize ou clique para voltar</span>
-                </button>
-            </div>
-
-            <header style={{ marginBottom: '24px', textAlign: 'center' }}>
+            <header style={{ marginBottom: '24px', textAlign: 'center', paddingTop: 'env(safe-area-inset-top, 10px)' }}>
                 <h1 style={{ fontSize: '1.4rem', color: 'var(--text-main)', fontWeight: '700' }}>Estatísticas</h1>
             </header>
 

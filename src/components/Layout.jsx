@@ -139,8 +139,8 @@ const Layout = () => {
             {/* Bottom Blur Effect */}
             <div className="bottom-blur-layer" />
 
-            {/* Navegação Simplificada - Apenas Botão Central (Oculto no Perfil) */}
-            {location.pathname !== '/profile' && (
+            {/* Navegação Simplificada - Apenas Botão Central (Home) */}
+            {location.pathname === '/' && (
                 <nav className="bottom-nav">
                     {/* Botão Central de IA */}
                     <div className="nav-center-item">
