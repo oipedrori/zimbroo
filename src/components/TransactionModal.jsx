@@ -38,6 +38,13 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
             setRepeatType('none');
             setInstallments(1);
         }
+
+        if (isOpen) {
+            document.body.classList.add('modal-open');
+        } else {
+            document.body.classList.remove('modal-open');
+        }
+        return () => document.body.classList.remove('modal-open');
     }, [isOpen, initialData, defaultType]);
 
     if (!isOpen) return null;
@@ -123,7 +130,7 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                         <input
                             type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)}
                             placeholder="0,00" required
-                            style={{ width: '100%', padding: '12px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)', fontSize: '1.2rem' }}
+                            style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '12px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)', fontSize: '1.2rem' }}
                         />
                     </div>
 
@@ -132,23 +139,23 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                         <input
                             type="text" value={description} onChange={e => setDescription(e.target.value)}
                             placeholder="Ex: Mercado" required
-                            style={{ width: '100%', padding: '12px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)' }}
+                            style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '12px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)' }}
                         />
                     </div>
 
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                        <div style={{ flex: 1 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '16px', width: '100%' }}>
+                        <div>
                             <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Data</label>
                             <input
                                 type="date" value={date} onChange={e => setDate(e.target.value)} required
-                                style={{ width: '100%', padding: '12px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)' }}
+                                style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '12px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)' }}
                             />
                         </div>
-                        <div style={{ flex: 1 }}>
+                        <div>
                             <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Categoria</label>
                             <select
                                 value={category} onChange={e => setCategory(e.target.value)}
-                                style={{ width: '100%', padding: '12px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)' }}
+                                style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '12px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)' }}
                             >
                                 {categories.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                             </select>
@@ -160,7 +167,7 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                         <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Repetição</label>
                         <select
                             value={repeatType} onChange={e => setRepeatType(e.target.value)}
-                            style={{ width: '100%', padding: '12px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)' }}
+                            style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '12px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)' }}
                         >
                             <option value="none">Não repete (Única vez)</option>
                             <option value="recurring">Mensal (Recorrente todo mês)</option>
@@ -173,7 +180,7 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                             <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Quantas parcelas no total?</label>
                             <input
                                 type="number" min="2" max="120" value={installments} onChange={e => setInstallments(e.target.value)} required
-                                style={{ width: '100%', padding: '12px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)' }}
+                                style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '12px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)' }}
                             />
                             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                                 O valor {amount ? `de R$ ${amount}` : 'total'} será cobrado mensalmente por {installments} meses.

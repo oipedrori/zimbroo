@@ -43,21 +43,21 @@
 /* Dark mode basic variables */
 @media (prefers-color-scheme: dark) {
   :root:not(.theme-light) {
-    --bg-color: #0E2210;
-    --surface-color: #1B4520;
-    --text-main: #f8fafc;
-    --text-muted: #d4f0db;
-    --glass-bg: rgba(27, 69, 32, 0.75);
+    --bg-color: #050a06;
+    --surface-color: #0a140b;
+    --text-main: #ffffff;
+    --text-muted: #b8dfc4;
+    --glass-bg: rgba(5, 10, 6, 0.85);
     --glass-border: rgba(255, 255, 255, 0.1);
   }
 }
 
 :root.theme-dark {
-  --bg-color: #0E2210;
-  --surface-color: #1B4520;
-  --text-main: #f8fafc;
-  --text-muted: #d4f0db;
-  --glass-bg: rgba(27, 69, 32, 0.75);
+  --bg-color: #050a06;
+  --surface-color: #0a140b;
+  --text-main: #ffffff;
+  --text-muted: #b8dfc4;
+  --glass-bg: rgba(5, 10, 6, 0.85);
   --glass-border: rgba(255, 255, 255, 0.1);
 }
 
@@ -199,4 +199,8 @@ button {
   font-family: inherit;
   cursor: pointer;
   outline: none;
+}
+
+body.modal-open .bottom-nav {
+  display: none !important;
 }
