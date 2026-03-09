@@ -1,5 +1,6 @@
 import { collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { createNotionTransaction } from './notionService';
 
 const TRANSACTIONS_COLLECTION = 'transactions';
 
@@ -25,6 +26,15 @@ export const addTransaction = async (userId, data) => {
 
     try {
         const docRef = await addDoc(collection(db, TRANSACTIONS_COLLECTION), newTx);
+
+        // Notion Sync (Side Effect - doesn't block UI)
+        const notionToken = localStorage.getItem('zimbroo_notion_token');
+        const notionDbId = localStorage.getItem('zimbroo_notion_db_id');
+        if (notionToken && notionDbId) {
+            createNotionTransaction(notionToken, notionDbId, newTx)
+                .catch(err => console.error("Notion Sync Error:", err));
+        }
+
         return { id: docRef.id, ...newTx };
     } catch (error) {
         console.error("Error adding transaction: ", error);

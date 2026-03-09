@@ -1,0 +1,12 @@
+{
+    "rewrites": [
+        {
+            "source": "/notion-api/(.*)",
+            "destination": "https://api.notion.com/v1/$1"
+        },
+        {
+            "source": "/((?!api/).*)",
+            "destination": "/index.html"
+        }
+    ]
+}

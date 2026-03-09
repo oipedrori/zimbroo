@@ -32,6 +32,64 @@ export const getNotionDatabaseInfo = async (secret, databaseId) => {
 };
 
 /**
+ * Create a new Page (Transaction) in Notion Database
+ */
+export const createNotionTransaction = async (secret, databaseId, tx) => {
+    try {
+        // 1. First, we need to know the property names of the database
+        const dbInfo = await getNotionDatabaseInfo(secret, databaseId);
+        const properties = dbInfo.properties;
+
+        // 2. Identify property names by type
+        const titleKey = Object.keys(properties).find(k => properties[k].type === 'title');
+        const numberKey = Object.keys(properties).find(k => properties[k].type === 'number');
+        const dateKey = Object.keys(properties).find(k => properties[k].type === 'date');
+        const selectKey = Object.keys(properties).find(k => properties[k].type === 'select');
+
+        // 3. Build the properties object for Notion
+        const notionProps = {};
+
+        if (titleKey) {
+            notionProps[titleKey] = { title: [{ text: { content: tx.description } }] };
+        }
+        if (numberKey) {
+            notionProps[numberKey] = { number: Number(tx.amount) };
+        }
+        if (dateKey) {
+            notionProps[dateKey] = { date: { start: tx.date } };
+        }
+        if (selectKey) {
+            notionProps[selectKey] = { select: { name: tx.category || 'Zimbroo' } };
+        }
+
+        // 4. Send the request
+        const response = await fetch(`${API_BASE}/pages`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${secret}`,
+                'Notion-Version': '2022-06-28',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                parent: { database_id: databaseId },
+                properties: notionProps
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            console.warn("Failed to sync to Notion:", err);
+            return null;
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Notion Sync Error:", error);
+        return null; // Don't crash the app if sync fails
+    }
+};
+
+/**
  * Fetch and Map Transactions from Notion
  */
 export const fetchNotionTransactions = async (secret, databaseId) => {
