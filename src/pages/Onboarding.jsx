@@ -44,7 +44,8 @@ const Onboarding = () => {
         setIsLoggingIn(true);
         try {
             await loginWithGoogle();
-            navigate('/');
+            // Com signInWithRedirect, a página será recarregada.
+            // O componente App.jsx cuidará de redirecionar para '/' assim que detectar currentUser.
         } catch (error) {
             console.error("Falha ao fazer login", error);
             setIsLoggingIn(false);
