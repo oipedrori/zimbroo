@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
-import { Mic, TrendingUp, ShieldCheck, Sparkles, Globe } from 'lucide-react';
+import { Mic, TrendingUp, ShieldCheck, Sparkles, Globe, X, MessageSquare, Zap } from 'lucide-react';
 
 const STORY_DURATION = 5000; // 5 segundos por story
 
@@ -13,35 +13,55 @@ const Onboarding = () => {
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [loginError, setLoginError] = useState(null);
     const [currentStory, setCurrentStory] = useState(0);
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
+    const [showDocs, setShowDocs] = useState(null); // 'terms' or 'privacy'
+    const [docContent, setDocContent] = useState('');
+    const [loadingDoc, setLoadingDoc] = useState(false);
+
+    useEffect(() => {
+        if (showDocs) {
+            setLoadingDoc(true);
+            fetch(`/${showDocs}.md`)
+                .then(res => res.text())
+                .then(text => {
+                    setDocContent(text);
+                    setLoadingDoc(false);
+                });
+        }
+    }, [showDocs]);
 
     const stories = [
         {
             id: 0,
             icon: <img src="/Z.png" alt="Zimbro" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />,
-            title: t('ob_welcome'),
-            desc: t('ob_desc_1')
+            title: "Boas-vindas!",
+            desc: "O Zimbro é seu novo aliado inteligente na gestão financeira pessoal."
         },
         {
             id: 1,
-            icon: <Mic size={48} color="white" />,
-            title: t('ob_ai_title'),
-            desc: t('ob_ai_desc')
+            icon: <Mic size={54} color="white" />,
+            title: "Registre com IA",
+            desc: "Fale ou digite naturalmente. Nossa inteligência organiza tudo para você."
         },
         {
             id: 2,
-            icon: <ShieldCheck size={48} color="white" />,
-            title: t('ob_fast_title'),
-            desc: t('ob_fast_desc')
+            icon: <MessageSquare size={54} color="white" />,
+            title: "Pergunte à IA",
+            desc: "Tire dúvidas sobre seus gastos e receba conselhos financeiros personalizados."
         },
         {
             id: 3,
-            icon: <Sparkles size={48} color="white" />,
-            title: t('ob_ready'),
-            desc: t('ob_start')
+            icon: <Zap size={54} color="white" />,
+            title: "Simples e Rápido",
+            desc: "Sem planilhas chatas. O que você precisa, onde você estiver, em segundos."
         }
     ];
 
     const handleLogin = async () => {
+        if (!acceptedTerms) {
+            alert(t('ob_accept_error', { defaultValue: 'Por favor, aceite os termos e a política para continuar.' }));
+            return;
+        }
         setIsLoggingIn(true);
         setLoginError(null);
         try {
@@ -162,7 +182,8 @@ const Onboarding = () => {
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'flex-end',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     color: 'white',
                     fontWeight: 'sans-serif',
                     padding: '24px',
@@ -210,14 +231,49 @@ const Onboarding = () => {
                         {loginError}
                     </div>
                 )}
+
+                {/* Termos e Consentimento */}
+                <div style={{
+                    display: 'flex', alignItems: 'flex-start', gap: '12px',
+                    marginBottom: '24px', textAlign: 'left', padding: '0 4px'
+                }}>
+                    <input
+                        type="checkbox"
+                        id="terms"
+                        checked={acceptedTerms}
+                        onChange={(e) => setAcceptedTerms(e.target.checked)}
+                        style={{
+                            width: '20px', height: '20px', marginTop: '2px', cursor: 'pointer',
+                            accentColor: 'white'
+                        }}
+                    />
+                    <label htmlFor="terms" style={{ fontSize: '0.85rem', lineHeight: 1.4, opacity: 0.9 }}>
+                        {t('ob_terms_prefix', { defaultValue: 'Eu li e aceito os ' })}
+                        <span
+                            onClick={(e) => { e.preventDefault(); setShowDocs('terms'); }}
+                            style={{ textDecoration: 'underline', fontWeight: '700', cursor: 'pointer' }}
+                        >
+                            {t('ob_terms_label', { defaultValue: 'Termos de Uso' })}
+                        </span>
+                        {t('ob_terms_and', { defaultValue: ' e a ' })}
+                        <span
+                            onClick={(e) => { e.preventDefault(); setShowDocs('privacy'); }}
+                            style={{ textDecoration: 'underline', fontWeight: '700', cursor: 'pointer' }}
+                        >
+                            {t('ob_privacy_label', { defaultValue: 'Política de Privacidade' })}
+                        </span>.
+                    </label>
+                </div>
+
                 <button
                     onClick={handleLogin}
-                    disabled={isLoggingIn}
+                    disabled={isLoggingIn || !acceptedTerms}
                     style={{
                         width: '100%', padding: '18px', backgroundColor: 'white', color: 'var(--primary-color)',
                         borderRadius: 'var(--border-radius-lg)', fontSize: '1.1rem', fontWeight: '700',
                         display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px',
-                        boxShadow: '0 8px 25px rgba(0,0,0,0.2)', transition: 'transform 0.2s',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.2)', transition: 'all 0.2s',
+                        opacity: !acceptedTerms ? 0.6 : 1,
                         zIndex: 10
                     }}
                 >
@@ -234,6 +290,49 @@ const Onboarding = () => {
                     )}
                 </button>
             </div>
+
+            {/* Modal para Termos e Privacidade */}
+            {showDocs && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex',
+                    flexDirection: 'column', padding: '24px', backdropFilter: 'blur(10px)'
+                }}>
+                    <div style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        marginBottom: '20px', color: 'white'
+                    }}>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: '700' }}>
+                            {showDocs === 'terms' ? t('ob_terms_label', { defaultValue: 'Termos de Uso' }) : t('ob_privacy_label', { defaultValue: 'Política de Privacidade' })}
+                        </h3>
+                        <button
+                            onClick={() => setShowDocs(null)}
+                            style={{
+                                width: '36px', height: '36px', borderRadius: '50%',
+                                background: 'rgba(255,255,255,0.2)', display: 'flex',
+                                justifyContent: 'center', alignItems: 'center', color: 'white',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                    <div style={{
+                        flex: 1, overflowY: 'auto', background: 'white', color: 'black',
+                        padding: '24px', borderRadius: '24px', lineHeight: 1.6, fontSize: '0.95rem'
+                    }}>
+                        {loadingDoc ? (
+                            <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '40px' }}>
+                                <span>Carregando...</span>
+                            </div>
+                        ) : (
+                            <div style={{ whiteSpace: 'pre-wrap' }}>
+                                {docContent}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 .onboarding-bg {
