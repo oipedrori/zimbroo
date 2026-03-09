@@ -20,27 +20,46 @@ export const extractNotionId = (input) => {
  */
 export const searchNotionDatabases = async (secret) => {
     try {
-        const response = await fetch(`${API_BASE}/search`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${secret}`,
-                'Notion-Version': '2022-06-28',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                filter: { property: 'object', value: 'database' }
-            })
-        });
+        let allResults = [];
+        let hasMore = true;
+        let startCursor = undefined;
 
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.message || 'Falha ao buscar bases');
+        console.log("Iniciando busca global por databases no Notion...");
+
+        while (hasMore) {
+            const response = await fetch(`${API_BASE}/search`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${secret}`,
+                    'Notion-Version': '2022-06-28',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    filter: { property: 'object', value: 'database' },
+                    start_cursor: startCursor,
+                    page_size: 100
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                console.error("Notion Search API Error:", err);
+                throw new Error(err.message || 'Falha na busca global do Notion');
+            }
+
+            const data = await response.json();
+            allResults = [...allResults, ...data.results];
+            hasMore = data.has_more;
+            startCursor = data.next_cursor;
+
+            // Limit to 5 pages to avoid infinite loops or massive hits
+            if (allResults.length > 500) break;
         }
 
-        const data = await response.json();
-        return data.results;
+        console.log(`Busca global concluída. Total: ${allResults.length} bases encontradas.`);
+        return allResults;
     } catch (error) {
-        console.error("Search Error: ", error);
+        console.error("Search Fail: ", error);
         throw error;
     }
 };
@@ -52,39 +71,55 @@ export const findDatabasesOnPage = async (secret, blockId) => {
     try {
         const databases = [];
         const visited = new Set();
+        const MAX_DEPTH = 3; // Profundidade segura para recursão
 
-        const scan = async (id) => {
-            if (visited.has(id)) return;
+        const scan = async (id, level) => {
+            if (visited.has(id) || level > MAX_DEPTH) return;
             visited.add(id);
 
-            const response = await fetch(`${API_BASE}/blocks/${id}/children`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${secret}`,
-                    'Notion-Version': '2022-06-28'
-                }
-            });
+            // Se encontrarmos muitas bases, paramos para evitar lentidão excessiva
+            if (databases.length > 15) return;
 
-            if (!response.ok) return;
-            const data = await response.json();
+            let hasMore = true;
+            let startCursor = undefined;
 
-            for (const block of data.results) {
-                // Se for uma database, adicionamos
-                if (block.type === 'child_database') {
-                    try {
-                        const db = await getNotionDatabaseInfo(secret, block.id);
-                        databases.push(db);
-                    } catch (e) { console.error(e); }
-                }
-                // Se for um bloco que pode conter outros blocos (colunas, grupos, toggles, etc)
-                // e não for uma página (para não entrar em sub-páginas sem querer)
-                else if (block.has_children && block.type !== 'child_page') {
-                    await scan(block.id);
+            while (hasMore) {
+                try {
+                    const response = await fetch(`${API_BASE}/blocks/${id}/children?page_size=100${startCursor ? `&start_cursor=${startCursor}` : ''}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${secret}`,
+                            'Notion-Version': '2022-06-28'
+                        }
+                    });
+
+                    if (!response.ok) break;
+                    const data = await response.json();
+
+                    for (const block of data.results) {
+                        // 1. Encontrou database direta
+                        if (block.type === 'child_database') {
+                            try {
+                                const db = await getNotionDatabaseInfo(secret, block.id);
+                                if (db) databases.push(db);
+                            } catch (e) { /* ignore individual db error */ }
+                        }
+                        // 2. Encontrou sub-página ou bloco com filhos (entramos até certo nível)
+                        else if ((block.type === 'child_page' || block.has_children) && level < MAX_DEPTH) {
+                            await scan(block.id, level + 1);
+                        }
+                    }
+
+                    hasMore = data.has_more;
+                    startCursor = data.next_cursor;
+                } catch (e) {
+                    console.error("Error scanning children of block:", id, e);
+                    break;
                 }
             }
         };
 
-        await scan(blockId);
+        await scan(blockId, 0);
         return databases;
     } catch (error) {
         console.error("Deep Scan Error: ", error);

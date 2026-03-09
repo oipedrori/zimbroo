@@ -120,8 +120,10 @@ const NotionImport = () => {
         setLoading(true);
         setError(null);
         try {
+            console.log("Notion Deep Scan Iniciado para o ID:", id);
             // Tenta buscar bases dentro dessa página
             const childrenDbs = await findDatabasesOnPage(notionToken, id);
+            console.log("Resultado scan profundo:", childrenDbs.length, "bases encontradas.");
 
             if (childrenDbs && childrenDbs.length > 0) {
                 let autoAssigned = 0;
@@ -146,22 +148,25 @@ const NotionImport = () => {
                 if (autoAssigned > 0) {
                     setManualUrl('');
                 } else {
-                    setError(`Encontramos ${childrenDbs.length} tabelas, mas não conseguimos identificar qual é qual. Por favor, vincule manualmente abaixo.`);
+                    setError(`Encontramos ${childrenDbs.length} tabelas, mas não conseguimos identificar qual é qual automaticamente. Vincule abaixo:`);
                 }
             } else {
                 // Se não achou filhos, tenta ver se o ID já é de uma database direta
                 try {
+                    console.log("Tentando busca direta como Database ID...");
                     const directDb = await getNotionDatabaseInfo(notionToken, id);
                     if (directDb) {
                         setFoundDbs(prev => [directDb, ...prev]);
-                        setError("Link identificado como uma base direta. Vincule-a como Despesa ou Receita abaixo.");
+                        setError("Link identificado como uma base direta! Vincule-a como Despesa ou Receita abaixo.");
                     }
                 } catch (e) {
-                    setError("Não encontramos bases de dados neste link. Verifique se você deu acesso à página no Notion.");
+                    console.error("Direct fetch failed:", e);
+                    setError(`Não detectamos bases no ID [${id.substring(0, 8)}...]. Tente recriar a conexão e marcar explicitamente as tabelas na tela do Notion.`);
                 }
             }
         } catch (err) {
-            setError("Erro ao processar o link. Verifique sua conexão.");
+            console.error("Critical Manual Link Error:", err);
+            setError("Erro ao processar o link. Verifique sua conexão ou permissões no Notion.");
         } finally {
             setLoading(false);
         }
