@@ -256,7 +256,7 @@ button {
   left: -15px;
   right: -15px;
   bottom: -15px;
-  background: #4ade80;
+  background: #ffffff;
   border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
   z-index: -1;
   filter: blur(12px);

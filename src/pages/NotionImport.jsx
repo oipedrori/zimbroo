@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, Database, ArrowRight, CheckCircle2, AlertCircle, FileText, Loader2, Link, Lock, TrendingUp, TrendingDown, RefreshCcw, Trash2, HelpCircle } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
-import { getNotionDatabaseInfo, fetchNotionTransactions, searchNotionDatabases, extractNotionId } from '../services/notionService';
+import { getNotionDatabaseInfo, fetchNotionTransactions, searchNotionDatabases, extractNotionId, findDatabasesOnPage } from '../services/notionService';
 import { addTransaction } from '../services/transactionService';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -114,13 +114,58 @@ const NotionImport = () => {
 
     const handleManualLink = async () => {
         const id = extractNotionId(manualUrl);
-        if (id && id.length >= 32) {
-            // Pergunta para qual base o link serve
-            const role = window.confirm("Este link é para sua base de DESPESAS? (Clique 'Cancelar' se for para RECEITAS)") ? 'expense' : 'income';
-            assignDb(id, role);
-            setManualUrl('');
-        } else {
+        if (!id) {
             setError("Link inválido. Cole a URL completa da página do Notion.");
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+        try {
+            // Tenta buscar bases dentro dessa página
+            const childrenDbs = await findDatabasesOnPage(notionToken, id);
+
+            if (childrenDbs && childrenDbs.length > 0) {
+                let autoAssigned = 0;
+                childrenDbs.forEach(db => {
+                    const title = (db.title[0]?.plain_text || '').toLowerCase();
+                    if (title.includes('despesa') || title.includes('gastos') || title.includes('expense')) {
+                        assignDb(db.id, 'expense');
+                        autoAssigned++;
+                    } else if (title.includes('receita') || title.includes('ganho') || title.includes('income')) {
+                        assignDb(db.id, 'income');
+                        autoAssigned++;
+                    }
+                });
+
+                // Adiciona todas as encontradas na lista de visíveis
+                setFoundDbs(prev => {
+                    const existingIds = new Set(prev.map(d => d.id));
+                    const newOnes = childrenDbs.filter(d => !existingIds.has(d.id));
+                    return [...newOnes, ...prev];
+                });
+
+                if (autoAssigned > 0) {
+                    setManualUrl('');
+                } else {
+                    setError(`Encontramos ${childrenDbs.length} tabelas, mas não conseguimos identificar qual é qual. Por favor, vincule manualmente abaixo.`);
+                }
+            } else {
+                // Se não achou filhos, tenta ver se o ID já é de uma database direta
+                try {
+                    const directDb = await getNotionDatabaseInfo(notionToken, id);
+                    if (directDb) {
+                        setFoundDbs(prev => [directDb, ...prev]);
+                        setError("Link identificado como uma base direta. Vincule-a como Despesa ou Receita abaixo.");
+                    }
+                } catch (e) {
+                    setError("Não encontramos bases de dados neste link. Verifique se você deu acesso à página no Notion.");
+                }
+            }
+        } catch (err) {
+            setError("Erro ao processar o link. Verifique sua conexão.");
+        } finally {
+            setLoading(false);
         }
     };
 

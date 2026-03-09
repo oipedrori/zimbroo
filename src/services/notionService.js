@@ -38,10 +38,45 @@ export const searchNotionDatabases = async (secret) => {
         }
 
         const data = await response.json();
-        return data.results; // Retorna lista de databases
+        return data.results;
     } catch (error) {
         console.error("Search Error: ", error);
         throw error;
+    }
+};
+
+/**
+ * Find databases inside a specific page (Mother Page)
+ */
+export const findDatabasesOnPage = async (secret, pageId) => {
+    try {
+        // 1. Get child blocks
+        const response = await fetch(`${API_BASE}/blocks/${pageId}/children`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${secret}`,
+                'Notion-Version': '2022-06-28'
+            }
+        });
+
+        if (!response.ok) return [];
+        const data = await response.json();
+
+        // 2. Filter for child_database type
+        const dbBlocks = data.results.filter(b => b.type === 'child_database');
+
+        // 3. For each block, fetch full database metadata
+        const databases = [];
+        for (const block of dbBlocks) {
+            try {
+                const db = await getNotionDatabaseInfo(secret, block.id);
+                databases.push(db);
+            } catch (e) { console.error(e); }
+        }
+        return databases;
+    } catch (error) {
+        console.error("FindChildren Error: ", error);
+        return [];
     }
 };
 
