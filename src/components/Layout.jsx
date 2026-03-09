@@ -65,11 +65,7 @@ const Layout = () => {
                             aria-label={t('ai_mic_label')}
                         >
                             <div className="mystical-aura"></div>
-                            {isAiActive ? (
-                                <Mic size={28} color="#ffffff" strokeWidth={2.5} />
-                            ) : (
-                                <img src="/Z.png" alt="Zimbro" />
-                            )}
+                            <img src="/Z.png" alt="Zimbro" />
                         </button>
                     </div>
                 </nav>
@@ -84,7 +80,7 @@ const Layout = () => {
                             onClick={handleAiClick}
                         >
                             <div className="mystical-aura"></div>
-                            <Mic size={28} color="#ffffff" strokeWidth={2.5} />
+                            <X size={32} color="#ffffff" strokeWidth={2.5} />
                         </button>
                     </div>
                 </nav>

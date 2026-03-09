@@ -244,7 +244,12 @@ const AiPanel = ({ isActive, onClose, onOpenManualModal, onListeningChange }) =>
                     setAiMessage(result.message);
                     setTranscript('');
                     transcriptRef.current = '';
-                    // We don't auto-close the panel on analysis so the user has time to read it.
+
+                    if (!isManualTextMode) {
+                        setTimeout(() => {
+                            recognitionRef.current?.start();
+                        }, 1000); // re-open mic after reading so user can keep asking
+                    }
                 } else if (result.action === 'add') {
                     const tx = result.transaction;
                     const finalDate = tx.date ? tx.date : format(new Date(), 'yyyy-MM-dd');
@@ -418,29 +423,30 @@ const AiPanel = ({ isActive, onClose, onOpenManualModal, onListeningChange }) =>
         
         .mystical-aura {
           position: absolute;
-          top: -15px; left: -15px; right: -15px; bottom: -15px;
+          top: -20px; left: -20px; right: -20px; bottom: -20px;
           background: var(--highlight-color);
-          border-radius: 50%;
+          border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
           z-index: -1;
           filter: blur(25px);
-          animation: auricPulse 2s infinite alternate ease-in-out;
-          opacity: 0.8;
+          animation: blobMorph 5s linear infinite alternate;
+          opacity: 0.5;
           display: none;
         }
 
         .ai-mic-btn.listening .mystical-aura {
           display: block;
-          animation: intensePulse 0.4s infinite alternate ease-in-out;
+          animation: blobMorph 4s linear infinite alternate, intenseOrganicGlow 1.5s ease-in-out infinite alternate;
         }
 
-        @keyframes auricPulse {
-          0% { transform: scale(0.9); opacity: 0.5; filter: blur(20px); }
-          100% { transform: scale(1.1); opacity: 0.8; filter: blur(25px); }
+        @keyframes blobMorph {
+          0% { border-radius: 40% 60% 70% 30% / 40% 40% 60% 50%; transform: rotate(0deg) scale(0.9); }
+          50% { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; transform: rotate(180deg) scale(1.1); }
+          100% { border-radius: 40% 60% 70% 30% / 40% 40% 60% 50%; transform: rotate(360deg) scale(0.9); }
         }
         
-        @keyframes intensePulse {
-          0% { transform: scale(0.9); opacity: 0.6; filter: blur(20px); }
-          100% { transform: scale(1.4); opacity: 1; filter: blur(35px); }
+        @keyframes intenseOrganicGlow {
+          0% { opacity: 0.5; filter: blur(20px); }
+          100% { opacity: 1; filter: blur(35px); }
         }
 
         .ai-mic-btn {

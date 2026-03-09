@@ -26,8 +26,26 @@ const Home = () => {
     const [editingTx, setEditingTx] = useState(null);
     const [activeFilter, setActiveFilter] = useState('all');
     const [isFlipped, setIsFlipped] = useState(false);
+    const [isClosingFlipped, setIsClosingFlipped] = useState(false);
     const [yearlyStats, setYearlyStats] = useState([]);
     const [loadingYearly, setLoadingYearly] = useState(true);
+
+    useEffect(() => {
+        if (isFlipped) {
+            document.body.classList.add('hide-ai-btn');
+        } else {
+            document.body.classList.remove('hide-ai-btn');
+        }
+        return () => document.body.classList.remove('hide-ai-btn');
+    }, [isFlipped]);
+
+    const closeFlipped = () => {
+        setIsClosingFlipped(true);
+        setTimeout(() => {
+            setIsFlipped(false);
+            setIsClosingFlipped(false);
+        }, 450);
+    };
 
     // Fetch yearly stats for the back of the card
     React.useEffect(() => {
@@ -103,11 +121,21 @@ const Home = () => {
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                     background: 'var(--bg-color)', zIndex: 10000,
                     padding: '24px', display: 'flex', flexDirection: 'column',
-                    animation: 'slideInUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                    animation: isClosingFlipped ? 'flipZoomOut 0.4s forwards' : 'flipZoomIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1)'
                 }}>
+                    <style>{`
+                        @keyframes flipZoomIn {
+                            0% { transform: scale(0.4) rotateX(90deg) translateY(50vh); opacity: 0; border-radius: 40px; }
+                            100% { transform: scale(1) rotateX(0deg) translateY(0); opacity: 1; border-radius: 0; }
+                        }
+                        @keyframes flipZoomOut {
+                            0% { transform: scale(1) rotateX(0deg); opacity: 1; border-radius: 0; }
+                            100% { transform: scale(0.4) rotateX(90deg) translateY(50vh); opacity: 0; border-radius: 40px; }
+                        }
+                    `}</style>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                         <h2 style={{ fontSize: '1.4rem' }}>{t('statistics')}</h2>
-                        <button onClick={() => setIsFlipped(false)} style={{ fontSize: '1.5rem', color: 'var(--text-main)', padding: '8px' }}>
+                        <button onClick={closeFlipped} style={{ fontSize: '1.5rem', color: 'var(--text-main)', padding: '8px' }}>
                             <X size={24} />
                         </button>
                     </div>
@@ -227,14 +255,14 @@ const Home = () => {
                         <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4ade80' }}></div>
-                                <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('income')}</p>
+                                <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
                             </div>
                             <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(incomes)}</p>
                         </div>
                         <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f87171' }}></div>
-                                <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('expense')}</p>
+                                <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
                             </div>
                             <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(expenses)}</p>
                         </div>

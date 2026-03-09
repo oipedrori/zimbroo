@@ -58,6 +58,13 @@
     padding-bottom: env(safe-area-inset-bottom, 10px);
 }
 
+body.hide-ai-btn .bottom-nav {
+    transform: translateY(150px);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* === Botão Central (IA Mic) === */
 .nav-center-item {
     display: flex;
