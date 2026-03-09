@@ -202,6 +202,38 @@ button {
   outline: none;
 }
 
+@keyframes flipZoomIn {
+  0% {
+    transform: perspective(1200px) rotateY(90deg) scale(0.5);
+    opacity: 0;
+    border-radius: 50px;
+    transform-origin: center center;
+  }
+
+  100% {
+    transform: perspective(1200px) rotateY(0deg) scale(1);
+    opacity: 1;
+    border-radius: 0;
+    transform-origin: center center;
+  }
+}
+
+@keyframes flipZoomOut {
+  0% {
+    transform: perspective(1200px) rotateY(0deg) scale(1);
+    opacity: 1;
+    border-radius: 0;
+    transform-origin: center center;
+  }
+
+  100% {
+    transform: perspective(1200px) rotateY(-90deg) scale(0.5);
+    opacity: 0;
+    border-radius: 50px;
+    transform-origin: center center;
+  }
+}
+
 body.modal-open .bottom-nav {
   display: none !important;
 }

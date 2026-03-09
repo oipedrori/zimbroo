@@ -123,16 +123,7 @@ const Home = () => {
                     padding: '24px', display: 'flex', flexDirection: 'column',
                     animation: isClosingFlipped ? 'flipZoomOut 0.4s forwards' : 'flipZoomIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1)'
                 }}>
-                    <style>{`
-                        @keyframes flipZoomIn {
-                            0% { transform: perspective(1200px) rotateY(90deg) scale(0.5); opacity: 0; border-radius: 50px; }
-                            100% { transform: perspective(1200px) rotateY(0deg) scale(1); opacity: 1; border-radius: 0; }
-                        }
-                        @keyframes flipZoomOut {
-                            0% { transform: perspective(1200px) rotateY(0deg) scale(1); opacity: 1; border-radius: 0; }
-                            100% { transform: perspective(1200px) rotateY(-90deg) scale(0.5); opacity: 0; border-radius: 50px; }
-                        }
-                    `}</style>
+
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                         <h2 style={{ fontSize: '1.4rem' }}>{t('statistics')}</h2>
                         <button onClick={closeFlipped} style={{ fontSize: '1.5rem', color: 'var(--text-main)', padding: '8px' }}>
