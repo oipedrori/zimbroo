@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Plus, Mic } from 'lucide-react';
+import { Plus, Mic, X } from 'lucide-react';
 import AiPanel from './AiPanel';
 import DynamicIslandHint from './DynamicIslandHint';
 import TransactionModal from './TransactionModal';
