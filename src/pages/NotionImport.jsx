@@ -26,6 +26,7 @@ const NotionImport = () => {
     const [debugItems, setDebugItems] = useState([]); // Itens crus retornados pelo Notion
     const [workspaceInfo, setWorkspaceInfo] = useState(null);
     const [searchingBackground, setSearchingBackground] = useState(false);
+    const [hasInitialSearchDone, setHasInitialSearchDone] = useState(false);
 
     // Check if connected on mount
     const NOTION_CLIENT_ID = import.meta.env.VITE_NOTION_CLIENT_ID;
@@ -137,10 +138,11 @@ const NotionImport = () => {
     };
 
     useEffect(() => {
-        if (notionToken && step === 2 && foundDbs.length === 0 && !loading) {
+        if (notionToken && step === 2 && !hasInitialSearchDone && !loading) {
+            setHasInitialSearchDone(true);
             refreshDatabases();
         }
-    }, [notionToken, step, foundDbs.length]);
+    }, [notionToken, step, hasInitialSearchDone]);
 
     const assignDb = (id, role) => {
         const cleanId = id.replace(/-/g, '');
