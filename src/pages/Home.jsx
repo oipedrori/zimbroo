@@ -298,6 +298,24 @@ const Home = () => {
                             <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(expenses)}</p>
                         </div>
                     </div>
+
+                    {/* Barra de Porcentagem de Gastos */}
+                    {incomes > 0 && (
+                        <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ flex: 1, height: '6px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '10px', overflow: 'hidden' }}>
+                                <div style={{
+                                    width: `${Math.min((expenses / incomes) * 100, 100)}%`,
+                                    height: '100%',
+                                    background: 'white',
+                                    borderRadius: '10px',
+                                    transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                                }}></div>
+                            </div>
+                            <span style={{ fontSize: '0.85rem', fontWeight: '800', opacity: 0.9, minWidth: '35px', textAlign: 'right' }}>
+                                {Math.round((expenses / incomes) * 100)}%
+                            </span>
+                        </div>
+                    )}
                 </section>
 
                 <section style={{ marginTop: '24px' }}>
