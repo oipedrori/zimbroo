@@ -93,19 +93,20 @@ const NotionImport = () => {
 
             setFoundDbs(uniqueDbs);
 
-            // 4. Auto-vínculo inteligente por nome
+            // 4. Auto-vínculo inteligente por nome e estrutura
             uniqueDbs.forEach(db => {
                 const title = (db.title[0]?.plain_text || '').toLowerCase();
-                const cleanId = db.id.replace(/-/g, '');
+                const props = db.properties || {};
 
-                if (title.includes('despesa') || title.includes('gastos') || title.includes('expense')) {
-                    if (!localStorage.getItem('zimbroo_notion_expense_db_id')) {
-                        assignDb(db.id, 'expense');
-                    }
-                } else if (title.includes('receita') || title.includes('ganho') || title.includes('income')) {
-                    if (!localStorage.getItem('zimbroo_notion_income_db_id')) {
-                        assignDb(db.id, 'income');
-                    }
+                const isExpense = title.includes('despesa') || title.includes('gasto') || title.includes('expense') || title.includes('saída');
+                const isIncome = title.includes('receita') || title.includes('ganho') || title.includes('income') || title.includes('entrada');
+
+                const hasValue = Object.values(props).some(p => p.type === 'number');
+
+                if (isExpense && hasValue) {
+                    if (!localStorage.getItem('zimbroo_notion_expense_db_id')) assignDb(db.id, 'expense');
+                } else if (isIncome && hasValue) {
+                    if (!localStorage.getItem('zimbroo_notion_income_db_id')) assignDb(db.id, 'income');
                 }
             });
 

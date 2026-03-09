@@ -75,8 +75,8 @@ export const findDatabasesOnPage = async (secret, blockId) => {
             if (visited.has(id) || level > MAX_DEPTH) return;
             visited.add(id);
 
-            // Se encontrarmos muitas bases, paramos para evitar lentidão excessiva
-            if (databases.length > 15) return;
+            // Evita varredura infinita ou muito pesada
+            if (databases.length > 20) return;
 
             let hasMore = true;
             let startCursor = undefined;
@@ -95,23 +95,27 @@ export const findDatabasesOnPage = async (secret, blockId) => {
                     const data = await response.json();
 
                     for (const block of data.results) {
-                        // 1. Encontrou database direta
-                        if (block.type === 'child_database') {
-                            try {
+                        try {
+                            // 1. Encontrou database direta
+                            if (block.type === 'child_database') {
                                 const db = await getNotionDatabaseInfo(secret, block.id);
-                                if (db) databases.push(db);
-                            } catch (e) { /* ignore individual db error */ }
-                        }
-                        // 2. Encontrou sub-página ou bloco com filhos (entramos até certo nível)
-                        else if ((block.type === 'child_page' || block.has_children) && level < MAX_DEPTH) {
-                            await scan(block.id, level + 1);
+                                if (db && !databases.some(d => d.id === db.id)) {
+                                    databases.push(db);
+                                }
+                            }
+                            // 2. Encontrou sub-página ou bloco com filhos (colunas, grupos, toggles, synced blocks)
+                            else if ((block.type === 'child_page' || block.has_children) && level < MAX_DEPTH) {
+                                await scan(block.id, level + 1);
+                            }
+                        } catch (e) {
+                            console.warn(`Erro processando bloco ${block.id}:`, e);
                         }
                     }
 
                     hasMore = data.has_more;
                     startCursor = data.next_cursor;
                 } catch (e) {
-                    console.error("Error scanning children of block:", id, e);
+                    console.error("Erro na varredura de filhos do bloco:", id, e);
                     break;
                 }
             }
