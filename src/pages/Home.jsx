@@ -237,9 +237,6 @@ const Home = () => {
             <div
                 className={`page-container animate-fade-in`}
                 style={{ paddingBottom: '120px', animation: 'slideUp 0.3s forwards' }}
-                onTouchStart={onTouchStart}
-                onTouchMove={onTouchMove}
-                onTouchEnd={onTouchEnd}
             >
                 <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px' }}>
                     <Link to="/profile" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
@@ -269,6 +266,9 @@ const Home = () => {
                 <section
                     className="glass-panel"
                     onClick={() => setIsFlipped(true)}
+                    onTouchStart={onTouchStart}
+                    onTouchMove={onTouchMove}
+                    onTouchEnd={onTouchEnd}
                     style={{ flexShrink: 0, padding: '24px', background: cardGradient, color: 'white', border: 'none', position: 'relative', overflow: 'hidden', cursor: 'pointer' }}
                 >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
