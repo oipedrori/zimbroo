@@ -277,7 +277,7 @@ const Home = () => {
                             <h2 style={{ fontSize: 'clamp(1.8rem, 8vw, 2.5rem)', marginBottom: '24px', fontWeight: '700', letterSpacing: '-1px', wordBreak: 'break-word' }}>{formatCurrency(balance)}</h2>
                         </div>
                         <div style={{ position: 'relative', display: 'flex' }}>
-                            <div className="card-aura"></div>
+                            <div className={`card-aura ${isNegative ? 'negative' : ''}`}></div>
                             <Pointer size={18} opacity={0.8} />
                         </div>
                     </div>
