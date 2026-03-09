@@ -441,7 +441,7 @@ const NotionImport = () => {
                                 ))}
                                 {searchingBackground && (
                                     <div style={{ padding: '12px', background: 'var(--primary-light)', borderRadius: '12px', fontSize: '0.75rem', color: 'var(--primary-dark)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                                        <RefreshCw size={14} className="animate-spin" />
+                                        <RefreshCcw size={14} className="animate-spin" />
                                         <span>Procurando tabelas dentro de suas páginas...</span>
                                     </div>
                                 )}
