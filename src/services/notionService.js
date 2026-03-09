@@ -103,9 +103,15 @@ export const findDatabasesOnPage = async (secret, blockId) => {
                     for (const block of data.results) {
                         try {
                             if (block.type === 'child_database') {
-                                const db = await getNotionDatabaseInfo(secret, block.id);
-                                if (db && !databases.some(d => d.id === db.id)) {
-                                    databases.push(db);
+                                const dbTitle = block.child_database?.title || 'Tabela sem nome';
+                                const simpleDb = {
+                                    id: block.id,
+                                    object: 'database',
+                                    title: [{ plain_text: dbTitle }],
+                                    properties: {} // Mock para não quebrar a UI, carregamos props no vincular se precisar
+                                };
+                                if (!databases.some(d => d.id === simpleDb.id)) {
+                                    databases.push(simpleDb);
                                 }
                             }
                             // Só entra em containers que podem ter tabelas (colunas, grupos, toggles)
