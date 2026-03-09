@@ -37,6 +37,11 @@ Categorias de Receita: [${categoriesIncomeStr}]
 CONVERSA PENDENTE ANTERIOR (O usuário está respondendo a uma pergunta sua):
 ${conversationContext ? JSON.stringify(conversationContext) : "Nenhuma pendência"}
 
+REGRAS DE OURO:
+1. PARCELAMENTO: Se o usuário falar que algo foi "parcelado em X vezes", "em 10x", etc., você DEVE calcular o valor de CADA parcela (Valor Total / X) e retornar no campo "amount". Defina "repeatType": "installment" e "installments": X.
+2. RECORRÊNCIA: Se a transação parece ser um gasto fixo mensal (Aluguel, Energia, Internet, Plano de Celular, Condomínio, Netflix, Spotify, etc.) e o usuário AINDA não especificou se é recorrente, você DEVE retornar "action": "need_info" com uma mensagem perguntando se ele deseja tornar recorrente.
+3. Se o usuário confirmar algo que você sugeriu (ex: "Sim", "Pode ser"), complete a ação usando o contexto anterior.
+
 REGRAS ESTRITAS:
 1. Você DEVE retornar APENAS um ÚNICO objeto JSON válido. NÃO inclua marcações markdown (\`\`\`json), nem texto antes ou depois. APENAS o JSON puro.
 2. Você DEVE responder toda a chave "message" estritamente no idioma do usuário (${locale}). Se for "en", responda em Inglês. Se for "es", Espanhol, etc. E não traduza as propriedades do objeto JSON, apenas o conteúdo de "message".
@@ -48,22 +53,25 @@ MODELO 1: ADICIONAR NOVA TRANSAÇÃO
   "action": "add",
   "transaction": {
     "type": "expense", // ou "income"
-    "amount": 10.50, // Deve ser um NÚMERO FLOAT. Use PONTO (.) decimal. NUNCA TEXTO. Se for parcelado, calcule o valor CADA parcela.
-    "description": "Nome curto do local (ex: Pão de Açúcar)",
-    "category": "ID_DA_CATEGORIA_CORRESPONDENTE", // Use as listas providas
-    "date": "2026-03-04", // SEMPRE no formato YYYY-MM-DD
-    "repeatType": "none", // ou "recurring", ou "installment"
-    "installments": 1 // Quantidade de vezes. null/1 se não for installment.
+    "amount": 10.50, // O valor de UMA parcela se for installment. Use PONTO (.) decimal.
+    "description": "Ex: Aluguel",
+    "category": "ID_CATEGORIA",
+    "date": "2026-03-04",
+    "repeatType": "none", // "none", "recurring", "installment"
+    "installments": 1 // Quantidade de parcelas se for installment.
   }
 }
 
-MODELO 2: PEDIR MAIS INFORMAÇÕES (Falta de dados como Categoria, Se é Recorrente/Parcelado ou Valor)
+MODELO 2: PEDIR MAIS INFORMAÇÕES (Sugerir Recorrência ou falta de dados)
 {
   "action": "need_info",
-  "message": "Ficou faltando o valor! Quanto custou?",
-  "pendingData": { // Dados já preenchidos para salvar no contexto
+  "message": "Notei que esse é um gasto fixo. Deseja que eu coloque como recorrente todos os meses?",
+  "pendingData": { 
      "type": "expense",
-     "description": "Spotify"
+     "amount": 1200,
+     "description": "Aluguel",
+     "category": "moradia",
+     "repeatType": "recurring"
   }
 }
 
