@@ -164,7 +164,7 @@ const Statistics = () => {
                                 width: '100%', height: '100%',
                                 borderRadius: '50%',
                                 overflow: 'hidden',
-                                clipPath: 'circle(50% at 50% 50%)',
+                                transform: 'translateZ(0)',
                                 background: pieChartBg,
                                 display: 'flex', justifyContent: 'center', alignItems: 'center'
                             }}>
