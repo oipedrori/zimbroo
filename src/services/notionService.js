@@ -6,6 +6,46 @@
 const API_BASE = '/notion-api';
 
 /**
+ * Utility: Extract Notion ID from URL or string
+ */
+export const extractNotionId = (input) => {
+    if (!input) return '';
+    // Match 32 chars hex string from URL or raw
+    const match = input.match(/([a-f0-9]{32})/);
+    return match ? match[1] : input.trim();
+};
+
+/**
+ * Search all databases accessible by the integration
+ */
+export const searchNotionDatabases = async (secret) => {
+    try {
+        const response = await fetch(`${API_BASE}/search`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${secret}`,
+                'Notion-Version': '2022-06-28',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                filter: { property: 'object', value: 'database' }
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.message || 'Falha ao buscar bases');
+        }
+
+        const data = await response.json();
+        return data.results; // Retorna lista de databases
+    } catch (error) {
+        console.error("Search Error: ", error);
+        throw error;
+    }
+};
+
+/**
  * Fetch Database Metadata to check available properties
  */
 export const getNotionDatabaseInfo = async (secret, databaseId) => {

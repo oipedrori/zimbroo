@@ -27,11 +27,13 @@ export const addTransaction = async (userId, data) => {
     try {
         const docRef = await addDoc(collection(db, TRANSACTIONS_COLLECTION), newTx);
 
-        // Notion Sync (Side Effect - doesn't block UI)
+        // Smart Notion Sync (Side Effect)
         const notionToken = localStorage.getItem('zimbroo_notion_token');
-        const notionDbId = localStorage.getItem('zimbroo_notion_db_id');
-        if (notionToken && notionDbId) {
-            createNotionTransaction(notionToken, notionDbId, newTx)
+        const dbTypeKey = newTx.type === 'income' ? 'zimbroo_notion_income_db_id' : 'zimbroo_notion_expense_db_id';
+        const targetDbId = localStorage.getItem(dbTypeKey);
+
+        if (notionToken && targetDbId) {
+            createNotionTransaction(notionToken, targetDbId, newTx)
                 .catch(err => console.error("Notion Sync Error:", err));
         }
 
