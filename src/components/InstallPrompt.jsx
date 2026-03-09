@@ -10,7 +10,7 @@ const InstallPrompt = () => {
 
     useEffect(() => {
         // Verifica se já viu o prompt ou se já está rodando como app standalone (PWA instalado)
-        const hasSeenPrompt = localStorage.getItem('zimbro_install_prompt_seen');
+        const hasSeenPrompt = localStorage.getItem('zimbroo_install_prompt_seen');
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
         if (hasSeenPrompt === 'true' || isStandalone) {
@@ -46,7 +46,7 @@ const InstallPrompt = () => {
 
     const handleDismiss = () => {
         setIsVisible(false);
-        localStorage.setItem('zimbro_install_prompt_seen', 'true');
+        localStorage.setItem('zimbroo_install_prompt_seen', 'true');
     };
 
     const handleInstallAndroid = async () => {
@@ -91,7 +91,7 @@ const InstallPrompt = () => {
 
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'var(--primary-color)', display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
-                    <img src="/favicon.png" alt="Zimbro Icon" style={{ width: '28px', height: '28px' }} />
+                    <img src="/favicon.png" alt="Zimbroo Icon" style={{ width: '28px', height: '28px' }} />
                 </div>
                 <div>
                     <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 'bold', color: 'var(--text-main)' }}>{t('install_title')}</h4>

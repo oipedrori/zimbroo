@@ -1,5 +1,5 @@
 /**
- * Notion Service - Zimbro App
+ * Notion Service - Zimbroo App
  * Handles interaction with Notion API (proxied via Vite for dev)
  */
 
@@ -51,7 +51,7 @@ export const fetchNotionTransactions = async (secret, databaseId) => {
         }
 
         const data = await response.json();
-        return mapNotionToZimbro(data.results);
+        return mapNotionToZimbroo(data.results);
     } catch (error) {
         console.error("Fetch Error: ", error);
         throw error;
@@ -59,9 +59,9 @@ export const fetchNotionTransactions = async (secret, databaseId) => {
 };
 
 /**
- * Heuristics to map various Notion property names to Zimbro
+ * Heuristics to map various Notion property names to Zimbroo
  */
-const mapNotionToZimbro = (results) => {
+const mapNotionToZimbroo = (results) => {
     return results.map(row => {
         const props = row.properties;
         const mapped = {};

@@ -5,7 +5,7 @@ import { useI18n } from '../contexts/I18nContext';
 const Wallet = () => {
     // Store accounts in local state/storage for MVP
     const [accounts, setAccounts] = useState(() => {
-        const saved = localStorage.getItem('zimbro_accounts');
+        const saved = localStorage.getItem('zimbroo_accounts');
         return saved ? JSON.parse(saved) : {};
     });
 
@@ -17,7 +17,7 @@ const Wallet = () => {
     const { t, formatCurrency } = useI18n();
 
     useEffect(() => {
-        localStorage.setItem('zimbro_accounts', JSON.stringify(accounts));
+        localStorage.setItem('zimbroo_accounts', JSON.stringify(accounts));
     }, [accounts]);
 
     const handleAddAccount = (e) => {

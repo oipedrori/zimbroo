@@ -21,39 +21,39 @@ const Onboarding = () => {
     useEffect(() => {
         if (showDocs) {
             setLoadingDoc(true);
-            fetch(`/${showDocs}.md`)
+            fetch(`/${showDocs}_${locale}.md`)
                 .then(res => res.text())
                 .then(text => {
                     setDocContent(text);
                     setLoadingDoc(false);
                 });
         }
-    }, [showDocs]);
+    }, [showDocs, locale]);
 
     const stories = [
         {
             id: 0,
-            icon: <img src="/Z.png" alt="Zimbro" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />,
-            title: "Boas-vindas!",
-            desc: "O Zimbro é seu novo aliado inteligente na gestão financeira pessoal."
+            icon: <img src="/Z.png" alt="Zimbroo" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />,
+            title: t('ob_welcome'),
+            desc: t('ob_desc_1')
         },
         {
             id: 1,
             icon: <Mic size={54} color="white" />,
-            title: "Registre com IA",
-            desc: "Fale ou digite naturalmente. Nossa inteligência organiza tudo para você."
+            title: t('ob_ai_title'),
+            desc: t('ob_ai_desc')
         },
         {
             id: 2,
             icon: <MessageSquare size={54} color="white" />,
-            title: "Pergunte à IA",
-            desc: "Tire dúvidas sobre seus gastos e receba conselhos financeiros personalizados."
+            title: t('ob_ask_title'),
+            desc: t('ob_ask_desc')
         },
         {
             id: 3,
             icon: <Zap size={54} color="white" />,
-            title: "Simples e Rápido",
-            desc: "Sem planilhas chatas. O que você precisa, onde você estiver, em segundos."
+            title: t('ob_fast_title'),
+            desc: t('ob_fast_desc')
         }
     ];
 
@@ -144,31 +144,7 @@ const Onboarding = () => {
                 })}
             </div>
 
-            {/* Language Selector Chip */}
-            <div style={{
-                position: 'absolute',
-                top: '50px', right: '16px',
-                zIndex: 20,
-                display: 'flex',
-                alignItems: 'center',
-                background: 'rgba(255, 255, 255, 0.2)',
-                backdropFilter: 'blur(10px)',
-                borderRadius: '20px',
-                padding: '4px 12px',
-                border: '1px solid rgba(255, 255, 255, 0.3)'
-            }}>
-                <Globe size={14} color="white" style={{ marginRight: '6px' }} />
-                <select
-                    value={locale}
-                    onChange={(e) => changeLocale(e.target.value)}
-                    style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.85rem', fontWeight: 'bold', outline: 'none', cursor: 'pointer' }}
-                >
-                    <option value="pt" style={{ color: 'black' }}>PT</option>
-                    <option value="en" style={{ color: 'black' }}>EN</option>
-                    <option value="es" style={{ color: 'black' }}>ES</option>
-                    <option value="fr" style={{ color: 'black' }}>FR</option>
-                </select>
-            </div>
+
 
             {/* Áreas Invisíveis de Toque (Laterais) */}
             <div style={{ position: 'absolute', top: 0, bottom: '100px', left: 0, width: '35%', zIndex: 5, cursor: 'pointer' }} onClick={handleTouchLeft} />
@@ -331,6 +307,35 @@ const Onboarding = () => {
                             </div>
                         )}
                     </div>
+                </div>
+            )}
+
+            {/* Language Selector Chip - Moved to end for stacking order */}
+            {!showDocs && (
+                <div style={{
+                    position: 'absolute',
+                    top: '50px', right: '16px',
+                    zIndex: 100,
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '20px',
+                    padding: '4px 12px',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    pointerEvents: 'auto'
+                }}>
+                    <Globe size={14} color="white" style={{ marginRight: '6px' }} />
+                    <select
+                        value={locale}
+                        onChange={(e) => changeLocale(e.target.value)}
+                        style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.85rem', fontWeight: 'bold', outline: 'none', cursor: 'pointer' }}
+                    >
+                        <option value="pt" style={{ color: 'black' }}>PT</option>
+                        <option value="en" style={{ color: 'black' }}>EN</option>
+                        <option value="es" style={{ color: 'black' }}>ES</option>
+                        <option value="fr" style={{ color: 'black' }}>FR</option>
+                    </select>
                 </div>
             )}
 

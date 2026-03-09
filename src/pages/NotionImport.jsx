@@ -113,7 +113,7 @@ const NotionImport = () => {
                         </h2>
 
                         <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '32px', fontSize: '1.05rem' }}>
-                            Sincronize automaticamente seus gastos do Notion com a inteligência do Zimbro.
+                            Sincronize automaticamente seus gastos do Notion com a inteligência do Zimbroo.
                         </p>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '40px' }}>
@@ -246,7 +246,7 @@ const NotionImport = () => {
                             {dbMetadata.title[0]?.plain_text || 'Base Encontrada!'}
                         </h2>
                         <p style={{ color: 'var(--text-muted)', marginBottom: '40px' }}>
-                            Pronto para importar suas transações para o Zimbro.
+                            Pronto para importar suas transações para o Zimbroo.
                         </p>
 
                         {loading ? (

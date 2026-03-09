@@ -11,7 +11,7 @@ const Limits = () => {
 
     // Store limits in local state/storage for MVP
     const [limits, setLimits] = useState(() => {
-        const saved = localStorage.getItem('zimbro_limits');
+        const saved = localStorage.getItem('zimbroo_limits');
         return saved ? JSON.parse(saved) : {};
     });
 
@@ -22,7 +22,7 @@ const Limits = () => {
     const { t, formatCurrency } = useI18n();
 
     useEffect(() => {
-        localStorage.setItem('zimbro_limits', JSON.stringify(limits));
+        localStorage.setItem('zimbroo_limits', JSON.stringify(limits));
     }, [limits]);
 
     const expensesByCategory = transactions

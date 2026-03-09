@@ -24,7 +24,7 @@ export const analyzeTextWithGemini = async (text, transactions = [], conversatio
     const currentDateStr = new Date().toLocaleDateString('pt-BR'); // Ex: 04/03/2026
 
     const prompt = `
-Você é um assistente financeiro do aplicativo Zimbro. O usuário enviará uma transcrição de voz.
+Você é um assistente financeiro do aplicativo Zimbroo. O usuário enviará uma transcrição de voz.
 
 Data de Hoje: ${currentDateStr}. Sempre que o usuário mencionar uma data específica (ex: "dia 10", "10 de marco"), calcule a data correta no formato YYYY-MM-DD considerando o mês/ano atual. Se não falar data, retorne um texto vazio "".
 

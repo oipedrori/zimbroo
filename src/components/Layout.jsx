@@ -65,7 +65,7 @@ const Layout = () => {
                             aria-label={t('ai_mic_label')}
                         >
                             <div className="mystical-aura"></div>
-                            <img src="/Z.png" alt="Zimbro" />
+                            <img src="/Z.png" alt="Zimbroo" />
                         </button>
                     </div>
                 </nav>

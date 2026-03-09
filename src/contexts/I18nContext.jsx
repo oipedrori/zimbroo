@@ -17,14 +17,14 @@ export function I18nProvider({ children }) {
         const baseLang = (browserLang || 'pt').split('-')[0].toLowerCase();
 
         // Check local storage
-        const savedLocale = localStorage.getItem('zimbro_locale');
-        const savedCurrency = localStorage.getItem('zimbro_currency');
+        const savedLocale = localStorage.getItem('zimbroo_locale');
+        const savedCurrency = localStorage.getItem('zimbroo_currency');
 
         if (savedLocale && translations[savedLocale]) {
             setLocale(savedLocale);
         } else if (translations[baseLang]) {
             setLocale(baseLang);
-            localStorage.setItem('zimbro_locale', baseLang);
+            localStorage.setItem('zimbroo_locale', baseLang);
         } else {
             setLocale('en'); // fallback
         }
@@ -34,7 +34,7 @@ export function I18nProvider({ children }) {
         } else {
             const defaultCur = defaultCurrencyForLanguage[baseLang] || 'USD';
             setCurrency(defaultCur);
-            localStorage.setItem('zimbro_currency', defaultCur);
+            localStorage.setItem('zimbroo_currency', defaultCur);
         }
     }, []);
 
@@ -68,7 +68,7 @@ export function I18nProvider({ children }) {
     const changeLocale = (newLocale) => {
         if (translations[newLocale]) {
             setLocale(newLocale);
-            localStorage.setItem('zimbro_locale', newLocale);
+            localStorage.setItem('zimbroo_locale', newLocale);
 
             // Optionally auto-change currency if user hasn't strictly overridden it, 
             // but usually safer to just let them change currency if they want.
@@ -77,7 +77,7 @@ export function I18nProvider({ children }) {
 
     const changeCurrency = (newCurrency) => {
         setCurrency(newCurrency);
-        localStorage.setItem('zimbro_currency', newCurrency);
+        localStorage.setItem('zimbroo_currency', newCurrency);
     };
 
     const formatCurrency = (value) => {

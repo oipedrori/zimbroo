@@ -13,7 +13,7 @@ const Profile = () => {
     const [isPremium, setIsPremium] = useState(false); // Default to free for demo
 
     // Theme logic
-    const [theme, setTheme] = useState(localStorage.getItem('zimbro_theme') || 'system');
+    const [theme, setTheme] = useState(localStorage.getItem('zimbroo_theme') || 'system');
 
     useEffect(() => {
         const root = document.documentElement;
@@ -26,7 +26,7 @@ const Profile = () => {
         } else {
             root.classList.remove('theme-dark', 'theme-light');
         }
-        localStorage.setItem('zimbro_theme', theme);
+        localStorage.setItem('zimbroo_theme', theme);
     }, [theme]);
 
     return (
@@ -46,7 +46,7 @@ const Profile = () => {
                     <User size={36} />
                 </div>
                 <h2 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                    {currentUser?.displayName || 'Usuário Zimbro'}
+                    {currentUser?.displayName || 'Usuário Zimbroo'}
                 </h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '12px' }}>{currentUser?.email}</p>
 

@@ -1,9 +1,9 @@
-POLÍTICA DE PRIVACIDADE E PROTEÇÃO DE DADOS - ZIMBRO APP
+POLÍTICA DE PRIVACIDADE E PROTEÇÃO DE DADOS - ZIMBROO APP
 
-A privacidade do usuário ("usuário", "você", "seu") é a prioridade número um do Zimbro App ("Zimbro", "nós", "nosso"). Esta política descreve como as informações são coletadas, usadas, compartilhadas e protegidas ao usar nosso aplicativo de gestão financeira assistido por IA.
+A privacidade do usuário ("usuário", "você", "seu") é a prioridade número um do Zimbroo App ("Zimbroo", "nós", "nosso"). Esta política descreve como as informações são coletadas, usadas, compartilhadas e protegidas ao usar nosso aplicativo de gestão financeira assistido por IA.
 
 1. COLETA DE INFORMAÇÕES
-O Zimbro coleta apenas as informações necessárias para operar o serviço:
+O Zimbroo coleta apenas as informações necessárias para operar o serviço:
 A) Autenticação: Ao fazer login com o Google, coletamos seu nome, endereço de e-mail e ID do usuário Google.
 B) Transações Financeiras: Coletamos dados inseridos manualmente ou via áudio, incluindo descrição, valor, data e categoria.
 C) Integração com Notion: Coletamos tokens de integração e IDs de bancos de dados que o usuário configurar explicitamente.
@@ -16,7 +16,7 @@ C) Sincronizar dados entre os seus dispositivos via Google Cloud (Firebase).
 D) Garantir o acesso seguro à sua conta.
 
 3. ARMAZENAMENTO E SEGURANÇA
-Todos os dados são armazenados na infraestrutura do Google Cloud Platform (Firebase) nos Estados Unidos da América, seguindo padrões internacionais de segurança. O acesso aos seus dados é restrito a você através de sua autenticação Google. O Zimbro não compartilha, vende ou transfere suas informações financeiras para terceiros para fins publicitários ou de marketing.
+Todos os dados são armazenados na infraestrutura do Google Cloud Platform (Firebase) nos Estados Unidos da América, seguindo padrões internacionais de segurança. O acesso aos seus dados é restrito a você através de sua autenticação Google. O Zimbroo não compartilha, vende ou transfere suas informações financeiras para terceiros para fins publicitários ou de marketing.
 
 4. COMPARTILHAMENTO COM TERCEIROS
 Operamos via APIs de terceiros para funcionalidades específicas:

@@ -88,7 +88,7 @@ const AppRoutes = () => {
 
 function App() {
   useEffect(() => {
-    const theme = localStorage.getItem('zimbro_theme') || 'system';
+    const theme = localStorage.getItem('zimbroo_theme') || 'system';
     const root = document.documentElement;
     if (theme === 'dark') {
       root.classList.add('theme-dark');
