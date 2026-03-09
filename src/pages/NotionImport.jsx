@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, Database, ArrowRight, CheckCircle2, AlertCircle, FileText, Loader2, Link, Lock, TrendingUp, TrendingDown, RefreshCcw, Trash2, HelpCircle } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
-import { getNotionDatabaseInfo, fetchNotionTransactions, searchNotionDatabases, extractNotionId, findDatabasesOnPage } from '../services/notionService';
+import { getNotionDatabaseInfo, fetchNotionTransactions, searchNotionDatabases, extractNotionId, findDatabasesOnPage, getNotionWorkspaceInfo } from '../services/notionService';
 import { addTransaction } from '../services/transactionService';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -24,6 +24,7 @@ const NotionImport = () => {
     const [progress, setProgress] = useState(0);
     const [syncStats, setSyncStats] = useState({ expenses: 0, incomes: 0 });
     const [debugItems, setDebugItems] = useState([]); // Itens crus retornados pelo Notion
+    const [workspaceInfo, setWorkspaceInfo] = useState(null);
 
     const NOTION_CLIENT_ID = import.meta.env.VITE_NOTION_CLIENT_ID;
     const NOTION_REDIRECT_URI = import.meta.env.VITE_NOTION_REDIRECT_URI || (window.location.origin + '/notion-callback');
@@ -67,6 +68,11 @@ const NotionImport = () => {
         setError(null);
         try {
             console.log("Iniciando descoberta automática...");
+
+            // Tenta validar o token primeiro
+            const ws = await getNotionWorkspaceInfo(notionToken);
+            setWorkspaceInfo(ws);
+
             const results = await searchNotionDatabases(notionToken);
             setDebugItems(results); // Guarda para o debug do usuário
 
@@ -444,21 +450,31 @@ const NotionImport = () => {
                         )}
 
                         {/* Debug Panel for User */}
-                        {debugItems.length > 0 && foundDbs.length === 0 && (
+                        {(debugItems.length > 0 || workspaceInfo) && foundDbs.length === 0 && (
                             <div style={{ padding: '16px', borderRadius: '16px', background: 'rgba(0,0,0,0.03)', marginBottom: '32px', border: '1px dashed var(--border-color)' }}>
-                                <h4 style={{ margin: '0 0 10px 0', fontSize: '0.75rem', fontWeight: '800', opacity: 0.5 }}>DIAGNÓSTICO: O ZIMBROO ESTÁ VENDO ESTES ITENS:</h4>
+                                <h4 style={{ margin: '0 0 10px 0', fontSize: '0.75rem', fontWeight: '800', opacity: 0.5 }}>DIAGNÓSTICO DA CONEXÃO:</h4>
+
+                                {workspaceInfo && (
+                                    <div style={{ marginBottom: '12px', padding: '10px', background: '#e8f5e9', borderRadius: '10px', fontSize: '0.8rem', color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <CheckCircle2 size={16} />
+                                        <span>Conectado ao Workspace: <b>{workspaceInfo?.workspace_name || 'Privado'}</b></span>
+                                    </div>
+                                )}
+
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                    {debugItems.map((item, idx) => (
+                                    {debugItems.length > 0 ? debugItems.map((item, idx) => (
                                         <div key={idx} style={{ fontSize: '0.65rem', padding: '4px 8px', background: 'white', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                                             {item.object === 'page' ? '📄 ' : '📊 '}
                                             {item.object === 'page'
-                                                ? (item.properties?.title?.title?.[0]?.plain_text || item.properties?.Name?.title?.[0]?.plain_text || 'Sem Título')
+                                                ? (item.properties?.title?.title?.[0]?.plain_text || item.properties?.Name?.title?.[0]?.plain_text || item.properties?.title?.id || 'Página')
                                                 : (item.title?.[0]?.plain_text || 'Database')}
                                         </div>
-                                    ))}
+                                    )) : (
+                                        <p style={{ fontSize: '0.75rem', color: '#d32f2f', margin: '4px 0' }}>O Notion não enviou nenhum item autorizado.</p>
+                                    )}
                                 </div>
                                 <p style={{ fontSize: '0.7rem', marginTop: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                                    Se suas tabelas não aparecem acima, você precisa clicar em "Excluir" e reconectar, marcando os checkbox de cada tabela individualmente.
+                                    Se suas tabelas não aparecem acima, você precisa clicar em "Excluir" e reconectar, marcando o checkbox de cada tabela individualmente.
                                 </p>
                             </div>
                         )}

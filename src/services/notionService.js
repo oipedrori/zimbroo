@@ -24,7 +24,7 @@ export const searchNotionDatabases = async (secret) => {
         let hasMore = true;
         let startCursor = undefined;
 
-        console.log("Iniciando busca global no Notion (Páginas e Bases)...");
+        console.log("Iniciando discovery global no Notion...");
 
         while (hasMore) {
             const response = await fetch(`${API_BASE}/search`, {
@@ -35,20 +35,15 @@ export const searchNotionDatabases = async (secret) => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    query: "", // Força o Notion a retornar itens mesmo sem filtro
-                    sort: {
-                        direction: 'descending',
-                        timestamp: 'last_edited_time'
-                    },
                     start_cursor: startCursor,
                     page_size: 100
+                    // Removemos query e sort para evitar qualquer filtro que oculte itens
                 })
             });
 
             if (!response.ok) {
-                const err = await response.json();
-                console.error("Notion Search API Error:", err);
-                throw new Error(err.message || 'Falha na busca global do Notion');
+                const errData = await response.json();
+                throw new Error(`Erro API Notion (${response.status}): ${errData.message || 'Falha na comunicação'}`);
             }
 
             const data = await response.json();
@@ -56,14 +51,32 @@ export const searchNotionDatabases = async (secret) => {
             hasMore = data.has_more;
             startCursor = data.next_cursor;
 
-            if (allResults.length > 500) break;
+            if (allResults.length > 300) break;
         }
 
-        console.log(`Busca concluída. Total: ${allResults.length} itens encontrados.`);
         return allResults;
     } catch (error) {
-        console.error("Search Fail: ", error);
+        console.error("Discovery Fail: ", error);
         throw error;
+    }
+};
+
+/**
+ * Get workspace/bot info to verify connection
+ */
+export const getNotionWorkspaceInfo = async (secret) => {
+    try {
+        const response = await fetch(`${API_BASE}/users/me`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${secret}`,
+                'Notion-Version': '2022-06-28'
+            }
+        });
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (e) {
+        return null;
     }
 };
 
