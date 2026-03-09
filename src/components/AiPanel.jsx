@@ -448,11 +448,11 @@ const AiPanel = ({ isActive, onClose, onOpenManualModal, onListeningChange }) =>
           height: 68px;
           border-radius: 50%;
           border: none;
-          background: var(--highlight-gradient);
+          background: var(--primary-gradient);
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 10px 30px rgba(75, 180, 90, 0.4);
+          box-shadow: 0 10px 30px rgba(27, 69, 32, 0.5);
           cursor: pointer;
           position: relative;
           transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);

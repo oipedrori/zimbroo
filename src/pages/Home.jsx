@@ -7,7 +7,7 @@ import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA } from '../utils/categories';
 import { useI18n } from '../contexts/I18nContext';
 import TransactionModal from '../components/TransactionModal';
 import SwipeableItem from '../components/SwipeableItem';
-import { Plus, ChevronLeft, ChevronRight, User, Hand, X } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, User, Pointer, X } from 'lucide-react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { getYearlyStats } from '../services/transactionService';
 
@@ -141,7 +141,7 @@ const Home = () => {
 
                                 return (
                                     <>
-                                        <div style={{ width: '180px', height: '180px', borderRadius: '50%', background: pieBg, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', border: '2px solid var(--glass-border)' }}>
+                                        <div style={{ width: '180px', height: '180px', borderRadius: '50%', background: pieBg, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', overflow: 'hidden', clipPath: 'circle(50% at 50% 50%)', border: '1px solid var(--glass-border)' }}>
                                             <div style={{ width: '120px', height: '120px', background: 'var(--bg-color)', borderRadius: '50%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                                                 <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t('total')}</span>
                                                 <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{formatCurrency(totalExpenses)}</span>
@@ -164,7 +164,7 @@ const Home = () => {
                         </section>
 
                         <section className="glass-panel" style={{ padding: '24px' }}>
-                            <h3 style={{ fontSize: '1rem', marginBottom: '24px' }}>{t('monthly_balances_current_year', { defaultValue: 'Saldos Mensais' })}</h3>
+                            <h3 style={{ fontSize: '1rem', marginBottom: '24px' }}>{t('monthly_balances_current_year', { defaultValue: 'Saldos Mensais' })} ({currentDate.getFullYear()})</h3>
                             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '160px', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
                                 {yearlyStats.map((stat, i) => (
                                     <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%' }}>
@@ -219,7 +219,7 @@ const Home = () => {
                             <h2 style={{ fontSize: 'clamp(1.8rem, 8vw, 2.5rem)', marginBottom: '24px', fontWeight: '700', letterSpacing: '-1px', wordBreak: 'break-word' }}>{formatCurrency(balance)}</h2>
                         </div>
                         <div style={{ background: 'rgba(255,255,255,0.2)', padding: '6px', borderRadius: '50%', display: 'flex' }}>
-                            <Hand size={16} />
+                            <Pointer size={16} />
                         </div>
                     </div>
 
