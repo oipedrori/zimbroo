@@ -1,6 +1,6 @@
 .ai-insight-bubble {
-    position: fixed;
-    bottom: 105px; /* Logo acima do botão central (bottom-nav height = 100px) */
+    position: absolute;
+    bottom: 5px; /* Relativo ao container que o envolve na Layout.jsx */
     left: 50%;
     transform: translateX(-50%) scale(0.6) translateY(20px);
     transform-origin: bottom center;

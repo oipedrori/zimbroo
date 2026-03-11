@@ -7,7 +7,6 @@ import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA } from '../utils/categories';
 import { useI18n } from '../contexts/I18nContext';
 import TransactionModal from '../components/TransactionModal';
 import SwipeableItem from '../components/SwipeableItem';
-import AiInsightBubble from '../components/AiInsightBubble';
 import { Plus, ChevronLeft, ChevronRight, User, Pointer, X } from 'lucide-react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { getYearlyStats } from '../services/transactionService';
@@ -33,7 +32,6 @@ const Home = () => {
     const [swipeDirection, setSwipeDirection] = useState(''); // 'left' or 'right'
     const [touchStart, setTouchStart] = useState(null);
     const [touchEnd, setTouchEnd] = useState(null);
-    const [showAiInsight, setShowAiInsight] = useState(true);
 
     useEffect(() => {
         if (isFlipped) {
@@ -377,16 +375,6 @@ const Home = () => {
                 </section>
 
                 <TransactionModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingTx(null); }} defaultType={modalType} initialData={editingTx} onSuccess={refetch} />
-                
-                {showAiInsight && (
-                    <AiInsightBubble 
-                        transactions={transactions} 
-                        balance={balance} 
-                        expenses={expenses} 
-                        incomes={incomes} 
-                        onClose={() => setShowAiInsight(false)} 
-                    />
-                )}
             </div>
 
             <style>{`

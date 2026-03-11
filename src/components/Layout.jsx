@@ -4,15 +4,24 @@ import { Plus, Mic, X } from 'lucide-react';
 import AiPanel from './AiPanel';
 import DynamicIslandHint from './DynamicIslandHint';
 import TransactionModal from './TransactionModal';
+import AiInsightBubble from './AiInsightBubble';
 import { useI18n } from '../contexts/I18nContext';
+import { useTransactions } from '../hooks/useTransactions';
+import { format } from 'date-fns';
 import './Layout.css';
 
 const Layout = () => {
     const [isAiActive, setIsAiActive] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+    const [showAiInsight, setShowAiInsight] = useState(true);
     const location = useLocation();
     const { t } = useI18n();
+
+    // Pegamos a data atual para o hook de transactions, mas de forma simplificada apenas para passar pro balão
+    const currentDate = new Date();
+    const monthPrefix = format(currentDate, 'yyyy-MM');
+    const { transactions } = useTransactions(monthPrefix);
 
     useEffect(() => {
         if (location.hash === '#voice') {
@@ -55,9 +64,17 @@ const Layout = () => {
 
             {location.pathname === '/' && <div className="bottom-blur-layer" />}
 
-            {/* Navegação Simplificada - Botão Místico de IA */}
+            {/* Navegação Simplificada - Botão Místico de IA e Balão */}
             {location.pathname === '/' && !isManualModalOpen && !isAiActive && (
                 <nav className="bottom-nav">
+                    {showAiInsight && (
+                        <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, zIndex: 3000 }}>
+                            <AiInsightBubble 
+                                transactions={transactions} 
+                                onClose={() => setShowAiInsight(false)} 
+                            />
+                        </div>
+                    )}
                     <div className="nav-center-item">
                         <button
                             className={`ai-mic-btn ${isAiActive ? 'active' : ''} ${isListening ? 'listening' : ''}`}

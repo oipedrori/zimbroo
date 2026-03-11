@@ -115,6 +115,7 @@ Mensagem do usuário: "${text}"
 
 export const generateInsightMessage = async (transactions = [], locale = 'pt') => {
   if (!API_KEY) {
+    console.warn("VITE_GEMINI_API_KEY is not defined. Using fallback insight.");
     return "Pronto para organizar suas finanças hoje? É só apertar e falar.";
   }
 
