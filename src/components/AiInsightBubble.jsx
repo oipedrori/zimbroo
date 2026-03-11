@@ -1,57 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { generateInsightMessage } from '../services/geminiService';
+import React, { useState, useEffect } from 'react';
 import './AiInsightBubble.css';
 
-const AiInsightBubble = ({ transactions, onClose }) => {
+const AiInsightBubble = ({ preFetchedMessage, onClose }) => {
     const [isVisible, setVisible] = useState(false);
-    const [message, setMessage] = useState('');
     const [isLoading, setIsLoading] = useState(true);
-    const hasFetched = useRef(false);
 
     useEffect(() => {
-        let isMounted = true;
         let hideTimeout;
-        let interactionTimeout;
+        let showTimeout;
+        
+        // Mostrar o balão na tela com os pontinhos carregando logo no começo
+        showTimeout = setTimeout(() => setVisible(true), 300);
 
-        const fetchMessage = async () => {
-            if (hasFetched.current) return;
-            hasFetched.current = true;
-            
-            setIsLoading(true);
-            // Mostrar o balão na tela com os pontinhos carregando
-            setTimeout(() => setVisible(true), 300);
+        if (preFetchedMessage) {
+            setIsLoading(false);
 
-            try {
-                const insight = await generateInsightMessage(transactions);
-                
-                if (isMounted) {
-                    setMessage(insight);
-                    setIsLoading(false);
-
-                    // Autodestruição após 6 segundos de aparecer a mensagem para ler com calma
-                    hideTimeout = setTimeout(() => {
-                        handleDismiss();
-                    }, 8000);
-                }
-            } catch (error) {
-                console.error("Bubble fetch error:", error);
-                if (isMounted) {
-                    setMessage("Pronto para organizar suas finanças hoje? É só apertar e falar.");
-                    setIsLoading(false);
-                    hideTimeout = setTimeout(() => {
-                        handleDismiss();
-                    }, 8000);
-                }
-            }
-        };
-
-        fetchMessage();
+            // Autodestruição após 15 segundos
+            hideTimeout = setTimeout(() => {
+                handleDismiss();
+            }, 15000);
+        }
 
         return () => {
-            isMounted = false;
             clearTimeout(hideTimeout);
+            clearTimeout(showTimeout);
         };
-    }, [transactions]);
+    }, [preFetchedMessage]);
 
     const handleDismiss = () => {
         setVisible(false);
@@ -69,7 +43,7 @@ const AiInsightBubble = ({ transactions, onClose }) => {
                         <span></span><span></span><span></span>
                     </div>
                 ) : (
-                    message
+                    preFetchedMessage
                 )}
             </div>
             {/* Elementos visuais pontilhados de um balão de pensamento */}

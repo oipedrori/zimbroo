@@ -7,7 +7,8 @@ import TransactionModal from './TransactionModal';
 import AiInsightBubble from './AiInsightBubble';
 import { useI18n } from '../contexts/I18nContext';
 import { useTransactions } from '../hooks/useTransactions';
-import { format } from 'date-fns';
+import { getYearlyStats } from '../services/transactionService';
+import { generateInsightMessage } from '../services/geminiService';
 import './Layout.css';
 
 const Layout = () => {
@@ -15,6 +16,7 @@ const Layout = () => {
     const [isListening, setIsListening] = useState(false);
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
     const [showAiInsight, setShowAiInsight] = useState(true);
+    const [insightMessage, setInsightMessage] = useState('');
     const location = useLocation();
     const { t } = useI18n();
 
@@ -22,6 +24,20 @@ const Layout = () => {
     const currentDate = new Date();
     const monthPrefix = format(currentDate, 'yyyy-MM');
     const { transactions } = useTransactions(monthPrefix);
+
+    // Pré-buscar o Insight assim que o app carrega, independente de renderizar o balão
+    useEffect(() => {
+        let isMounted = true;
+        
+        if (transactions !== undefined && insightMessage === '') {
+            generateInsightMessage(transactions).then(msg => {
+                if (isMounted) setInsightMessage(msg);
+            });
+        }
+        
+        return () => { isMounted = false; };
+    }, [transactions]); // Will fire when transactions are ready
+
 
     useEffect(() => {
         if (location.hash === '#voice') {
@@ -70,7 +86,7 @@ const Layout = () => {
                     {showAiInsight && (
                         <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, zIndex: 3000 }}>
                             <AiInsightBubble 
-                                transactions={transactions} 
+                                preFetchedMessage={insightMessage} 
                                 onClose={() => setShowAiInsight(false)} 
                             />
                         </div>

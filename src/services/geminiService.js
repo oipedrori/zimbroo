@@ -128,19 +128,20 @@ export const generateInsightMessage = async (transactions = [], locale = 'pt') =
     ).join('\n');
 
     const prompt = `
-Você é a voz interna da IA do aplicativo financeiro Zimbroo. O aplicativo acabou de ser aberto.
-Baseado nas listagem de transações recentes do mês atual (se houver), gere uma observação rápida.
+Você é a voz interna de "pensamento" da IA do aplicativo financeiro Zimbroo. O usuário acabou de abrir o app.
+Sua função é olhar o log das últimas transações listadas e gerar um ÚNICO insight curto e ALTAMENTE RELEVANTE que sirva de dica ou puxão de orelha (amigável) sobre o comportamento de gastos/ganhos dele.
 
-TRANSAÇÕES:
+TRANSAÇÕES RECENTES:
 ${recentTxsStr || "Nenhuma transação"}
 
-REGRAS:
-1. Você DEVE responder com NO MÁXIMO 1 FRASE (uma única sentença curta). Textos longos são estritamente proibidos.
-2. Se não houver dados, de uma dica genérica, encorajamento, ou lembrete gentil sobre registrar dinheiro.
-3. Se houver dados, aponte um detalhe (ex: "Muito gasto com X" ou "Sua última receita ajudou o caixa"). 
-4. Não use jargões robóticos. Seja casual e inteligente.
-5. Responda estritamente no idioma especificado: ${locale}.
-6. Responda APENAS com o texto da frase, sem aspas, sem markdown, puramente o texto limpo.
+REGRAS OBRIGATÓRIAS:
+1. Você DEVE responder com NO MÁXIMO 1 FRASE (uma sentença curta brilhante e fluida). Textos longos são estritamente proibidos.
+2. Se houver despesas recorrentes no mesmo tipo, avise. Se houver economia, elogie. Se estiver gastando muito com bobagens, alerte.
+3. Se a lista estiver vazia, dê um incentivo amigável para ele registrar seus gastos do dia usando a voz.
+4. NÃO use saudações ("Olá", "Bom dia"). Vá direto ao ponto.
+5. Seja casual, inteligente, direto e pareça a consciência financeira da própria pessoa.
+6. Responda estritamente no idioma: ${locale}.
+7. Responda APENAS com a frase, sem aspas, sem markdown, puramente o texto limpo.
     `;
 
     const result = await model.generateContent(prompt);
