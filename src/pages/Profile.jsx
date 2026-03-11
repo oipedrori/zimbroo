@@ -14,6 +14,7 @@ const Profile = () => {
 
     // Theme logic
     const [theme, setTheme] = useState(localStorage.getItem('zimbroo_theme') || 'system');
+    const [showEasterEgg, setShowEasterEgg] = useState(false);
 
     useEffect(() => {
         const root = document.documentElement;
@@ -177,7 +178,28 @@ const Profile = () => {
                         <span style={{ fontWeight: '600', color: 'var(--danger-color)' }}>{t('logout')}</span>
                     </div>
                 </div>
-            </section>
+            {/* Easter Egg / Version */}
+            <div style={{ marginTop: '40px', paddingBottom: '20px', textAlign: 'center' }}>
+                <p 
+                    onClick={() => setShowEasterEgg(!showEasterEgg)}
+                    style={{ fontSize: '0.8rem', color: 'var(--text-muted)', cursor: 'pointer', opacity: 0.5, transition: 'opacity 0.2s' }}
+                    onMouseEnter={(e) => e.target.style.opacity = 1}
+                    onMouseLeave={(e) => e.target.style.opacity = 0.5}
+                >
+                    Zimbroo v1.0
+                </p>
+                
+                {showEasterEgg && (
+                    <div className="animate-fade-in" style={{ marginTop: '16px', padding: '16px', borderRadius: '16px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)' }}>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontStyle: 'italic', lineHeight: '1.5', margin: 0 }}>
+                            "Deitou-se e dormiu sob o zimbro. De repente um anjo o tocou e disse: 'Levante-se e coma'."
+                        </p>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--primary-color)', fontWeight: '700', marginTop: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                            — 1 Reis 19:5
+                        </p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
