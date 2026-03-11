@@ -92,7 +92,7 @@ const Home = () => {
         setTouchEnd(null);
         setTouchStart(e.targetTouches[0].clientX);
         setLastX(e.targetTouches[0].clientX);
-        setIsSwiping(true);
+        // Não ligamos isSwiping aqui para permitir cliques (tap)
     };
 
     const onTouchMove = (e) => {
@@ -100,14 +100,23 @@ const Home = () => {
         const currentX = e.targetTouches[0].clientX;
         const diff = currentX - touchStart;
         
-        // Se o movimento for muito pequeno, ignora para não interferir no scroll
-        if (Math.abs(diff) > 5) {
+        // Ativamos o modo swipe apenas se houver um deslocamento mínimo (ex: 10px)
+        if (Math.abs(diff) > 10) {
+            setIsSwiping(true);
             setSwipeOffset(diff);
             setTouchEnd(currentX);
         }
     };
 
     const onTouchEnd = () => {
+        if (!isSwiping) {
+            // Se não chegou a deslizar, apenas resetamos e deixamos o onClick fluir
+            setTouchStart(null);
+            setTouchEnd(null);
+            setSwipeOffset(0);
+            return;
+        }
+
         setIsSwiping(false);
         if (!touchStart || !touchEnd) {
             setSwipeOffset(0);
@@ -126,6 +135,7 @@ const Home = () => {
         
         // Pequeno atraso para o reset não parecer brusco caso o mês não mude
         setTimeout(() => setSwipeOffset(0), 10);
+        setTouchStart(null);
     };
 
     // Cálculos do Dashboard
