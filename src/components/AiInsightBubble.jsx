@@ -1,48 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { generateInsightMessage } from '../services/geminiService';
 import './AiInsightBubble.css';
 
-const AiInsightBubble = ({ transactions, balance, expenses, incomes, onClose }) => {
+const AiInsightBubble = ({ transactions, onClose }) => {
     const [isVisible, setVisible] = useState(false);
     const [message, setMessage] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const hasFetched = useRef(false);
 
     useEffect(() => {
-        // Lógica de texto: no máximo 2 frases.
-        let selectedMessage = "Pronto para organizar suas finanças hoje? É só apertar e falar.";
+        let isMounted = true;
+        let hideTimeout;
+        let interactionTimeout;
 
-        if (transactions && transactions.length > 0) {
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
+        const fetchMessage = async () => {
+            if (hasFetched.current) return;
+            hasFetched.current = true;
             
-            const yYear = yesterday.getFullYear();
-            const yMonth = String(yesterday.getMonth() + 1).padStart(2, '0');
-            const yDay = String(yesterday.getDate()).padStart(2, '0');
-            const yesterdayStr = `${yYear}-${yMonth}-${yDay}`; // Formato virtualDate YYYY-MM-DD
-            
-            const spentYesterday = transactions.some(t => t.type === 'expense' && t.virtualDate === yesterdayStr);
-            const hasPastExpenses = transactions.some(t => t.type === 'expense' && t.virtualDate <= yesterdayStr);
-            
-            // Cenário 2: Alerta de orçamento
-            if (incomes > 0 && expenses >= incomes * 0.8) {
-                selectedMessage = "Notei que você já gastou 80% do orçamento. Que tal segurar os gastos extras hoje?";
-            } 
-            // Cenário 1: Dias sem gastar
-            else if (hasPastExpenses && !spentYesterday) {
-                selectedMessage = "Nenhum gasto registrado ontem! Seu saldo do mês agradece.";
-            }
-        }
+            setIsLoading(true);
+            // Mostrar o balão na tela com os pontinhos carregando
+            setTimeout(() => setVisible(true), 300);
 
-        setMessage(selectedMessage);
+            const insight = await generateInsightMessage(transactions);
+            if (!isMounted) return;
 
-        // Animação de Entrada: brotar
-        const showTimeout = setTimeout(() => {
-            setVisible(true);
-        }, 300);
+            setMessage(insight);
+            setIsLoading(false);
 
-        // Autodestruição após 4 a 5 segundos
-        const hideTimeout = setTimeout(() => {
-            handleDismiss();
-        }, 4800);
+            // Autodestruição após 6 segundos de aparecer a mensagem para ler com calma
+            hideTimeout = setTimeout(() => {
+                handleDismiss();
+            }, 6000);
+        };
+
+        fetchMessage();
 
         // Dismiss imediato via interação global
         const handleGlobalInteraction = () => {
@@ -50,21 +41,21 @@ const AiInsightBubble = ({ transactions, balance, expenses, incomes, onClose }) 
         };
 
         // Delay para evitar sumir com o próprio clique que abriu o app/tela
-        const interactionTimeout = setTimeout(() => {
+        interactionTimeout = setTimeout(() => {
             document.addEventListener('touchstart', handleGlobalInteraction, { passive: true });
             document.addEventListener('mousedown', handleGlobalInteraction, { passive: true });
             document.addEventListener('scroll', handleGlobalInteraction, { passive: true });
         }, 500);
 
         return () => {
-            clearTimeout(showTimeout);
+            isMounted = false;
             clearTimeout(hideTimeout);
             clearTimeout(interactionTimeout);
             document.removeEventListener('touchstart', handleGlobalInteraction);
             document.removeEventListener('mousedown', handleGlobalInteraction);
             document.removeEventListener('scroll', handleGlobalInteraction);
         };
-    }, [transactions, expenses, incomes]);
+    }, [transactions]);
 
     const handleDismiss = () => {
         setVisible(false);
@@ -77,9 +68,17 @@ const AiInsightBubble = ({ transactions, balance, expenses, incomes, onClose }) 
     return (
         <div className={`ai-insight-bubble ${isVisible ? 'visible' : 'hidden'}`} onClick={(e) => { e.stopPropagation(); handleDismiss(); }}>
             <div className="bubble-content">
-                {message}
+                {isLoading ? (
+                    <div className="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                ) : (
+                    message
+                )}
             </div>
-            <div className="bubble-pointer"></div>
+            {/* Elementos visuais pontilhados de um balão de pensamento */}
+            <div className="thought-dot dot-1"></div>
+            <div className="thought-dot dot-2"></div>
         </div>
     );
 };

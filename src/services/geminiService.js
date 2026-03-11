@@ -45,6 +45,7 @@ REGRAS DE OURO:
 REGRAS ESTRITAS:
 1. Você DEVE retornar APENAS um ÚNICO objeto JSON válido. NÃO inclua marcações markdown (\`\`\`json), nem texto antes ou depois. APENAS o JSON puro.
 2. Você DEVE responder toda a chave "message" estritamente no idioma do usuário (${locale}). Se for "en", responda em Inglês. Se for "es", Espanhol, etc. E não traduza as propriedades do objeto JSON, apenas o conteúdo de "message".
+3. Quando a ação for "analysis" ou apenas responder a informações ou opiniões pedidas pelo usuário, o campo "message" DEVE ter NO MÁXIMO 2 parágrafos. Seja conciso e direto.
 
 Você APENAS PODE RESPONDER com um objeto JSON puro. NÃO INCLUA \`\`\`json ou markdown. Seu JSON deve obrigatoriamente seguir um destes modelos abaixo baseado no objetivo da fala:
 
@@ -109,5 +110,45 @@ Mensagem do usuário: "${text}"
   } catch (error) {
     console.error("Gemini AI Error:", error);
     return { error: `Erro na IA: ${error.message || "Tente novamente mais tarde."}` };
+  }
+};
+
+export const generateInsightMessage = async (transactions = [], locale = 'pt') => {
+  if (!API_KEY) {
+    return "Pronto para organizar suas finanças hoje? É só apertar e falar.";
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const recentTxsStr = transactions.slice(0, 20).map(t =>
+      `Tipo: ${t.type === 'expense' ? 'Despesa' : 'Receita'} | Valor: ${t.amount} | Desc: ${t.description} | Data: ${t.virtualDate}`
+    ).join('\n');
+
+    const prompt = `
+Você é a voz interna da IA do aplicativo financeiro Zimbroo. O aplicativo acabou de ser aberto.
+Baseado nas listagem de transações recentes do mês atual (se houver), gere uma observação rápida.
+
+TRANSAÇÕES:
+${recentTxsStr || "Nenhuma transação"}
+
+REGRAS:
+1. Você DEVE responder com NO MÁXIMO 1 FRASE (uma única sentença curta). Textos longos são estritamente proibidos.
+2. Se não houver dados, de uma dica genérica, encorajamento, ou lembrete gentil sobre registrar dinheiro.
+3. Se houver dados, aponte um detalhe (ex: "Muito gasto com X" ou "Sua última receita ajudou o caixa"). 
+4. Não use jargões robóticos. Seja casual e inteligente.
+5. Responda estritamente no idioma especificado: ${locale}.
+6. Responda APENAS com o texto da frase, sem aspas, sem markdown, puramente o texto limpo.
+    `;
+
+    const result = await model.generateContent(prompt);
+    let message = result.response.text().trim();
+    // Limpar aspas acidentais no começo/fim
+    message = message.replace(/^["']|["']$/g, '');
+    return message;
+  } catch (error) {
+    console.error("Gemini AI Insight Error:", error);
+    return "Pronto para organizar suas finanças hoje? É só apertar e falar.";
   }
 };
