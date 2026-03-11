@@ -35,25 +35,9 @@ const AiInsightBubble = ({ transactions, onClose }) => {
 
         fetchMessage();
 
-        // Dismiss imediato via interação global
-        const handleGlobalInteraction = () => {
-            handleDismiss();
-        };
-
-        // Delay para evitar sumir com o próprio clique que abriu o app/tela
-        interactionTimeout = setTimeout(() => {
-            document.addEventListener('touchstart', handleGlobalInteraction, { passive: true });
-            document.addEventListener('mousedown', handleGlobalInteraction, { passive: true });
-            document.addEventListener('scroll', handleGlobalInteraction, { passive: true });
-        }, 500);
-
         return () => {
             isMounted = false;
             clearTimeout(hideTimeout);
-            clearTimeout(interactionTimeout);
-            document.removeEventListener('touchstart', handleGlobalInteraction);
-            document.removeEventListener('mousedown', handleGlobalInteraction);
-            document.removeEventListener('scroll', handleGlobalInteraction);
         };
     }, [transactions]);
 
