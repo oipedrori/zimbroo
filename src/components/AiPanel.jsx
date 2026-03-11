@@ -5,6 +5,7 @@ import { useTransactions } from '../hooks/useTransactions';
 import { format } from 'date-fns';
 import { useI18n } from '../contexts/I18nContext';
 import { useAuth } from '../contexts/AuthContext';
+import { haptic } from '../utils/haptic';
 import LoadingDots from './LoadingDots';
 
 const AI_SUGGESTIONS = [
@@ -228,11 +229,13 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
 
                 if (result.error) {
                     console.error("Gemini returned an error flag:", result.error);
+                    haptic.error();
                     setAiMessage(result.error);
                     setTranscript('');
                     transcriptRef.current = '';
                     setConversationContext(null);
                 } else if (result.action === 'need_info') {
+                    haptic.medium();
                     setAiMessage(result.message);
                     setConversationContext(result.pendingData);
                     // Do not clear the transcript so the user remembers what they just said.
@@ -245,11 +248,13 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                     }
                 } else if (result.action === 'delete') {
                     await deleteTx(result.targetId);
+                    haptic.success();
                     setAiMessage(result.message || "A transação foi removida.");
                     setTranscript('');
                     transcriptRef.current = '';
                     setTimeout(() => onClose(), 2500);
                 } else if (result.action === 'analysis') {
+                    haptic.medium();
                     setAiMessage(result.message);
                     setTranscript('');
                     transcriptRef.current = '';
@@ -295,12 +300,14 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                     setTranscript('');
                     transcriptRef.current = '';
                     setConversationContext(null);
+                    haptic.success();
 
                     // Fecha sozinho depois de ler
                     setTimeout(() => onClose(), 2500);
                 }
             } catch (err) {
                 console.error(err);
+                haptic.error();
                 setAiMessage('Ocorreu um erro ao processar. Tente novamente.');
             } finally {
                 setIsProcessing(false);

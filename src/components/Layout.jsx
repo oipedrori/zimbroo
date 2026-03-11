@@ -6,6 +6,7 @@ import DynamicIslandHint from './DynamicIslandHint';
 import TransactionModal from './TransactionModal';
 import AiInsightBubble from './AiInsightBubble';
 import { useI18n } from '../contexts/I18nContext';
+import { haptic } from '../utils/haptic';
 import { useTransactions } from '../hooks/useTransactions';
 import { format } from 'date-fns';
 import { generateInsightMessage } from '../services/geminiService';
@@ -32,7 +33,10 @@ const Layout = () => {
         
         if (transactions !== undefined && insightMessage === '') {
             generateInsightMessage(transactions).then(msg => {
-                if (isMounted) setInsightMessage(msg);
+                if (isMounted) {
+                    setInsightMessage(msg);
+                    haptic.light(); // Vibrar levemente quando o pensamento aparece
+                }
             });
         }
         

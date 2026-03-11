@@ -3,6 +3,7 @@ import { useTransactions } from '../hooks/useTransactions';
 import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA } from '../utils/categories';
 import { format } from 'date-fns';
 import { useI18n } from '../contexts/I18nContext';
+import { haptic } from '../utils/haptic';
 import LoadingDots from './LoadingDots';
 
 const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialData = null, onSuccess }) => {
@@ -94,6 +95,7 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
             }
 
             onSuccess?.();
+            haptic.success();
             onClose();
         } catch (error) {
             console.error(error);
@@ -225,6 +227,7 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                                     setLoading(true);
                                     try {
                                         await deleteTx(initialData.id);
+                                        haptic.success();
                                         onSuccess?.();
                                         onClose();
                                     } catch (e) {
