@@ -3,16 +3,17 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { I18nProvider } from './contexts/I18nContext';
 import Layout from './components/Layout';
-import Home from './pages/Home';
-import Statistics from './pages/Statistics'; // Added Statistics import
-import Limits from './pages/Limits';
-import Wallet from './pages/Wallet';
-import Onboarding from './pages/Onboarding';
-import Profile from './pages/Profile';
-import NotionImport from './pages/NotionImport';
-import InstallPrompt from './components/InstallPrompt';
 import LoadingDots from './components/LoadingDots';
 import './index.css';
+
+// Lazy load pages for performance
+const Home = React.lazy(() => import('./pages/Home'));
+const Statistics = React.lazy(() => import('./pages/Statistics'));
+const Limits = React.lazy(() => import('./pages/Limits'));
+const Wallet = React.lazy(() => import('./pages/Wallet'));
+const Onboarding = React.lazy(() => import('./pages/Onboarding'));
+const Profile = React.lazy(() => import('./pages/Profile'));
+const NotionImport = React.lazy(() => import('./pages/NotionImport'));
 
 const PrivateRoute = ({ children }) => {
   const { currentUser, loading } = useAuth();
@@ -73,36 +74,28 @@ const AppRoutes = () => {
   }
 
   return (
-    <Routes>
-      <Route path="/onboarding" element={currentUser ? <Navigate to="/" /> : <Onboarding />} />
-      <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-        <Route index element={<Home />} />
-        <Route path="statistics" element={<Statistics />} />
-        <Route path="limits" element={<Limits />} />
-        <Route path="wallet" element={<Wallet />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="notion-import" element={<NotionImport />} />
-        <Route path="notion-callback" element={<NotionImport />} />
-      </Route>
-    </Routes>
+    <React.Suspense fallback={
+      <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'var(--bg-color)' }}>
+        <LoadingDots />
+      </div>
+    }>
+      <Routes>
+        <Route path="/onboarding" element={currentUser ? <Navigate to="/" /> : <Onboarding />} />
+        <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+          <Route index element={<Home />} />
+          <Route path="statistics" element={<Statistics />} />
+          <Route path="limits" element={<Limits />} />
+          <Route path="wallet" element={<Wallet />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="notion-import" element={<NotionImport />} />
+          <Route path="notion-callback" element={<NotionImport />} />
+        </Route>
+      </Routes>
+    </React.Suspense>
   );
 };
 
 function App() {
-  useEffect(() => {
-    const theme = localStorage.getItem('zimbroo_theme') || 'system';
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('theme-dark');
-      root.classList.remove('theme-light');
-    } else if (theme === 'light') {
-      root.classList.add('theme-light');
-      root.classList.remove('theme-dark');
-    } else {
-      root.classList.remove('theme-dark', 'theme-light');
-    }
-  }, []);
-
   return (
     <I18nProvider>
       <AuthProvider>

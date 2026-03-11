@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
     const { currentUser } = useAuth();
     const [transactions, setTransactions] = useState([]);
+    const [allTransactions, setAllTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -29,6 +30,7 @@ export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
             });
             
             const processed = prepareMonthlyTransactions(allTxs, currentMonth);
+            setAllTransactions(allTxs);
             setTransactions(processed);
             setLoading(false);
             setError(null);
@@ -68,5 +70,5 @@ export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
         }
     };
 
-    return { transactions, loading, error, addTx, updateTx, deleteTx, refetch: () => {} };
+    return { transactions, allTransactions, loading, error, addTx, updateTx, deleteTx, refetch: () => {} };
 };

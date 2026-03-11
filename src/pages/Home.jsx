@@ -8,10 +8,12 @@ import { useI18n } from '../contexts/I18nContext';
 import TransactionModal from '../components/TransactionModal';
 import SwipeableItem from '../components/SwipeableItem';
 import LoadingDots from '../components/LoadingDots';
-import { Plus, ChevronLeft, ChevronRight, User, Pointer, X } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, User, Pointer, X, Trash2 } from 'lucide-react';
 import { Link, useOutletContext } from 'react-router-dom';
-import { getYearlyStats } from '../services/transactionService';
 import { getEmojiForDescription } from '../utils/emojiUtils';
+import { prepareMonthlyTransactions } from '../services/transactionService';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { haptic } from '../utils/haptic';
 
 const Home = () => {
     const { currentUser } = useAuth();
@@ -21,7 +23,7 @@ const Home = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const monthPrefix = format(currentDate, 'yyyy-MM');
 
-    const { transactions, loading, refetch, deleteTx } = useTransactions(monthPrefix);
+    const { transactions, allTransactions, loading, refetch, deleteTx } = useTransactions(monthPrefix);
     const { t, formatCurrency, locale } = useI18n();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState('expense');
@@ -36,6 +38,8 @@ const Home = () => {
     const [touchEnd, setTouchEnd] = useState(null);
     const [swipeOffset, setSwipeOffset] = useState(0);
     const [isSwiping, setIsSwiping] = useState(false);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [confirmConfig, setConfirmConfig] = useState({});
 
     useEffect(() => {
         if (isFlipped) {
@@ -54,16 +58,29 @@ const Home = () => {
         }, 300);
     };
 
-    // Fetch yearly stats for the back of the card
+    // Calculate yearly stats locally from allTransactions to avoid redundant fetches
     React.useEffect(() => {
-        if (currentUser) {
+        if (allTransactions.length > 0) {
             const currentYear = currentDate.getFullYear();
-            getYearlyStats(currentUser.uid, currentYear).then(data => {
-                setYearlyStats(data);
-                setLoadingYearly(false);
-            });
+            const monthlyBalances = [];
+            for (let m = 1; m <= 12; m++) {
+                const monthPrefix = `${currentYear}-${String(m).padStart(2, '0')}`;
+                const monthTxs = prepareMonthlyTransactions(allTransactions, monthPrefix);
+                const inc = monthTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+                const exp = monthTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+
+                monthlyBalances.push({
+                    month: m,
+                    label: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][m - 1],
+                    incomes: inc,
+                    expenses: exp,
+                    balance: inc - exp
+                });
+            }
+            setYearlyStats(monthlyBalances);
+            setLoadingYearly(false);
         }
-    }, [currentUser, currentDate]);
+    }, [allTransactions, currentDate]);
 
     // Hide AI button when stats are open
     React.useEffect(() => {
@@ -158,6 +175,43 @@ const Home = () => {
         setEditingTx(null); // Ensure we are in "new" mode
         setModalType(type);
         setIsModalOpen(true);
+    };
+
+    // Exclusão Centralizada
+    const handleConfirmDelete = (tx) => {
+        const isRecurring = tx.repeatType !== 'none';
+        
+        setConfirmConfig({
+            title: isRecurring ? t('recurring_delete_title', { defaultValue: 'Movimentação Recorrente' }) : t('confirm_delete', { defaultValue: 'Excluir Movimentação' }),
+            message: isRecurring ? t('recurring_delete_msg', { defaultValue: 'Deseja excluir apenas este mês ou toda a série?' }) : t('confirm_delete_msg', { defaultValue: 'Tem certeza que deseja excluir este registro?' }),
+            options: isRecurring ? [
+                { 
+                    label: t('only_this_month', { defaultValue: 'Apenas este mês' }), 
+                    value: 'skip',
+                    color: 'var(--surface-color)',
+                    textColor: 'var(--text-main)'
+                },
+                { 
+                    label: t('all_series', { defaultValue: 'Toda a série' }), 
+                    value: 'all',
+                    color: 'var(--danger-color)'
+                }
+            ] : [],
+            onConfirm: async (val) => {
+                try {
+                    const skipMonth = val === 'skip' ? monthPrefix : null;
+                    await deleteTx(tx.id, skipMonth);
+                    haptic.success();
+                    refetch();
+                } catch (e) {
+                    console.error(e);
+                    alert(t('error_deleting', { defaultValue: 'Erro ao excluir' }));
+                } finally {
+                    setIsConfirmOpen(false);
+                }
+            }
+        });
+        setIsConfirmOpen(true);
     };
 
     const handleEditTx = (tx) => {
@@ -449,7 +503,7 @@ const Home = () => {
                     ) : (
                         <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
                             {filteredTransactions.map((tx, i) => (
-                                <SwipeableItem key={tx.id} onDelete={() => deleteTx(tx.id)} onEdit={() => handleEditTx(tx)}>
+                                <SwipeableItem key={tx.id} onDelete={() => handleConfirmDelete(tx)} onEdit={() => handleEditTx(tx)}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: i === transactions.length - 1 ? 'none' : '1px solid var(--glass-border)' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                                             <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontWeight: 'bold', fontSize: '1.2rem' }}>
@@ -472,6 +526,12 @@ const Home = () => {
             </div>
 
             <TransactionModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingTx(null); }} defaultType={modalType} initialData={editingTx} onSuccess={refetch} />
+
+            <ConfirmDialog 
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                {...confirmConfig}
+            />
 
 
             <style>{`

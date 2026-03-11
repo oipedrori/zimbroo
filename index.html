@@ -10,6 +10,19 @@
   <link rel="preload" href="/notion_logo.png" as="image" />
   <meta name="theme-color" content="#1B4520" />
   <title>Zimbroo</title>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('zimbroo_theme') || 'system';
+        var root = document.documentElement;
+        if (theme === 'dark') {
+          root.classList.add('theme-dark');
+        } else if (theme === 'light') {
+          root.classList.add('theme-light');
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 
 <body>

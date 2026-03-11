@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { useI18n } from '../contexts/I18nContext';
 import { useAuth } from '../contexts/AuthContext';
 import { haptic } from '../utils/haptic';
+import ConfirmDialog from './ConfirmDialog';
 import LoadingDots from './LoadingDots';
 
 const AI_SUGGESTIONS = [
@@ -78,6 +79,8 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
     const [manualText, setManualText] = useState('');
     const [conversationContext, setConversationContext] = useState(null);
     const [activeSuggestions, setActiveSuggestions] = useState([]);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [confirmConfig, setConfirmConfig] = useState({});
     const inputRef = useRef(null);
     const recognitionRef = useRef(null);
     const silenceTimeoutRef = useRef(null);
@@ -179,7 +182,6 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
             const pickNext = () => {
                 const phrase = AI_SUGGESTIONS[Math.floor(Math.random() * AI_SUGGESTIONS.length)];
                 setActiveSuggestions(prev => {
-                    // Mantemos apenas as 2 últimas para o efeito de cross-fade
                     const next = [...prev, { id: Math.random(), text: phrase }];
                     if (next.length > 2) return next.slice(1);
                     return next;
@@ -247,12 +249,26 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                         }, 1000);
                     }
                 } else if (result.action === 'delete') {
-                    await deleteTx(result.targetId);
-                    haptic.success();
-                    setAiMessage(result.message || "A transação foi removida.");
-                    setTranscript('');
-                    transcriptRef.current = '';
-                    setTimeout(() => onClose(), 2500);
+                    setConfirmConfig({
+                        title: t('confirm_delete', { defaultValue: 'Excluir Movimentação' }),
+                        message: result.message || t('confirm_delete_msg', { defaultValue: 'Tem certeza que deseja excluir este registro?' }),
+                        onConfirm: async () => {
+                            try {
+                                await deleteTx(result.targetId);
+                                haptic.success();
+                                setAiMessage(t('transaction_removed', { defaultValue: "A movimentação foi removida." }));
+                                setTranscript('');
+                                transcriptRef.current = '';
+                                setTimeout(() => onClose(), 2000);
+                            } catch (e) {
+                                console.error(e);
+                                setAiMessage(t('error_deleting', { defaultValue: "Erro ao excluir." }));
+                            } finally {
+                                setIsConfirmOpen(false);
+                            }
+                        }
+                    });
+                    setIsConfirmOpen(true);
                 } else if (result.action === 'analysis') {
                     haptic.medium();
                     setAiMessage(result.message);
@@ -431,6 +447,12 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                     ) : null}
                 </div>
             </div>
+
+            <ConfirmDialog 
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                {...confirmConfig}
+            />
 
 
 
@@ -637,6 +659,40 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
         @keyframes slideUp {
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
+        }
+
+        .suggestions-container {
+            position: relative;
+            width: 100%;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .floating-suggestion {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.9);
+            font-family: 'Solway', serif;
+            animation: verticalRoulette 5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            pointer-events: none;
+            text-align: center;
+            width: 90%;
+            font-size: 1.15rem;
+            line-height: 1.4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        @keyframes verticalRoulette {
+            0% { opacity: 0; transform: translateY(60px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-60px); }
         }
       `}</style>
         </div>

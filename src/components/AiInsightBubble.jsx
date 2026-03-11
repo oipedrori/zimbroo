@@ -16,10 +16,10 @@ const AiInsightBubble = ({ preFetchedMessage, onClose }) => {
         if (preFetchedMessage) {
             setIsLoading(false);
 
-            // Autodestruição após 15 segundos
+            // Autodestruição após 10 segundos
             hideTimeout = setTimeout(() => {
                 handleDismiss();
-            }, 15000);
+            }, 10000);
         }
 
         return () => {
