@@ -124,44 +124,11 @@ Mensagem do usuário: "${text}"
   }
 };
 
+import { AI_BUBBLE_PHRASES } from '../utils/phrases';
+
 export const generateInsightMessage = async (transactions = [], locale = 'pt') => {
-  if (!API_KEY) {
-    console.warn("VITE_GEMINI_API_KEY is not defined. Using fallback insight.");
-    return "Pronto para organizar suas finanças hoje? É só apertar e falar.";
-  }
-
-  try {
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-    const recentTxsStr = transactions.slice(0, 10).map(t =>
-      `Tipo: ${t.type === 'expense' ? 'Despesa' : 'Receita'} | Valor: ${t.amount} | Desc: ${t.description} | Data: ${t.virtualDate}`
-    ).join('\n');
-
-    const prompt = `
-Você é a voz interna de "pensamento" da IA do aplicativo financeiro Zimbroo. O usuário acabou de abrir o app.
-Sua função é olhar o log das últimas transações listadas e gerar um ÚNICO insight curto e ALTAMENTE RELEVANTE que sirva de dica ou puxão de orelha (amigável) sobre o comportamento de gastos/ganhos dele.
-
-TRANSAÇÕES RECENTES:
-${recentTxsStr || "Nenhuma transação"}
-
-REGRAS OBRIGATÓRIAS:
-1. Você DEVE responder com NO MÁXIMO 1 FRASE (uma sentença curta brilhante e fluida). Textos longos são estritamente proibidos.
-2. Se houver despesas recorrentes no mesmo tipo, avise. Se houver economia, elogie. Se estiver gastando muito com bobagens, alerte.
-3. Se a lista estiver vazia, dê um incentivo amigável para ele registrar seus gastos do dia usando a voz.
-4. NÃO use saudações ("Olá", "Bom dia"). Vá direto ao ponto.
-5. Seja casual, inteligente, direto e pareça a consciência financeira da própria pessoa.
-6. Responda estritamente no idioma: ${locale}.
-7. Responda APENAS com a frase, sem aspas, sem markdown, puramente o texto limpo.
-    `;
-
-    const result = await model.generateContent(prompt);
-    let message = result.response.text().trim();
-    // Limpar aspas acidentais no começo/fim
-    message = message.replace(/^["']|["']$/g, '');
-    return message;
-  } catch (error) {
-    console.error("Gemini AI Insight Error:", error);
-    return "Pronto para organizar suas finanças hoje? É só apertar e falar.";
-  }
+  // Para economizar tokens, agora usamos frases estáticas e amigáveis
+  // em vez de gerar via IA toda vez que o app abre.
+  const randomIndex = Math.floor(Math.random() * AI_BUBBLE_PHRASES.length);
+  return AI_BUBBLE_PHRASES[randomIndex];
 };
