@@ -25,6 +25,7 @@ const Home = () => {
     // --- State Declarations ---
     const [currentDate, setCurrentDate] = useState(new Date());
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isSidebarClosing, setIsSidebarClosing] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState('expense');
     const [editingTx, setEditingTx] = useState(null);
@@ -100,6 +101,14 @@ const Home = () => {
         setTimeout(() => {
             setIsFlipped(false);
             setIsClosingFlipped(false);
+        }, 300);
+    };
+
+    const closeSidebar = () => {
+        setIsSidebarClosing(true);
+        setTimeout(() => {
+            setIsSidebarOpen(false);
+            setIsSidebarClosing(false);
         }, 300);
     };
 
@@ -1013,9 +1022,17 @@ const Home = () => {
                     from { transform: translateX(-100%); opacity: 0; }
                     to { transform: translateX(0); opacity: 1; }
                 }
+                @keyframes slideOutLeft {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(-100%); opacity: 0; }
+                }
                 @keyframes fadeIn {
                     from { opacity: 0; }
                     to { opacity: 1; }
+                }
+                @keyframes fadeOut {
+                    from { opacity: 1; }
+                    to { opacity: 0; }
                 }
                 .pointer-icon {
                     animation: subtlePulse 5s infinite ease-in-out;
@@ -1031,11 +1048,12 @@ const Home = () => {
                     <>
                         {/* Backdrop */}
                         <div 
-                            onClick={() => setIsSidebarOpen(false)}
+                            onClick={closeSidebar}
                             style={{ 
                                 position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
                                 background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
-                                zIndex: 11000, animation: 'fadeIn 0.3s forwards' 
+                                zIndex: 11000, 
+                                animation: isSidebarClosing ? 'fadeOut 0.3s forwards' : 'fadeIn 0.3s forwards' 
                             }}
                         />
                         
@@ -1044,10 +1062,10 @@ const Home = () => {
                             position: 'fixed', top: 0, left: 0,
                             width: isDesktop ? '360px' : '85%', height: '100%', background: 'var(--bg-color)',
                             boxShadow: '10px 0 50px rgba(0,0,0,0.15)', zIndex: 11001,
-                            animation: 'slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                            animation: isSidebarClosing ? 'slideOutLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
                             padding: isDesktop ? '32px' : '24px', display: 'flex', flexDirection: 'column', overflowY: 'auto'
                         }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                                     <div style={{ width: '50px', height: '50px', borderRadius: '16px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-color)' }}>
                                         <User size={24} />
@@ -1057,7 +1075,7 @@ const Home = () => {
                                         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{currentUser?.email}</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setIsSidebarOpen(false)} style={{ padding: '8px', color: 'var(--text-muted)', border: 'none', background: 'transparent', cursor: 'pointer' }}>
+                                <button onClick={closeSidebar} style={{ padding: '8px', color: 'var(--text-muted)', border: 'none', background: 'transparent', cursor: 'pointer' }}>
                                     <X size={24} />
                                 </button>
                             </div>

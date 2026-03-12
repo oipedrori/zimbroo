@@ -51,19 +51,19 @@ const Profile = () => {
                 </h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '12px' }}>{currentUser?.email}</p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
                     {/* Theme Toggle */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-color)', padding: '18px 20px', borderRadius: '24px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                    <div style={{ minHeight: '56px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-color)', padding: '0 20px', borderRadius: '20px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                             <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--primary-light)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-darker)' }}>
-                                <Moon size={20} />
+                                <Moon size={18} />
                             </div>
-                            <span style={{ fontWeight: '600', fontSize: '1rem', color: 'var(--text-main)' }}>{t('theme')}</span>
+                            <span style={{ fontWeight: '600', fontSize: '0.95rem', color: 'var(--text-main)' }}>{t('theme')}</span>
                         </div>
                         <select
                             value={theme}
                             onChange={(e) => setTheme(e.target.value)}
-                            style={{ background: 'transparent', border: 'none', fontWeight: '600', color: 'var(--highlight-color)', fontSize: '0.9rem', outline: 'none', cursor: 'pointer', textAlign: 'right' }}
+                            style={{ background: 'transparent', border: 'none', fontWeight: '700', color: 'var(--primary-color)', fontSize: '0.9rem', outline: 'none', cursor: 'pointer', textAlign: 'right', padding: '10px 0' }}
                         >
                             <option value="system">Auto</option>
                             <option value="light">Claro</option>
@@ -72,14 +72,14 @@ const Profile = () => {
                     </div>
 
                     {/* Language Selection Chips */}
-                    <div style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '24px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                    <div style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '20px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
                             <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--primary-light)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-darker)' }}>
-                                <Globe size={20} />
+                                <Globe size={18} />
                             </div>
-                            <span style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--text-main)' }}>{t('language')}</span>
+                            <span style={{ fontWeight: '700', fontSize: '0.95rem', color: 'var(--text-main)' }}>{t('language')}</span>
                         </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
                             {[
                                 { id: 'pt', label: 'Português' },
                                 { id: 'en', label: 'English' },
@@ -90,16 +90,15 @@ const Profile = () => {
                                     key={lang.id}
                                     onClick={() => changeLocale(lang.id)}
                                     style={{
-                                        padding: '10px 16px',
+                                        height: '48px',
                                         borderRadius: '14px',
                                         fontSize: '0.85rem',
                                         fontWeight: '600',
                                         background: locale === lang.id ? 'var(--primary-color)' : 'var(--bg-color)',
                                         color: locale === lang.id ? 'white' : 'var(--text-main)',
-                                        border: '1px solid var(--glass-border)',
+                                        border: locale === lang.id ? 'none' : '1px solid var(--glass-border)',
                                         transition: 'all 0.2s',
-                                        flex: '1 1 calc(50% - 4px)',
-                                        textAlign: 'center'
+                                        cursor: 'pointer'
                                     }}
                                 >
                                     {lang.label}
@@ -109,14 +108,14 @@ const Profile = () => {
                     </div>
 
                     {/* Currency Selection Chips */}
-                    <div style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '24px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                    <div style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '20px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
                             <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--primary-light)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-darker)' }}>
-                                <DollarSign size={20} />
+                                <DollarSign size={18} />
                             </div>
-                            <span style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--text-main)' }}>{t('currency')}</span>
+                            <span style={{ fontWeight: '700', fontSize: '0.95rem', color: 'var(--text-main)' }}>{t('currency')}</span>
                         </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
                             {[
                                 { id: 'BRL', label: 'R$ Real' },
                                 { id: 'USD', label: '$ Dollar' },
@@ -127,16 +126,15 @@ const Profile = () => {
                                     key={curr.id}
                                     onClick={() => changeCurrency(curr.id)}
                                     style={{
-                                        padding: '10px 16px',
+                                        height: '48px',
                                         borderRadius: '14px',
                                         fontSize: '0.85rem',
                                         fontWeight: '600',
                                         background: currency === curr.id ? 'var(--primary-color)' : 'var(--bg-color)',
                                         color: currency === curr.id ? 'white' : 'var(--text-main)',
-                                        border: '1px solid var(--glass-border)',
+                                        border: currency === curr.id ? 'none' : '1px solid var(--glass-border)',
                                         transition: 'all 0.2s',
-                                        flex: '1 1 calc(50% - 4px)',
-                                        textAlign: 'center'
+                                        cursor: 'pointer'
                                     }}
                                 >
                                     {curr.label}
