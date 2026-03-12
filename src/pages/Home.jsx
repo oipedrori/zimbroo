@@ -16,9 +16,9 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { haptic } from '../utils/haptic';
 
 const Home = () => {
+    const { currentUser, logout, deleteAccount } = useAuth();
+    const { setIsAiActive } = useOutletContext();
     const { t, formatCurrency, locale, changeLocale, currency, changeCurrency } = useI18n();
-    const { logout, deleteAccount } = useAuth();
-    const navigate = Link ? null : () => {}; // Link handle navigation
 
     // --- State Declarations ---
     const [currentDate, setCurrentDate] = useState(new Date());
