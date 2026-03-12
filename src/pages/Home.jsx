@@ -60,16 +60,25 @@ const Home = () => {
     // Lock body scroll when any modal or sidebar is open
     useEffect(() => {
         if (isSidebarOpen || isModalOpen || isLimitModalOpen || isConfirmOpen) {
+            document.documentElement.style.overflow = 'hidden';
+            document.documentElement.style.height = '100dvh';
             document.body.style.overflow = 'hidden';
+            document.body.style.height = '100dvh';
             document.body.style.touchAction = 'none';
             document.body.classList.add('modal-open');
         } else {
+            document.documentElement.style.overflow = '';
+            document.documentElement.style.height = '';
             document.body.style.overflow = '';
+            document.body.style.height = '';
             document.body.style.touchAction = '';
             document.body.classList.remove('modal-open');
         }
         return () => {
+            document.documentElement.style.overflow = '';
+            document.documentElement.style.height = '';
             document.body.style.overflow = '';
+            document.body.style.height = '';
             document.body.style.touchAction = '';
             document.body.classList.remove('modal-open');
         };
@@ -1063,7 +1072,8 @@ const Home = () => {
                             width: isDesktop ? '360px' : '85%', height: '100%', background: 'var(--bg-color)',
                             boxShadow: '10px 0 50px rgba(0,0,0,0.15)', zIndex: 11001,
                             animation: isSidebarClosing ? 'slideOutLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                            padding: isDesktop ? '32px' : '24px', display: 'flex', flexDirection: 'column', overflowY: 'auto'
+                            padding: isDesktop ? '32px' : '24px', display: 'flex', flexDirection: 'column', overflowY: 'auto',
+                            overscrollBehavior: 'contain'
                         }}>
                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
