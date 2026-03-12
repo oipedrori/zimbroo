@@ -497,7 +497,7 @@ const Home = () => {
                         <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-color)' }}>
                             <User size={22} />
                         </div>
-                        <div style={{ display: isDesktop ? 'block' : 'none' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
                              <h1 style={{ fontSize: '1.2rem', color: 'var(--text-main)', fontWeight: '700', margin: 0 }}>{t('hello', { name: currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }) })}</h1>
                         </div>
                     </div>
@@ -514,14 +514,6 @@ const Home = () => {
                             <ChevronRight size={20} />
                         </button>
                     </div>
-
-                    {!isDesktop && (
-                        <Link to="/profile" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-                             <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--primary-gradient)', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '1rem' }}>
-                                {currentUser?.displayName?.charAt(0).toUpperCase() || 'Z'}
-                             </div>
-                        </Link>
-                    )}
                 </header>
 
                 {!isDesktop && (
