@@ -116,18 +116,34 @@ const Limits = () => {
                     <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '16px' }}>{t('config_limit')}</h3>
 
                     <div style={{ marginBottom: '12px' }}>
-                        <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '6px' }}>{t('category')}</label>
-                        <select
-                            required
-                            value={selectedCat}
-                            onChange={(e) => setSelectedCat(e.target.value)}
-                            style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--glass-border)', background: 'var(--bg-color)', WebkitAppearance: 'none' }}
-                        >
-                            <option value="">Selecione...</option>
-                            {availableCategories.map(c => (
-                                <option key={c.id} value={c.id}>{c.icon} {t(c.label, { defaultValue: c.label })}</option>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '12px', marginLeft: '4px' }}>{t('category').toUpperCase()}</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '10px' }}>
+                            {availableCategories.map(cat => (
+                                <button
+                                    key={cat.id}
+                                    type="button"
+                                    onClick={() => setSelectedCat(cat.id)}
+                                    style={{
+                                        padding: '12px 4px', borderRadius: '16px', border: '2px solid',
+                                        borderColor: selectedCat === cat.id ? cat.color : 'transparent',
+                                        background: selectedCat === cat.id ? cat.color + '20' : 'var(--bg-color)',
+                                        cursor: 'pointer', transition: 'all 0.2s',
+                                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                        gap: '4px'
+                                    }}
+                                >
+                                    <span style={{ fontSize: '1.4rem' }}>{cat.icon}</span>
+                                    <span style={{ fontSize: '0.6rem', fontWeight: '700', textTransform: 'uppercase', opacity: 0.9, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {t(cat.label, { defaultValue: cat.label }).split(' ')[0]}
+                                    </span>
+                                </button>
                             ))}
-                        </select>
+                        </div>
+                        {selectedCat && (
+                            <p style={{ marginTop: '10px', textAlign: 'center', fontWeight: '700', color: 'var(--text-main)', fontSize: '0.9rem' }}>
+                                {t(CATEGORIAS_DESPESA.find(c => c.id === selectedCat)?.label || '')}
+                            </p>
+                        )}
                     </div>
 
                     <div style={{ marginBottom: '20px' }}>

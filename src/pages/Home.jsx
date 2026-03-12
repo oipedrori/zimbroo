@@ -1058,7 +1058,7 @@ const Home = () => {
                         />
                         <div style={{
                             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                            width: 'min(90%, 400px)', backgroundColor: 'var(--bg-color)', borderRadius: '32px',
+                            width: 'min(90%, 550px)', backgroundColor: 'var(--bg-color)', borderRadius: '32px',
                             padding: '32px', zIndex: 12001, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
                             border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '24px',
                             animation: 'modalOpen 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
@@ -1071,7 +1071,7 @@ const Home = () => {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', marginLeft: '4px' }}>CATEGORIA</label>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '10px' }}>
                                         {CATEGORIAS_DESPESA.map(cat => (
                                             <button
                                                 key={cat.id}

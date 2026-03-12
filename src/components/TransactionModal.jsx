@@ -190,7 +190,7 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                                 style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '14px', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)', fontSize: '1rem', outline: 'none', appearance: 'none', minHeight: '48px' }}
                             />
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '10px' }}>
                             {categories.map(c => (
                                 <button
                                     key={c.id}
@@ -342,7 +342,7 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
         }
         @media (min-width: 1024px) {
             .modal-content {
-                width: 480px;
+                width: 620px;
                 border-radius: 32px;
                 transform: scale(0.9) translateY(20px);
                 opacity: 0;
