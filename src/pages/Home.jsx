@@ -419,155 +419,158 @@ const Home = () => {
                 className={`page-container animate-fade-in`}
                 style={{ paddingBottom: '120px', animation: 'slideUp 0.3s forwards' }}
             >
-                <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px' }}>
-                    <Link to="/profile" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--highlight-color)' }}>
-                            <User size={20} />
-                        </div>
-                        <div>
-                            <h1 style={{ fontSize: '1.3rem', color: 'var(--text-main)', fontWeight: '700', paddingLeft: '4px' }}>{t('hello', { name: currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }) })}</h1>
-                        </div>
-                    </Link>
-                </header>
+                {!isDesktop && (
+                    <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px' }}>
+                        <Link to="/profile" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--highlight-color)' }}>
+                                <User size={20} />
+                            </div>
+                            <div>
+                                <h1 style={{ fontSize: '1.3rem', color: 'var(--text-main)', fontWeight: '700', paddingLeft: '4px' }}>{t('hello', { name: currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }) })}</h1>
+                            </div>
+                        </Link>
+                    </header>
+                )}
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 10px', marginBottom: '8px' }}>
-                    <button onClick={prevMonth} style={{ padding: '8px' }}><ChevronLeft size={24} color="var(--text-main)" /></button>
-                    <div
+                {!isDesktop && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 10px', marginBottom: '8px' }}>
+                        <button onClick={prevMonth} style={{ padding: '8px' }}><ChevronLeft size={24} color="var(--text-main)" /></button>
+                        <div
+                            key={monthPrefix}
+                            style={{
+                                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                                animation: swipeDirection === 'left' ? 'slideLeftIn 0.3s ease-out' : 'slideRightIn 0.3s ease-out'
+                            }}
+                        >
+                            <span style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '1.2rem', textTransform: 'capitalize' }}>{formattedMonthLabel}</span>
+                        </div>
+                        <button onClick={nextMonth} style={{ padding: '8px' }}><ChevronRight size={24} color="var(--text-main)" /></button>
+                    </div>
+                )}
+
+                {!isDesktop && (
+                    <section
                         key={monthPrefix}
-                        style={{
-                            display: 'flex', flexDirection: 'column', alignItems: 'center',
-                            animation: swipeDirection === 'left' ? 'slideLeftIn 0.3s ease-out' : 'slideRightIn 0.3s ease-out'
+                        className="glass-panel"
+                        onClick={() => !isDesktop && setIsFlipped(true)}
+                        onTouchStart={onTouchStart}
+                        onTouchMove={onTouchMove}
+                        onTouchEnd={onTouchEnd}
+                        style={{ 
+                            flexShrink: 0, padding: '24px', background: cardGradient, color: 'white', border: 'none', 
+                            position: 'relative', overflow: 'hidden', cursor: isDesktop ? 'default' : 'pointer',
+                            touchAction: 'pan-y',
+                            transform: `translateX(${swipeOffset}px)`,
+                            transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1)',
+                            animation: !isSwiping ? (swipeDirection === 'left' ? 'slideLeftIn 0.3s ease-out' : swipeDirection === 'right' ? 'slideRightIn 0.3s ease-out' : 'none') : 'none'
                         }}
                     >
-                        <span style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '1.2rem', textTransform: 'capitalize' }}>{formattedMonthLabel}</span>
-                    </div>
-                    <button onClick={nextMonth} style={{ padding: '8px' }}><ChevronRight size={24} color="var(--text-main)" /></button>
-                </div>
-
-                <section
-                    key={monthPrefix}
-                    className="glass-panel"
-                    onClick={() => !isDesktop && setIsFlipped(true)}
-                    onTouchStart={onTouchStart}
-                    onTouchMove={onTouchMove}
-                    onTouchEnd={onTouchEnd}
-                    style={{ 
-                        flexShrink: 0, padding: '24px', background: cardGradient, color: 'white', border: 'none', 
-                        position: 'relative', overflow: 'hidden', cursor: isDesktop ? 'default' : 'pointer',
-                        touchAction: 'pan-y',
-                        transform: `translateX(${swipeOffset}px)`,
-                        transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1)',
-                        animation: !isSwiping ? (swipeDirection === 'left' ? 'slideLeftIn 0.3s ease-out' : swipeDirection === 'right' ? 'slideRightIn 0.3s ease-out' : 'none') : 'none'
-                    }}
-                >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                            <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '8px' }}>{t('monthly_balance')}</p>
-                            <h2 style={{ fontSize: 'clamp(1.8rem, 8vw, 2.5rem)', marginBottom: '24px', fontWeight: '700', letterSpacing: '-1px', wordBreak: 'break-word' }}>{formatCurrency(balance)}</h2>
-                        </div>
-                        <div style={{ position: 'relative', display: !isDesktop ? 'flex' : 'none' }}>
-                            <Pointer className="pointer-icon pulse-animation" size={18} opacity={0.8} />
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '24px', opacity: 0.9 }}>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4ade80' }}></div>
-                                <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '8px' }}>{t('monthly_balance')}</p>
+                                <h2 style={{ fontSize: 'clamp(1.8rem, 8vw, 2.5rem)', marginBottom: '24px', fontWeight: '700', letterSpacing: '-1px', wordBreak: 'break-word' }}>{formatCurrency(balance)}</h2>
                             </div>
-                            <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(incomes)}</p>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f87171' }}></div>
-                                <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
+                            <div style={{ position: 'relative', display: !isDesktop ? 'flex' : 'none' }}>
+                                <Pointer className="pointer-icon pulse-animation" size={18} opacity={0.8} />
                             </div>
-                            <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(expenses)}</p>
                         </div>
-                    </div>
 
-                    {/* Barra de Porcentagem de Gastos */}
-                    {incomes > 0 && (
-                        <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ flex: 1, height: '6px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '10px', overflow: 'hidden' }}>
-                                <div style={{
-                                    width: `${Math.min((expenses / incomes) * 100, 100)}%`,
-                                    height: '100%',
-                                    background: 'white',
-                                    borderRadius: '10px',
-                                    transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
-                                }}></div>
+                        <div style={{ display: 'flex', gap: '24px', opacity: 0.9 }}>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4ade80' }}></div>
+                                    <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
+                                </div>
+                                <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(incomes)}</p>
                             </div>
-                            <span style={{ fontSize: '0.85rem', fontWeight: '800', opacity: 0.9, minWidth: '35px', textAlign: 'right' }}>
-                                {Math.round((expenses / incomes) * 100)}%
-                            </span>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f87171' }}></div>
+                                    <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
+                                </div>
+                                <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(expenses)}</p>
+                            </div>
                         </div>
-                    )}
-                </section>
 
-                <section style={{ marginTop: '24px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                        <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>{t('transactions')}</h3>
-                    </div>
+                        {/* Barra de Porcentagem de Gastos */}
+                        {incomes > 0 && (
+                            <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{ flex: 1, height: '6px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '10px', overflow: 'hidden' }}>
+                                    <div style={{
+                                        width: `${Math.min((expenses / incomes) * 100, 100)}%`,
+                                        height: '100%',
+                                        background: 'white',
+                                        borderRadius: '10px',
+                                        transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                                    }}></div>
+                                </div>
+                                <span style={{ fontSize: '0.85rem', fontWeight: '800', opacity: 0.9, minWidth: '35px', textAlign: 'right' }}>
+                                    {Math.round((expenses / incomes) * 100)}%
+                                </span>
+                            </div>
+                        )}
+                    </section>
+                )}
 
-                    <div className="filters-row" style={{ display: 'flex', overflowX: 'auto', gap: '10px', marginBottom: '20px', padding: '4px 0', scrollbarWidth: 'none' }}>
-                        {[
-                            { id: 'all', label: 'filter_all' },
-                            { id: 'income', label: 'filter_incomes' },
-                            { id: 'expense', label: 'filter_expenses' },
-                            ...(isDesktop ? [
-                                { id: 'variable', label: 'Despesas Móveis' },
-                                { id: 'recurring', label: 'Despesas Recorrentes' },
-                                { id: 'installment', label: 'Despesas Parceladas' }
-                            ] : [])
-                        ].map(f => (
-                            <button
-                                key={f.id}
-                                onClick={() => setActiveFilter(f.id)}
-                                style={{
-                                    whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600',
-                                    background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--surface-color)',
-                                    color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
-                                    border: '1px solid var(--glass-border)', flexShrink: 0
-                                }}
-                            >
-                                {t(f.label)}
-                            </button>
-                        ))}
-                    </div>
-
-                    {loading ? (
-                        <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
-                            <LoadingDots />
+                {!isDesktop && (
+                    <section style={{ marginTop: '24px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>{t('transactions')}</h3>
                         </div>
-                    ) : filteredTransactions.length === 0 ? (
-                        <div className="glass-panel" style={{ padding: '30px', textAlign: 'center' }}>
-                            <p style={{ color: 'var(--text-muted)' }}>{t('no_transactions')}</p>
-                        </div>
-                    ) : (
-                        <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
-                            {filteredTransactions.map((tx, i) => (
-                                <SwipeableItem key={tx.id} onDelete={() => handleConfirmDelete(tx)} onEdit={() => handleEditTx(tx)}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: i === transactions.length - 1 ? 'none' : '1px solid var(--glass-border)' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                            <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontWeight: 'bold', fontSize: '1.2rem' }}>
-                                                {getEmojiForDescription(tx.description, getCategoryTheme(tx.category, tx.type).icon)}
-                                            </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <p style={{ fontWeight: '500', margin: 0 }}>{tx.dynamicDescription || tx.description}</p>
-                                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{tx.virtualDate.split('-').slice(1).reverse().join('/')}</p>
-                                            </div>
-                                        </div>
-                                        <p style={{ fontWeight: '600', color: tx.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)', margin: 0 }}>
-                                            {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
-                                        </p>
-                                    </div>
-                                </SwipeableItem>
+
+                        <div className="filters-row" style={{ display: 'flex', overflowX: 'auto', gap: '10px', marginBottom: '20px', padding: '4px 0', scrollbarWidth: 'none' }}>
+                            {[
+                                { id: 'all', label: 'filter_all' },
+                                { id: 'income', label: 'filter_incomes' },
+                                { id: 'expense', label: 'filter_expenses' },
+                            ].map(f => (
+                                <button
+                                    key={f.id}
+                                    onClick={() => setActiveFilter(f.id)}
+                                    style={{
+                                        whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600',
+                                        background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--surface-color)',
+                                        color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
+                                        border: '1px solid var(--glass-border)', flexShrink: 0
+                                    }}
+                                >
+                                    {t(f.label)}
+                                </button>
                             ))}
                         </div>
-                    )}
-                </section>
+
+                        {loading ? (
+                            <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+                                <LoadingDots />
+                            </div>
+                        ) : filteredTransactions.length === 0 ? (
+                            <div className="glass-panel" style={{ padding: '30px', textAlign: 'center' }}>
+                                <p style={{ color: 'var(--text-muted)' }}>{t('no_transactions')}</p>
+                            </div>
+                        ) : (
+                            <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
+                                {filteredTransactions.map((tx, i) => (
+                                    <SwipeableItem key={tx.id} onDelete={() => handleConfirmDelete(tx)} onEdit={() => handleEditTx(tx)}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: i === transactions.length - 1 ? 'none' : '1px solid var(--glass-border)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                                <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontWeight: 'bold', fontSize: '1.2rem' }}>
+                                                    {getEmojiForDescription(tx.description, getCategoryTheme(tx.category, tx.type).icon)}
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <p style={{ fontWeight: '500', margin: 0 }}>{tx.dynamicDescription || tx.description}</p>
+                                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{tx.virtualDate.split('-').slice(1).reverse().join('/')}</p>
+                                                </div>
+                                            </div>
+                                            <p style={{ fontWeight: '600', color: tx.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)', margin: 0 }}>
+                                                {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
+                                            </p>
+                                        </div>
+                                    </SwipeableItem>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                )}
 
                 {/* --- Bento Grid Desktop Sections --- */}
                 {isDesktop && (
@@ -619,6 +622,7 @@ const Home = () => {
                                     <div className="filters-row" style={{ display: 'flex', overflowX: 'auto', gap: '10px', marginBottom: '20px', padding: '4px 0', scrollbarWidth: 'none' }}>
                                         {[
                                             { id: 'all', label: 'filter_all' },
+                                            { id: 'income', label: 'filter_incomes' },
                                             { id: 'variable', label: 'Despesas Móveis' },
                                             { id: 'recurring', label: 'Despesas Recorrentes' },
                                             { id: 'installment', label: 'Despesas Parceladas' }
@@ -744,15 +748,28 @@ const Home = () => {
                                 <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Gerencie seu teto de gastos mensal por área</p>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
-                                {CATEGORIAS_DESPESA.map((cat) => {
+                                <button
+                                    onClick={() => {/* Navigate to Limits page or open a mini-modal */ window.location.href='/limits'; }}
+                                    style={{ 
+                                        background: 'var(--surface-color)', padding: '20px', borderRadius: '24px', 
+                                        border: '2px dashed var(--primary-color)', color: 'var(--primary-color)',
+                                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+                                        gap: '12px', cursor: 'pointer', transition: 'transform 0.2s'
+                                    }}
+                                    className="hover-scale"
+                                >
+                                    <Plus size={32} />
+                                    <span style={{ fontWeight: '700' }}>Adicionar Limite</span>
+                                </button>
+                                
+                                {CATEGORIAS_DESPESA.filter(cat => limits[cat.id]).map((cat) => {
                                     const limitAmount = limits[cat.id];
                                     const spent = expensesByCategory[cat.id] || 0;
-                                    const hasLimit = !!limitAmount;
-                                    const pct = hasLimit ? Math.min((spent / limitAmount) * 100, 100) : 0;
-                                    const isOverLimit = hasLimit && spent > limitAmount;
+                                    const pct = Math.min((spent / limitAmount) * 100, 100);
+                                    const isOverLimit = spent > limitAmount;
 
                                     return (
-                                        <div key={cat.id} style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '24px', border: '1px solid var(--glass-border)', position: 'relative', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        <div key={cat.id} style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '24px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                     <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: cat.color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.2rem' }}>
@@ -760,32 +777,22 @@ const Home = () => {
                                                     </div>
                                                     <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{t(cat.label, { defaultValue: cat.label })}</span>
                                                 </div>
-                                                {hasLimit && (
-                                                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: isOverLimit ? 'var(--danger-color)' : 'var(--text-muted)' }}>
-                                                        {Math.round((spent / limitAmount) * 100)}%
-                                                    </span>
-                                                )}
+                                                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: isOverLimit ? 'var(--danger-color)' : 'var(--text-muted)' }}>
+                                                    {Math.round((spent / limitAmount) * 100)}%
+                                                </span>
                                             </div>
 
-                                            {hasLimit ? (
-                                                <>
-                                                    <div style={{ width: '100%', height: '10px', background: 'var(--bg-color)', borderRadius: '5px', overflow: 'hidden' }}>
-                                                        <div style={{ 
-                                                            width: `${pct}%`, height: '100%', 
-                                                            background: isOverLimit ? 'var(--danger-color)' : cat.color,
-                                                            transition: 'width 1s ease-out'
-                                                        }} />
-                                                    </div>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '600' }}>
-                                                        <span style={{ color: isOverLimit ? 'var(--danger-color)' : 'var(--text-main)' }}>{formatCurrency(spent)}</span>
-                                                        <span style={{ color: 'var(--text-muted)' }}>{formatCurrency(limitAmount)}</span>
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed var(--glass-border)', borderRadius: '12px', color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic' }}>
-                                                    Sem limite definido
-                                                </div>
-                                            )}
+                                            <div style={{ width: '100%', height: '10px', background: 'var(--bg-color)', borderRadius: '5px', overflow: 'hidden' }}>
+                                                <div style={{ 
+                                                    width: `${pct}%`, height: '100%', 
+                                                    background: isOverLimit ? 'var(--danger-color)' : cat.color,
+                                                    transition: 'width 1s ease-out'
+                                                }} />
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '600' }}>
+                                                <span style={{ color: isOverLimit ? 'var(--danger-color)' : 'var(--text-main)' }}>{formatCurrency(spent)}</span>
+                                                <span style={{ color: 'var(--text-muted)' }}>{formatCurrency(limitAmount)}</span>
+                                            </div>
                                         </div>
                                     );
                                 })}
@@ -794,9 +801,8 @@ const Home = () => {
 
                         {/* --- Floating Action Buttons (Desktop Only - Following the scroll) --- */}
                         <div style={{ 
-                            position: 'absolute', bottom: '0', right: '-80px', 
-                            display: 'flex', flexDirection: 'column-reverse', gap: '16px', zIndex: 1000,
-                            paddingBottom: '32px'
+                            position: 'fixed', bottom: '32px', right: '32px', 
+                            display: 'flex', flexDirection: 'column-reverse', gap: '16px', zIndex: 1000
                         }}>
                             {/* MICROFONE: Bottom-most, Largest */}
                             <button 
