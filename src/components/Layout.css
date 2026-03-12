@@ -70,6 +70,14 @@ body.modal-open .bottom-blur-layer {
     pointer-events: none;
     z-index: 5000;
     padding-bottom: env(safe-area-inset-bottom, 0px);
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hide FAB when modal is open */
+body.modal-open .bottom-nav {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+    pointer-events: none;
 }
 
 @media (min-width: 1024px) {

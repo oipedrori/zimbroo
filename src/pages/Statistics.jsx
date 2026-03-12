@@ -74,7 +74,7 @@ const Statistics = () => {
 
             {/* Gráfico Anual de Saldos */}
             <section className="glass-panel" style={{ padding: '24px 16px', marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '24px' }}>{t('monthly_balances_current_year', { defaultValue: 'Saldos Mensais (ano vigente)' })} ({currentYear})</h3>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '24px' }}>{t('monthly_balances_current_year', { defaultValue: 'Saldos Mensais (ano vigente)' })} ({currentYear})</h3>
 
                 {loadingYearly ? (
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
@@ -154,7 +154,7 @@ const Statistics = () => {
             </section>
 
             <section className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <h3 style={{ width: '100%', fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '8px' }}>
+                <h3 style={{ width: '100%', fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px' }}>
                     {t('expenses_of', { month: format(currentDate, 'MMMM', { locale: dateLocales[locale] || enUS }).replace(/^\w/, c => c.toUpperCase()), defaultValue: 'Despesas do mês' })}
                 </h3>
 

@@ -62,7 +62,7 @@ const Wallet = () => {
     return (
         <div className="page-container animate-fade-in" style={{ paddingBottom: '110px' }}>
             <header style={{ paddingTop: '10px', marginBottom: '24px' }}>
-                <h1 style={{ fontSize: '1.5rem', color: 'var(--text-main)', fontWeight: '700' }}>{t('wallet_title')}</h1>
+                <h1 style={{ fontSize: '1.4rem', color: 'var(--text-main)', fontWeight: '700' }}>{t('wallet_title')}</h1>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>{t('wallet_subtitle')}</p>
             </header>
 
@@ -85,7 +85,7 @@ const Wallet = () => {
             ) : (
                 <form onSubmit={handleAddAccount} className="glass-panel" style={{ padding: '20px', marginBottom: '24px', position: 'relative' }}>
                     <button type="button" onClick={() => setIsAdding(false)} style={{ position: 'absolute', top: '10px', right: '10px', color: 'var(--text-muted)', fontSize: '1.2rem' }}>&times;</button>
-                    <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '16px' }}>{t('new_institution')}</h3>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px' }}>{t('new_institution')}</h3>
 
                     <div style={{ marginBottom: '12px' }}>
                         <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '6px' }}>{t('account_name')}</label>
@@ -147,7 +147,7 @@ const Wallet = () => {
                                 {getIconForType(val.type)}
                             </div>
                             <div>
-                                <h3 style={{ fontSize: '1.05rem', fontWeight: '600', color: 'var(--text-main)' }}>{val.name}</h3>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)' }}>{val.name}</h3>
                                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
                                     {t(val.type)}
                                 </p>

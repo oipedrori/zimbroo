@@ -77,7 +77,7 @@ const Limits = () => {
     return (
         <div className="page-container animate-fade-in" style={{ paddingBottom: '110px' }}>
             <header style={{ paddingTop: '10px', marginBottom: '16px' }}>
-                <h1 style={{ fontSize: '1.5rem', color: 'var(--text-main)', fontWeight: '700' }}>{t('limits_title')}</h1>
+                <h1 style={{ fontSize: '1.4rem', color: 'var(--text-main)', fontWeight: '700' }}>{t('limits_title')}</h1>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>{t('limits_subtitle')}</p>
             </header>
 
@@ -104,7 +104,7 @@ const Limits = () => {
                 availableCategories.length > 0 && (
                     <button
                         onClick={() => setIsAdding(true)}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '16px', borderRadius: '16px', background: 'var(--surface-color)', border: '2px dashed var(--primary-color)', color: 'var(--primary-color)', fontWeight: '600', marginBottom: '24px', transition: 'transform 0.2s', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '16px', borderRadius: '16px', background: 'var(--primary-color)', color: 'white', fontWeight: '700', marginBottom: '24px', transition: 'transform 0.2s', cursor: 'pointer', border: 'none', boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.2)' }}
                     >
                         <Plus size={20} />
                         {t('set_new_limit')}
@@ -113,7 +113,7 @@ const Limits = () => {
             ) : (
                 <form onSubmit={handleAddLimit} className="glass-panel" style={{ padding: '20px', marginBottom: '24px', position: 'relative' }}>
                     <button type="button" onClick={() => setIsAdding(false)} style={{ position: 'absolute', top: '10px', right: '10px', color: 'var(--text-muted)' }}><X size={20} /></button>
-                    <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '16px' }}>{t('config_limit')}</h3>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px' }}>{t('config_limit')}</h3>
 
                     <div style={{ marginBottom: '12px' }}>
                         <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '12px', marginLeft: '4px' }}>{t('category').toUpperCase()}</label>
@@ -193,7 +193,7 @@ const Limits = () => {
                                     {category.icon}
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <h3 style={{ fontSize: '1.05rem', fontWeight: '600', color: 'var(--text-main)' }}>{t(category.label, { defaultValue: category.label })}</h3>
+                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)' }}>{t(category.label, { defaultValue: category.label })}</h3>
                                     <p style={{ fontSize: '0.8rem', color: isOverLimit ? 'var(--danger-color)' : 'var(--primary-dark)', fontWeight: '500' }}>
                                         {isOverLimit ? t('limit_exceeded') : t('utilized', { percentage: percentage.toFixed(1) })}
                                     </p>

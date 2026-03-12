@@ -50,6 +50,7 @@ const Home = () => {
         const saved = localStorage.getItem('zimbroo_limits');
         return saved ? JSON.parse(saved) : {};
     });
+    const [chartType, setChartType] = useState('bar'); // 'bar' or 'line'
 
     // --- Derived Variables ---
     const monthPrefix = format(currentDate, 'yyyy-MM');
@@ -60,13 +61,16 @@ const Home = () => {
         if (isSidebarOpen || isModalOpen || isLimitModalOpen || isConfirmOpen) {
             document.body.style.overflow = 'hidden';
             document.body.style.touchAction = 'none';
+            document.body.classList.add('modal-open');
         } else {
             document.body.style.overflow = '';
             document.body.style.touchAction = '';
+            document.body.classList.remove('modal-open');
         }
         return () => {
             document.body.style.overflow = '';
             document.body.style.touchAction = '';
+            document.body.classList.remove('modal-open');
         };
     }, [isSidebarOpen, isModalOpen, isLimitModalOpen, isConfirmOpen]);
 
@@ -353,7 +357,7 @@ const Home = () => {
                 }}>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <h2 style={{ fontSize: '1.4rem' }}>{t('statistics')}</h2>
+                        <h2 style={{ fontSize: '1.2rem', fontWeight: '700' }}>{t('statistics')}</h2>
                         <button onClick={closeFlipped} style={{ fontSize: '1.5rem', color: 'var(--text-main)', padding: '8px' }}>
                             <X size={24} />
                         </button>
@@ -361,7 +365,7 @@ const Home = () => {
 
                     <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '40px' }}>
                         <section className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <h3 style={{ width: '100%', fontSize: '1rem', marginBottom: '24px', textAlign: 'left' }}>{t('expenses_by_category', { defaultValue: 'Despesas por Categoria' })}</h3>
+                            <h3 style={{ width: '100%', fontSize: '1.2rem', fontWeight: '700', marginBottom: '24px', textAlign: 'left' }}>{t('expenses_by_category', { defaultValue: 'Despesas por Categoria' })}</h3>
                             {(() => {
                                 const expensesByCategory = transactions
                                     .filter(t => t.type === 'expense')
@@ -411,7 +415,7 @@ const Home = () => {
                         </section>
 
                         <section className="glass-panel" style={{ padding: '24px' }}>
-                            <h3 style={{ fontSize: '1rem', marginBottom: '24px' }}>{t('monthly_balances_current_year', { defaultValue: 'Saldos Mensais' })}</h3>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '24px' }}>{t('monthly_balances_current_year', { defaultValue: 'Saldos Mensais' })}</h3>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '180px', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px', position: 'relative' }}>
                                 
                                 
@@ -485,43 +489,40 @@ const Home = () => {
                 style={{ paddingBottom: '120px', animation: 'slideUp 0.3s forwards' }}
             >
                 {/* Header (Now always visible but behaves differently on desktop) */}
-                <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px' }}>
+                <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', marginBottom: '24px' }}>
                     <div 
                         onClick={() => isDesktop ? setIsSidebarOpen(true) : null}
-                        style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', cursor: isDesktop ? 'pointer' : 'default' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: isDesktop ? 'pointer' : 'default' }}
                     >
-                        {isDesktop ? (
-                             <div className="hover-scale" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--highlight-color)' }}>
-                                <User size={20} />
-                             </div>
-                        ) : (
-                            <Link to="/profile" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--highlight-color)' }}>
-                                    <User size={20} />
-                                </div>
-                            </Link>
-                        )}
-                        <div>
-                            <h1 style={{ fontSize: '1.3rem', color: 'var(--text-main)', fontWeight: '700', paddingLeft: '4px' }}>{t('hello', { name: currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }) })}</h1>
+                        <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-color)' }}>
+                            <User size={22} />
+                        </div>
+                        <div style={{ display: isDesktop ? 'block' : 'none' }}>
+                             <h1 style={{ fontSize: '1.2rem', color: 'var(--text-main)', fontWeight: '700', margin: 0 }}>{t('hello', { name: currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }) })}</h1>
                         </div>
                     </div>
-                </header>
 
-                {!isDesktop && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 10px', marginBottom: '8px' }}>
-                        <button onClick={prevMonth} style={{ padding: '8px' }}><ChevronLeft size={24} color="var(--text-main)" /></button>
-                        <div
-                            key={monthPrefix}
-                            style={{
-                                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                                animation: swipeDirection === 'left' ? 'slideLeftIn 0.3s ease-out' : 'slideRightIn 0.3s ease-out'
-                            }}
-                        >
-                            <span style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '1.2rem', textTransform: 'capitalize' }}>{formattedMonthLabel}</span>
-                        </div>
-                        <button onClick={nextMonth} style={{ padding: '8px' }}><ChevronRight size={24} color="var(--text-main)" /></button>
+                    {/* Desktop/Mobile Month Navigation */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-color)', padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--glass-border)' }}>
+                        <button onClick={() => { haptic.light(); setCurrentDate(subMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
+                            <ChevronLeft size={20} />
+                        </button>
+                        <span style={{ fontWeight: '700', color: 'var(--text-main)', fontSize: '0.95rem', textTransform: 'capitalize', minWidth: '110px', textAlign: 'center' }}>
+                            {format(currentDate, 'MMMM yyyy', { locale: { pt: ptBR, en: enUS, es: es, fr: fr }[locale] || ptBR })}
+                        </span>
+                        <button onClick={() => { haptic.light(); setCurrentDate(addMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
+                            <ChevronRight size={20} />
+                        </button>
                     </div>
-                )}
+
+                    {!isDesktop && (
+                        <Link to="/profile" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+                             <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--primary-gradient)', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '1rem' }}>
+                                {currentUser?.displayName?.charAt(0).toUpperCase() || 'Z'}
+                             </div>
+                        </Link>
+                    )}
+                </header>
 
                 {!isDesktop && (
                     <section
@@ -649,9 +650,9 @@ const Home = () => {
 
                 {/* --- Bento Grid Desktop Sections --- */}
                 {isDesktop && (
-                    <div className="desktop-dashboard-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '32px', position: 'relative' }}>
+                    <div className="desktop-dashboard-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '16px', position: 'relative' }}>
                         
-                        <div className="desktop-bento-top" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '32px', alignItems: 'start' }}>
+                        <div className="desktop-bento-top" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'start' }}>
                             
                             {/* Coluna Esquerda: Saldo + Movimentações */}
                             <div className="column-left" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
@@ -706,7 +707,7 @@ const Home = () => {
 
                                 <section className="transactions-section">
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                        <h3 style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-main)' }}>{t('transactions')}</h3>
+                                        <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)' }}>{t('transactions')}</h3>
                                     </div>
 
                                     <div className="filters-row" style={{ display: 'flex', overflowX: 'auto', gap: '10px', marginBottom: '20px', padding: '4px 0', scrollbarWidth: 'none' }}>
@@ -761,7 +762,7 @@ const Home = () => {
 
                             <div className="column-right" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                                 <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                    <h3 style={{ width: '100%', fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '24px' }}>
+                                    <h3 style={{ width: '100%', fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '24px' }}>
                                         {t('expenses_by_category', { defaultValue: 'Gastos por Categoria' })}
                                     </h3>
                                     {totalStatsExpenses > 0 ? (
@@ -772,116 +773,172 @@ const Home = () => {
                                                     <span style={{ fontSize: '1.3rem', fontWeight: '800' }}>{formatCurrency(totalStatsExpenses)}</span>
                                                 </div>
                                             </div>
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', width: '100%' }}>
-                                                {Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a).slice(0, 6).map(([catId, amount]) => {
-                                                    const cat = CATEGORIAS_DESPESA.find(c => c.id === catId) || { label: catId, color: '#999', icon: '📌' };
-                                                    const pct = Math.round((amount / totalStatsExpenses) * 100);
-                                                    return (
-                                                        <div key={catId} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', background: 'var(--surface-color)', padding: '10px 14px', borderRadius: '16px', border: '1px solid var(--glass-border)', justifyContent: 'space-between' }}>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: cat.color }}></div>
-                                                                <span style={{ fontWeight: '500' }}>{cat.icon} {cat.label}</span>
-                                                            </div>
-                                                            <span style={{ fontWeight: '700', opacity: 0.8 }}>{pct}%</span>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <p style={{ color: 'var(--text-muted)', margin: '60px 0' }}>Sem despesas no mês</p>
-                                    )}
-                                </section>
-
-                                <section className="glass-panel" style={{ padding: '32px' }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '32px' }}>Saldos Mensais</h3>
-                                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '220px', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px' }}>
-                                        {yearlyStats.map((stat, i) => {
-                                            const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 5000);
-                                            const h = Math.max(4, (Math.abs(stat.balance) / maxVal) * 100);
-                                            const isCurrent = stat.month === (currentDate.getMonth() + 1);
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '12px', width: '100%', marginTop: 'auto' }}>
+                                        {Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a).slice(0, 4).map(([catId, amount]) => {
+                                            const cat = CATEGORIAS_DESPESA.find(c => c.id === catId) || { label: catId, color: '#999', icon: '📌' };
+                                            const pct = Math.round((amount / totalStatsExpenses) * 100);
                                             return (
-                                                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', height: '100%', justifyContent: 'flex-end' }}>
-                                                    <div style={{ 
-                                                        width: '100%', height: `${h}%`, 
-                                                        background: stat.balance >= 0 ? 'var(--primary-color)' : 'var(--danger-color)',
-                                                        borderRadius: '6px 6px 0 0',
-                                                        opacity: isCurrent ? 1 : 0.4,
-                                                        transition: 'height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                                        position: 'relative'
-                                                    }}>
+                                                <div key={catId} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', background: 'var(--surface-color)', padding: '12px 16px', borderRadius: '16px', border: '1px solid var(--glass-border)', justifyContent: 'space-between' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: cat.color + '15', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                            <span style={{ fontSize: '1.1rem' }}>{cat.icon}</span>
+                                                        </div>
+                                                        <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{t(cat.label, { defaultValue: cat.label })}</span>
                                                     </div>
-                                                    <span style={{ fontSize: '0.75rem', color: isCurrent ? 'var(--primary-dark)' : 'var(--text-muted)', fontWeight: isCurrent ? '700' : '500' }}>{stat.label.charAt(0)}</span>
+                                                    <span style={{ fontWeight: '800', color: cat.color }}>{formatCurrency(amount)} ({pct}%)</span>
                                                 </div>
                                             );
                                         })}
                                     </div>
-                                </section>
-                            </div>
-                        </div>
+                                    {Object.keys(expensesByCategory).length > 4 && (
+                                        <button onClick={() => navigate('/statistics')} style={{ marginTop: '16px', background: 'transparent', border: 'none', color: 'var(--primary-color)', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer' }}>
+                                            {t('view_all')}
+                                        </button>
+                                    )}
+                                </>
+                            ) : (
+                                <p style={{ color: 'var(--text-muted)', margin: '60px 0' }}>Sem despesas no mês</p>
+                            )}
+                        </section>
 
-                        <section className="glass-panel" style={{ padding: '32px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                <h3 style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-main)' }}>Limites de Gastos por Categoria</h3>
-                                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Gerencie seu teto de gastos mensal por área</p>
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+                        <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>Limites Ativos</h3>
                                 <button
                                     onClick={() => {
                                         setTempLimit({ categoryId: CATEGORIAS_DESPESA[0].id, amount: '' });
                                         setIsLimitModalOpen(true);
                                     }}
                                     style={{ 
-                                        background: 'var(--surface-color)', padding: '20px', borderRadius: '24px', 
-                                        border: '2px dashed var(--primary-color)', color: 'var(--primary-color)',
-                                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-                                        gap: '12px', cursor: 'pointer', transition: 'transform 0.2s',
-                                        minHeight: '160px'
+                                        padding: '8px 14px', borderRadius: '12px', background: 'var(--primary-color)', color: 'white',
+                                        fontSize: '0.85rem', fontWeight: '700', border: 'none', cursor: 'pointer'
                                     }}
-                                    className="hover-scale"
                                 >
-                                    <Plus size={32} />
-                                    <span style={{ fontWeight: '700' }}>Adicionar Limite</span>
+                                    Novo Limite
                                 </button>
-                                {CATEGORIAS_DESPESA.filter(cat => limits[cat.id]).map((cat) => {
-                                    const limitAmount = limits[cat.id];
-                                    const spent = expensesByCategory[cat.id] || 0;
-                                    const pct = Math.min((spent / limitAmount) * 100, 100);
-                                    const isOverLimit = spent > limitAmount;
+                            </div>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '350px', overflowY: 'auto', paddingRight: '4px' }}>
+                                {CATEGORIAS_DESPESA.filter(cat => limits[cat.id]).length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '32px', border: '1px solid var(--glass-border)', borderRadius: '24px', background: 'var(--surface-color)' }}>
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0' }}>Nenhum limite configurado</p>
+                                    </div>
+                                ) : (
+                                    CATEGORIAS_DESPESA.filter(cat => limits[cat.id]).slice(0, 3).map((cat) => {
+                                        const limitAmount = limits[cat.id];
+                                        const spent = expensesByCategory[cat.id] || 0;
+                                        const pct = Math.min((spent / limitAmount) * 100, 100);
+                                        const isOverLimit = spent > limitAmount;
 
-                                    return (
-                                        <div key={cat.id} style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '24px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: cat.color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.2rem' }}>
-                                                        {cat.icon}
-                                                    </div>
-                                                    <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{t(cat.label, { defaultValue: cat.label })}</span>
+                                        return (
+                                            <div key={cat.id} style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <span style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-main)' }}>{cat.icon} {t(cat.label)}</span>
+                                                    <span style={{ fontSize: '0.8rem', fontWeight: '800', color: isOverLimit ? 'var(--danger-color)' : 'var(--text-muted)' }}>
+                                                        {Math.round((spent / limitAmount) * 100)}%
+                                                    </span>
                                                 </div>
-                                                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: isOverLimit ? 'var(--danger-color)' : 'var(--text-muted)' }}>
-                                                    {Math.round((spent / limitAmount) * 100)}%
-                                                </span>
+                                                <div style={{ width: '100%', height: '6px', background: 'var(--bg-color)', borderRadius: '3px', overflow: 'hidden' }}>
+                                                    <div style={{ width: `${pct}%`, height: '100%', background: isOverLimit ? 'var(--danger-color)' : cat.color, transition: 'width 1s ease-out' }} />
+                                                </div>
                                             </div>
-
-                                            <div style={{ width: '100%', height: '10px', background: 'var(--bg-color)', borderRadius: '5px', overflow: 'hidden' }}>
-                                                <div style={{ 
-                                                    width: `${pct}%`, height: '100%', 
-                                                    background: isOverLimit ? 'var(--danger-color)' : cat.color,
-                                                    transition: 'width 1s ease-out'
-                                                }} />
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '600' }}>
-                                                <span style={{ color: isOverLimit ? 'var(--danger-color)' : 'var(--text-main)' }}>{formatCurrency(spent)}</span>
-                                                <span style={{ color: 'var(--text-muted)' }}>{formatCurrency(limitAmount)}</span>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })
+                                )}
                             </div>
                         </section>
                     </div>
-                )}
-            </div>
+                </div>
+
+                {/* Saldos Mensais Row (Full Width Bottom) */}
+                <section className="glass-panel" style={{ padding: '32px', width: '100%' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>Evolução de Saldos Mensais</h3>
+                        
+                        <div style={{ display: 'flex', background: 'var(--bg-color)', padding: '4px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                            <button 
+                                onClick={() => { haptic.light(); setChartType('bar'); }}
+                                style={{ 
+                                    padding: '6px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', border: 'none',
+                                    background: chartType === 'bar' ? 'var(--primary-color)' : 'transparent',
+                                    color: chartType === 'bar' ? 'white' : 'var(--text-muted)',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Barras
+                            </button>
+                            <button 
+                                onClick={() => { haptic.light(); setChartType('line'); }}
+                                style={{ 
+                                    padding: '6px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', border: 'none',
+                                    background: chartType === 'line' ? 'var(--primary-color)' : 'transparent',
+                                    color: chartType === 'line' ? 'white' : 'var(--text-muted)',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Linha
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style={{ position: 'relative', height: '240px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '24px' }}>
+                        {chartType === 'bar' ? (
+                            yearlyStats.map((stat, i) => {
+                                const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 5000);
+                                const h = Math.max(4, (Math.abs(stat.balance) / maxVal) * 100);
+                                const isCurrent = stat.month === (currentDate.getMonth() + 1);
+                                return (
+                                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', height: '100%', justifyContent: 'flex-end' }}>
+                                        <div style={{ 
+                                            width: '100%', height: `${h}%`, 
+                                            background: stat.balance >= 0 ? 'var(--primary-color)' : 'var(--danger-color)',
+                                            borderRadius: '8px 8px 0 0',
+                                            opacity: isCurrent ? 1 : 0.4,
+                                            boxShadow: isCurrent ? '0 0 20px rgba(var(--primary-rgb), 0.2)' : 'none',
+                                            transition: 'height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                        }} />
+                                        <span style={{ fontSize: '0.8rem', color: isCurrent ? 'var(--primary-dark)' : 'var(--text-muted)', fontWeight: isCurrent ? '700' : '500' }}>{stat.label.substring(0, 3)}</span>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                                <svg width="100%" height="100%" viewBox="0 0 1000 100" preserveAspectRatio="none">
+                                    <path 
+                                        d={`M ${yearlyStats.map((stat, i) => {
+                                            const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 5000);
+                                            const x = (i / (yearlyStats.length - 1)) * 1000;
+                                            const y = 80 - (stat.balance / maxVal) * 60; // 20-80 range for safety
+                                            return `${x},${y}`;
+                                        }).join(' L ')}`}
+                                        fill="none" stroke="var(--primary-color)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                                        style={{ transition: 'all 0.5s ease' }}
+                                    />
+                                    {yearlyStats.map((stat, i) => {
+                                        const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 5000);
+                                        const x = (i / (yearlyStats.length - 1)) * 1000;
+                                        const y = 80 - (stat.balance / maxVal) * 60;
+                                        const isCurrent = stat.month === (currentDate.getMonth() + 1);
+                                        return (
+                                            <circle 
+                                                key={i} cx={x} cy={y} r={isCurrent ? 6 : 4} 
+                                                fill={isCurrent ? 'var(--primary-color)' : 'var(--bg-color)'} 
+                                                stroke="var(--primary-color)" strokeWidth="2"
+                                            />
+                                        );
+                                    })}
+                                </svg>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0 0 0' }}>
+                                    {yearlyStats.map((stat, i) => (
+                                        <span key={i} style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '25px', textAlign: 'center' }}>{stat.label.charAt(0)}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </section>
+                </div>
+            )}
 
             {/* --- Fixed Elements (Outside of transformed container) --- */}
             
@@ -1044,6 +1101,7 @@ const Home = () => {
                         </div>
                     </>
                 )}
+            </div>
 
                 {/* Modal Dinâmico de Limite */}
                 {isLimitModalOpen && (
