@@ -697,12 +697,12 @@ const Home = () => {
                                     )}
                                 </section>
 
-                                <section className="transactions-section">
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                        <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)' }}>{t('transactions')}</h3>
+                                <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                        <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>{t('transactions')}</h3>
                                     </div>
 
-                                    <div className="filters-row" style={{ display: 'flex', overflowX: 'auto', gap: '10px', marginBottom: '20px', padding: '4px 0', scrollbarWidth: 'none' }}>
+                                    <div className="filters-row" style={{ display: 'flex', overflowX: 'auto', gap: '10px', marginBottom: '24px', padding: '4px 0', scrollbarWidth: 'none' }}>
                                         {[
                                             { id: 'all', label: 'filter_all' },
                                             { id: 'income', label: 'filter_incomes' },
@@ -715,9 +715,10 @@ const Home = () => {
                                                 onClick={() => setActiveFilter(f.id)}
                                                 style={{
                                                     whiteSpace: 'nowrap', padding: '10px 18px', borderRadius: '24px', fontSize: '0.9rem', fontWeight: '600',
-                                                    background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--surface-color)',
+                                                    background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--bg-color)',
                                                     color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
-                                                    border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)'
+                                                    border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)',
+                                                    transition: 'all 0.2s'
                                                 }}
                                             >
                                                 {t(f.label, { defaultValue: f.label })}
@@ -726,27 +727,30 @@ const Home = () => {
                                     </div>
 
                                     {loading ? (
-                                        <LoadingDots />
+                                        <div style={{ padding: '40px 0' }}><LoadingDots /></div>
                                     ) : (
-                                        <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                                            <div style={{ maxHeight: '450px', overflowY: 'auto', scrollbarWidth: 'thin' }}>
-                                                {filteredTransactions.map((tx, i) => (
-                                                    <div key={tx.id} onClick={() => handleEditTx(tx)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: i === filteredTransactions.length - 1 ? 'none' : '1px solid var(--glass-border)', transition: 'background 0.2s' }} className="hover-brightness">
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                                            <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontSize: '1.3rem' }}>
-                                                                {getEmojiForDescription(tx.description, getCategoryTheme(tx.category, tx.type).icon)}
-                                                            </div>
-                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                <p style={{ fontWeight: '600', margin: 0, color: 'var(--text-main)' }}>{tx.dynamicDescription || tx.description}</p>
-                                                                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>{tx.virtualDate.split('-').slice(1).reverse().join('/')}</p>
-                                                            </div>
+                                        <div style={{ maxHeight: '450px', overflowY: 'auto', scrollbarWidth: 'thin', margin: '0 -32px' }}>
+                                            {filteredTransactions.map((tx, i) => (
+                                                <div key={tx.id} onClick={() => handleEditTx(tx)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 32px', borderBottom: i === filteredTransactions.length - 1 ? 'none' : '1px solid var(--glass-border)', transition: 'background 0.2s' }} className="hover-brightness">
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                                        <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontSize: '1.3rem' }}>
+                                                            {getEmojiForDescription(tx.description, getCategoryTheme(tx.category, tx.type).icon)}
                                                         </div>
-                                                        <p style={{ fontWeight: '700', color: tx.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)', margin: 0, fontSize: '1.1rem' }}>
-                                                            {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
-                                                        </p>
+                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                            <p style={{ fontWeight: '600', margin: 0, color: 'var(--text-main)' }}>{tx.dynamicDescription || tx.description}</p>
+                                                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>{tx.virtualDate.split('-').slice(1).reverse().join('/')}</p>
+                                                        </div>
                                                     </div>
-                                                ))}
-                                            </div>
+                                                    <p style={{ fontWeight: '700', color: tx.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)', margin: 0, fontSize: '1.1rem' }}>
+                                                        {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                            {filteredTransactions.length === 0 && (
+                                                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                                                    Nenhuma transação encontrada
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </section>
