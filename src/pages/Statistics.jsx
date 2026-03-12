@@ -67,7 +67,11 @@ const Statistics = () => {
     const dateLocales = { pt: ptBR, en: enUS, es: es, fr: fr };
 
     return (
-        <div className="page-container animate-fade-in" style={{ paddingBottom: '100px', animation: 'fadeIn 0.4s forwards' }}>
+        <div className="page-container animate-fade-in no-scrollbar" style={{ paddingBottom: '110px', animation: 'fadeIn 0.4s forwards' }}>
+            <style>{`
+                .no-scrollbar::-webkit-scrollbar { display: none; }
+                .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+            `}</style>
             <header style={{ marginBottom: '24px', textAlign: 'center', paddingTop: 'env(safe-area-inset-top, 10px)' }}>
                 <h1 style={{ fontSize: '1.4rem', color: 'var(--text-main)', fontWeight: '700' }}>{t('statistics')}</h1>
             </header>

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, googleProvider } from '../config/firebase';
-import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithPopup, signOut, onAuthStateChanged, deleteUser } from 'firebase/auth';
 
 const AuthContext = createContext();
 
@@ -27,6 +27,17 @@ export const AuthProvider = ({ children }) => {
             await signOut(auth);
         } catch (error) {
             console.error("Erro no logout:", error);
+        }
+    };
+
+    // Deletar Conta
+    const deleteAccount = async () => {
+        if (!currentUser) return;
+        try {
+            await deleteUser(currentUser);
+        } catch (error) {
+            console.error("Erro ao deletar conta:", error);
+            throw error;
         }
     };
 
@@ -76,6 +87,7 @@ export const AuthProvider = ({ children }) => {
         currentUser,
         loginWithGoogle,
         logout,
+        deleteAccount,
         loading
     };
 

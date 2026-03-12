@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
-import { ChevronLeft, User, LogOut, Crown, Moon, Globe, DollarSign, Database, ArrowRight } from 'lucide-react';
+import { ChevronLeft, User, LogOut, Trash2, Moon, Globe, DollarSign, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
-    const { currentUser, logout } = useAuth();
+    const { currentUser, logout, deleteAccount } = useAuth();
     const { t, locale, changeLocale, currency, changeCurrency } = useI18n();
     const navigate = useNavigate();
 
-    // Mock settings
-    const [isPremium, setIsPremium] = useState(false); // Default to free for demo
+    // States
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     // Theme logic
     const [theme, setTheme] = useState(localStorage.getItem('zimbroo_theme') || 'system');
@@ -29,6 +30,23 @@ const Profile = () => {
         }
         localStorage.setItem('zimbroo_theme', theme);
     }, [theme]);
+
+    const handleDeleteAccount = async () => {
+        setIsDeleting(true);
+        try {
+            await deleteAccount();
+            navigate('/onboarding');
+        } catch (error) {
+            if (error.code === 'auth/requires-recent-login') {
+                alert('Para sua segurança, esta ação exige um login recente. Por favor, saia e entre novamente antes de excluir sua conta.');
+            } else {
+                alert('Ocorreu um erro ao excluir sua conta. Tente novamente mais tarde.');
+            }
+            setShowDeleteConfirm(false);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     return (
         <div className="page-container animate-fade-in" style={{ paddingBottom: '110px' }}>
@@ -55,7 +73,7 @@ const Profile = () => {
                     {/* Theme Toggle */}
                     <div style={{ minHeight: '56px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-color)', padding: '0 20px', borderRadius: '20px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--primary-light)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-darker)' }}>
+                            <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '10px', background: 'var(--primary-light)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-darker)' }}>
                                 <Moon size={18} />
                             </div>
                             <span style={{ fontWeight: '600', fontSize: '0.95rem', color: 'var(--text-main)' }}>{t('theme')}</span>
@@ -74,7 +92,7 @@ const Profile = () => {
                     {/* Language Selection Chips */}
                     <div style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '20px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--primary-light)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-darker)' }}>
+                            <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '10px', background: 'var(--primary-light)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-darker)' }}>
                                 <Globe size={18} />
                             </div>
                             <span style={{ fontWeight: '700', fontSize: '0.95rem', color: 'var(--text-main)' }}>{t('language')}</span>
@@ -110,7 +128,7 @@ const Profile = () => {
                     {/* Currency Selection Chips */}
                     <div style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '20px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--primary-light)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-darker)' }}>
+                            <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '10px', background: 'var(--primary-light)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-darker)' }}>
                                 <DollarSign size={18} />
                             </div>
                             <span style={{ fontWeight: '700', fontSize: '0.95rem', color: 'var(--text-main)' }}>{t('currency')}</span>
@@ -153,7 +171,7 @@ const Profile = () => {
                         }}
                     >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', border: 'none' }}>
+                            <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '10px', background: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', border: 'none' }}>
                                 <img src="/notion_logo.png" style={{ width: '22px', height: '22px', objectFit: 'contain' }} alt="Notion" loading="eager" />
                             </div>
                             <span style={{ fontWeight: '600', fontSize: '1rem' }}>Sincronizar com Notion</span>
@@ -163,20 +181,87 @@ const Profile = () => {
                 </div>
             </div>
 
-            {/* Log out Menu Item (settings removed as requested) */}
+            {/* Account Management (Logout & Delete) */}
             <section style={{ background: 'var(--surface-color)', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', marginTop: '24px' }}>
                 <div
                     onClick={logout}
+                    style={{ 
+                        display: 'flex', alignItems: 'center', padding: '18px 20px', cursor: 'pointer',
+                        borderBottom: '1px solid var(--glass-border)'
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--danger-color)' }}>
+                            <LogOut size={20} />
+                        </div>
+                        <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{t('logout')}</span>
+                    </div>
+                </div>
+
+                <div
+                    onClick={() => setShowDeleteConfirm(true)}
                     style={{ display: 'flex', alignItems: 'center', padding: '18px 20px', cursor: 'pointer' }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--danger-color)' }}>
-                            <LogOut size={20} />
+                        <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '10px', background: 'rgba(239, 68, 68, 0.05)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--danger-color)' }}>
+                            <Trash2 size={20} />
                         </div>
-                        <span style={{ fontWeight: '600', color: 'var(--danger-color)' }}>{t('logout')}</span>
+                        <span style={{ fontWeight: '600', color: 'var(--danger-color)' }}>Excluir Minha Conta</span>
                     </div>
                 </div>
             </section>
+
+            {/* Delete Account Confirmation Overlay */}
+            {showDeleteConfirm && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    padding: '24px', zIndex: 20000
+                }}>
+                    <div style={{
+                        background: 'var(--surface-color)', padding: '32px 24px',
+                        borderRadius: '32px', border: '1px solid var(--glass-border)',
+                        width: '100%', maxWidth: '340px', textAlign: 'center',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                        animation: 'bubblePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+                    }}>
+                        <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'var(--danger-light)', color: 'var(--danger-color)', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto 20px' }}>
+                            <Trash2 size={32} />
+                        </div>
+                        <h2 style={{ fontSize: '1.4rem', marginBottom: '12px', color: 'var(--text-main)', fontFamily: "'Solway', serif" }}>Tem certeza?</h2>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '24px', lineHeight: '1.5' }}>
+                            Esta ação é <b>permanente</b> e não pode ser desfeita. Todos os seus dados serão apagados.
+                        </p>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <button
+                                onClick={handleDeleteAccount}
+                                disabled={isDeleting}
+                                style={{
+                                    height: '56px', borderRadius: '16px',
+                                    background: 'var(--danger-color)', color: 'white',
+                                    fontWeight: '700', fontSize: '1rem', border: 'none'
+                                }}
+                            >
+                                {isDeleting ? 'Excluindo...' : 'Sim, excluir permanentemente'}
+                            </button>
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                disabled={isDeleting}
+                                style={{
+                                    height: '56px', borderRadius: '16px',
+                                    background: 'var(--primary-light)', color: 'var(--primary-darker)',
+                                    fontWeight: '700', fontSize: '1rem', border: 'none'
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Easter Egg / Version */}
             <div style={{ marginTop: '40px', paddingBottom: '40px', textAlign: 'center', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

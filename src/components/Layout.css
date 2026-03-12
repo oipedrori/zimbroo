@@ -51,6 +51,10 @@
     transition: opacity 0.3s ease;
 }
 
+:root.theme-dark .bottom-blur-layer {
+    background: rgba(5, 10, 6, 0.5); /* Sutil fundo escuro para destacar o blur no modo escuro */
+}
+
 body.modal-open .bottom-blur-layer {
     opacity: 0;
     pointer-events: none;

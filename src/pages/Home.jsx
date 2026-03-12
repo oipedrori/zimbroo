@@ -1106,7 +1106,7 @@ const Home = () => {
                                 {/* Theme Section */}
                                 <div style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '24px', border: '1px solid var(--glass-border)' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                                        <div style={{ background: 'var(--primary-light)', padding: '8px', borderRadius: '10px', color: 'var(--primary-dark)' }}><Moon size={18} /></div>
+                                        <div style={{ width: '36px', height: '36px', flexShrink: 0, background: 'var(--primary-light)', borderRadius: '10px', color: 'var(--primary-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Moon size={18} /></div>
                                         <span style={{ fontWeight: '600' }}>{t('theme')}</span>
                                     </div>
                                     <div style={{ display: 'flex', background: 'var(--bg-color)', borderRadius: '12px', padding: '4px' }}>
@@ -1132,7 +1132,7 @@ const Home = () => {
                                 <div style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '24px', border: '1px solid var(--glass-border)' }}>
                                     <div style={{ marginBottom: '20px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                                            <div style={{ background: 'var(--primary-light)', padding: '8px', borderRadius: '10px', color: 'var(--primary-dark)' }}><Globe size={18} /></div>
+                                            <div style={{ width: '36px', height: '36px', flexShrink: 0, background: 'var(--primary-light)', borderRadius: '10px', color: 'var(--primary-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Globe size={18} /></div>
                                             <span style={{ fontWeight: '600' }}>{t('language')}</span>
                                         </div>
                                         <select 
@@ -1149,7 +1149,7 @@ const Home = () => {
 
                                     <div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                                            <div style={{ background: 'var(--primary-light)', padding: '8px', borderRadius: '10px', color: 'var(--primary-dark)' }}><DollarSign size={18} /></div>
+                                            <div style={{ width: '36px', height: '36px', flexShrink: 0, background: 'var(--primary-light)', borderRadius: '10px', color: 'var(--primary-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><DollarSign size={18} /></div>
                                             <span style={{ fontWeight: '600' }}>Moeda</span>
                                         </div>
                                         <select 
