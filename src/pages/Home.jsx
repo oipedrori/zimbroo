@@ -548,7 +548,7 @@ const Home = () => {
                                 <h2 style={{ fontSize: 'clamp(1.8rem, 8vw, 2.5rem)', marginBottom: '24px', fontWeight: '700', letterSpacing: '-1px', wordBreak: 'break-word' }}>{formatCurrency(balance)}</h2>
                             </div>
                             <div style={{ position: 'relative', display: !isDesktop ? 'flex' : 'none' }}>
-                                <Pointer className="pointer-icon pulse-animation" size={18} opacity={0.8} />
+                                <Pointer className="pointer-icon" size={18} opacity={0.8} />
                             </div>
                         </div>
 
@@ -587,6 +587,301 @@ const Home = () => {
                             </div>
                         )}
                     </section>
+                )}
+
+                {!isDesktop && (
+                    <section style={{ marginTop: '24px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>{t('transactions')}</h3>
+                        </div>
+
+                        <div className="filters-row" style={{ display: 'flex', overflowX: 'auto', gap: '10px', marginBottom: '20px', padding: '4px 0', scrollbarWidth: 'none' }}>
+                            {[
+                                { id: 'all', label: 'filter_all' },
+                                { id: 'income', label: 'filter_incomes' },
+                                { id: 'expense', label: 'filter_expenses' },
+                            ].map(f => (
+                                <button
+                                    key={f.id}
+                                    onClick={() => setActiveFilter(f.id)}
+                                    style={{
+                                        whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600',
+                                        background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--surface-color)',
+                                        color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
+                                        border: '1px solid var(--glass-border)', flexShrink: 0
+                                    }}
+                                >
+                                    {t(f.label)}
+                                </button>
+                            ))}
+                        </div>
+
+                        {loading ? (
+                            <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+                                <LoadingDots />
+                            </div>
+                        ) : filteredTransactions.length === 0 ? (
+                            <div className="glass-panel" style={{ padding: '30px', textAlign: 'center' }}>
+                                <p style={{ color: 'var(--text-muted)' }}>{t('no_transactions')}</p>
+                            </div>
+                        ) : (
+                            <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
+                                {filteredTransactions.map((tx, i) => (
+                                    <SwipeableItem key={tx.id} onDelete={() => handleConfirmDelete(tx)} onEdit={() => handleEditTx(tx)}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: i === transactions.length - 1 ? 'none' : '1px solid var(--glass-border)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                                <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontWeight: 'bold', fontSize: '1.2rem' }}>
+                                                    {getEmojiForDescription(tx.description, getCategoryTheme(tx.category, tx.type).icon)}
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <p style={{ fontWeight: '500', margin: 0 }}>{tx.dynamicDescription || tx.description}</p>
+                                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{tx.virtualDate.split('-').slice(1).reverse().join('/')}</p>
+                                                </div>
+                                            </div>
+                                            <p style={{ fontWeight: '600', color: tx.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)', margin: 0 }}>
+                                                {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
+                                            </p>
+                                        </div>
+                                    </SwipeableItem>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                )}
+
+                {/* --- Bento Grid Desktop Sections --- */}
+                {isDesktop && (
+                    <div className="desktop-dashboard-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '32px', position: 'relative' }}>
+                        
+                        <div className="desktop-bento-top" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '32px', alignItems: 'start' }}>
+                            
+                            {/* Coluna Esquerda: Saldo + Movimentações */}
+                            <div className="column-left" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                                <section
+                                    key={`card-${monthPrefix}`}
+                                    className="glass-panel"
+                                    style={{ 
+                                        padding: '32px', background: cardGradient, color: 'white', border: 'none', 
+                                        position: 'relative', overflow: 'hidden', borderRadius: '24px'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                        <div>
+                                            <p style={{ fontSize: '1rem', opacity: 0.8, marginBottom: '8px' }}>{t('monthly_balance')}</p>
+                                            <h2 style={{ fontSize: '3rem', marginBottom: '24px', fontWeight: '800', letterSpacing: '-1.5px' }}>{formatCurrency(balance)}</h2>
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '32px', opacity: 0.9 }}>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#4ade80' }}></div>
+                                                <p style={{ fontSize: '0.9rem', margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
+                                            </div>
+                                            <p style={{ fontWeight: '700', fontSize: '1.3rem', margin: 0 }}>{formatCurrency(incomes)}</p>
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f87171' }}></div>
+                                                <p style={{ fontSize: '0.9rem', margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
+                                            </div>
+                                            <p style={{ fontWeight: '700', fontSize: '1.3rem', margin: 0 }}>{formatCurrency(expenses)}</p>
+                                        </div>
+                                    </div>
+
+                                    {incomes > 0 && (
+                                        <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                            <div style={{ flex: 1, height: '8px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '10px', overflow: 'hidden' }}>
+                                                <div style={{
+                                                    width: `${Math.min((expenses / incomes) * 100, 100)}%`,
+                                                    height: '100%',
+                                                    background: 'white',
+                                                    borderRadius: '10px',
+                                                    transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                                                }}></div>
+                                            </div>
+                                            <span style={{ fontSize: '1rem', fontWeight: '800', opacity: 0.9, minWidth: '45px', textAlign: 'right' }}>
+                                                {Math.round((expenses / incomes) * 100)}%
+                                            </span>
+                                        </div>
+                                    )}
+                                </section>
+
+                                <section className="transactions-section">
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                        <h3 style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-main)' }}>{t('transactions')}</h3>
+                                    </div>
+
+                                    <div className="filters-row" style={{ display: 'flex', overflowX: 'auto', gap: '10px', marginBottom: '20px', padding: '4px 0', scrollbarWidth: 'none' }}>
+                                        {[
+                                            { id: 'all', label: 'filter_all' },
+                                            { id: 'income', label: 'filter_incomes' },
+                                            { id: 'variable', label: 'Despesas Móveis' },
+                                            { id: 'recurring', label: 'Despesas Recorrentes' },
+                                            { id: 'installment', label: 'Despesas Parceladas' }
+                                        ].map(f => (
+                                            <button
+                                                key={f.id}
+                                                onClick={() => setActiveFilter(f.id)}
+                                                style={{
+                                                    whiteSpace: 'nowrap', padding: '10px 18px', borderRadius: '24px', fontSize: '0.9rem', fontWeight: '600',
+                                                    background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--surface-color)',
+                                                    color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
+                                                    border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)'
+                                                }}
+                                            >
+                                                {t(f.label, { defaultValue: f.label })}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {loading ? (
+                                        <LoadingDots />
+                                    ) : (
+                                        <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                                            <div style={{ maxHeight: '450px', overflowY: 'auto', scrollbarWidth: 'thin' }}>
+                                                {filteredTransactions.map((tx, i) => (
+                                                    <div key={tx.id} onClick={() => handleEditTx(tx)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: i === filteredTransactions.length - 1 ? 'none' : '1px solid var(--glass-border)', transition: 'background 0.2s' }} className="hover-brightness">
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                                            <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontSize: '1.3rem' }}>
+                                                                {getEmojiForDescription(tx.description, getCategoryTheme(tx.category, tx.type).icon)}
+                                                            </div>
+                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                <p style={{ fontWeight: '600', margin: 0, color: 'var(--text-main)' }}>{tx.dynamicDescription || tx.description}</p>
+                                                                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>{tx.virtualDate.split('-').slice(1).reverse().join('/')}</p>
+                                                            </div>
+                                                        </div>
+                                                        <p style={{ fontWeight: '700', color: tx.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)', margin: 0, fontSize: '1.1rem' }}>
+                                                            {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </section>
+                            </div>
+
+                            <div className="column-right" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                                <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <h3 style={{ width: '100%', fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '24px' }}>
+                                        {t('expenses_by_category', { defaultValue: 'Gastos por Categoria' })}
+                                    </h3>
+                                    {totalStatsExpenses > 0 ? (
+                                        <>
+                                            <div style={{ position: 'relative', width: '220px', height: '220px', marginBottom: '32px', borderRadius: '50%', background: pieChartBg, display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 12px 40px rgba(0,0,0,0.1)' }}>
+                                                <div style={{ width: '150px', height: '150px', background: 'var(--bg-color)', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
+                                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('total')}</span>
+                                                    <span style={{ fontSize: '1.3rem', fontWeight: '800' }}>{formatCurrency(totalStatsExpenses)}</span>
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', width: '100%' }}>
+                                                {Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a).slice(0, 6).map(([catId, amount]) => {
+                                                    const cat = CATEGORIAS_DESPESA.find(c => c.id === catId) || { label: catId, color: '#999', icon: '📌' };
+                                                    const pct = Math.round((amount / totalStatsExpenses) * 100);
+                                                    return (
+                                                        <div key={catId} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', background: 'var(--surface-color)', padding: '10px 14px', borderRadius: '16px', border: '1px solid var(--glass-border)', justifyContent: 'space-between' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: cat.color }}></div>
+                                                                <span style={{ fontWeight: '500' }}>{cat.icon} {cat.label}</span>
+                                                            </div>
+                                                            <span style={{ fontWeight: '700', opacity: 0.8 }}>{pct}%</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p style={{ color: 'var(--text-muted)', margin: '60px 0' }}>Sem despesas no mês</p>
+                                    )}
+                                </section>
+
+                                <section className="glass-panel" style={{ padding: '32px' }}>
+                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '32px' }}>Saldos Mensais</h3>
+                                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '220px', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px' }}>
+                                        {yearlyStats.map((stat, i) => {
+                                            const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 5000);
+                                            const h = Math.max(4, (Math.abs(stat.balance) / maxVal) * 100);
+                                            const isCurrent = stat.month === (currentDate.getMonth() + 1);
+                                            return (
+                                                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', height: '100%', justifyContent: 'flex-end' }}>
+                                                    <div style={{ 
+                                                        width: '100%', height: `${h}%`, 
+                                                        background: stat.balance >= 0 ? 'var(--primary-color)' : 'var(--danger-color)',
+                                                        borderRadius: '6px 6px 0 0',
+                                                        opacity: isCurrent ? 1 : 0.4,
+                                                        transition: 'height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                                        position: 'relative'
+                                                    }}>
+                                                    </div>
+                                                    <span style={{ fontSize: '0.75rem', color: isCurrent ? 'var(--primary-dark)' : 'var(--text-muted)', fontWeight: isCurrent ? '700' : '500' }}>{stat.label.charAt(0)}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+
+                        <section className="glass-panel" style={{ padding: '32px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                <h3 style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-main)' }}>Limites de Gastos por Categoria</h3>
+                                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Gerencie seu teto de gastos mensal por área</p>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+                                <button
+                                    onClick={() => {
+                                        setTempLimit({ categoryId: CATEGORIAS_DESPESA[0].id, amount: '' });
+                                        setIsLimitModalOpen(true);
+                                    }}
+                                    style={{ 
+                                        background: 'var(--surface-color)', padding: '20px', borderRadius: '24px', 
+                                        border: '2px dashed var(--primary-color)', color: 'var(--primary-color)',
+                                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+                                        gap: '12px', cursor: 'pointer', transition: 'transform 0.2s',
+                                        minHeight: '160px'
+                                    }}
+                                    className="hover-scale"
+                                >
+                                    <Plus size={32} />
+                                    <span style={{ fontWeight: '700' }}>Adicionar Limite</span>
+                                </button>
+                                {CATEGORIAS_DESPESA.filter(cat => limits[cat.id]).map((cat) => {
+                                    const limitAmount = limits[cat.id];
+                                    const spent = expensesByCategory[cat.id] || 0;
+                                    const pct = Math.min((spent / limitAmount) * 100, 100);
+                                    const isOverLimit = spent > limitAmount;
+
+                                    return (
+                                        <div key={cat.id} style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '24px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: cat.color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.2rem' }}>
+                                                        {cat.icon}
+                                                    </div>
+                                                    <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{t(cat.label, { defaultValue: cat.label })}</span>
+                                                </div>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: isOverLimit ? 'var(--danger-color)' : 'var(--text-muted)' }}>
+                                                    {Math.round((spent / limitAmount) * 100)}%
+                                                </span>
+                                            </div>
+
+                                            <div style={{ width: '100%', height: '10px', background: 'var(--bg-color)', borderRadius: '5px', overflow: 'hidden' }}>
+                                                <div style={{ 
+                                                    width: `${pct}%`, height: '100%', 
+                                                    background: isOverLimit ? 'var(--danger-color)' : cat.color,
+                                                    transition: 'width 1s ease-out'
+                                                }} />
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '600' }}>
+                                                <span style={{ color: isOverLimit ? 'var(--danger-color)' : 'var(--text-main)' }}>{formatCurrency(spent)}</span>
+                                                <span style={{ color: 'var(--text-muted)' }}>{formatCurrency(limitAmount)}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    </div>
                 )}
             </div>
 

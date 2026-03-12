@@ -388,10 +388,6 @@ body.modal-open .bottom-nav {
         border-radius: 2px;
     }
 
-    /* Pulse animation for Mic */
-    .pulse-animation {
-        animation: fabPulse 2s infinite;
-    }
 
     @keyframes fabPulse {
         0% { box-shadow: 0 0 0 0 rgba(27, 69, 32, 0.4); }

@@ -122,11 +122,10 @@ const Layout = () => {
 
                         <div className="nav-center-item">
                             <button
-                                className={`ai-mic-btn ${isListening ? 'listening' : ''}`}
+                                className={`ai-mic-btn ${isListening ? 'active' : ''}`}
                                 onClick={() => handleAiClick('voice')}
                                 aria-label={t('ai_mic_label')}
                             >
-                                <div className="mystical-aura"></div>
                                 <Mic size={32} color="white" strokeWidth={2.5} />
                             </button>
                         </div>
