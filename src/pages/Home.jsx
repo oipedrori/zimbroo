@@ -16,11 +16,9 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { haptic } from '../utils/haptic';
 
 const Home = () => {
-    const { currentUser } = useAuth();
-    const { setIsAiActive } = useOutletContext();
-    const { t, formatCurrency, locale } = useI18n();
-    const { logout } = useAuth();
-    const { changeLocale, currency, changeCurrency } = useI18n();
+    const { t, formatCurrency, locale, changeLocale, currency, changeCurrency } = useI18n();
+    const { logout, deleteAccount } = useAuth();
+    const navigate = Link ? null : () => {}; // Link handle navigation
 
     // --- State Declarations ---
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -45,6 +43,8 @@ const Home = () => {
     const [aiSuggestion, setAiSuggestion] = useState(null);
     const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
     const [theme, setTheme] = useState(localStorage.getItem('zimbroo_theme') || 'system');
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
     const [tempLimit, setTempLimit] = useState({ categoryId: '', amount: '' });
     const [limits, setLimits] = useState(() => {
@@ -1077,14 +1077,20 @@ const Home = () => {
                         }}>
                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                    <div style={{ width: '50px', height: '50px', borderRadius: '16px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-color)' }}>
+                                {/* User info now links to Profile */}
+                                <Link 
+                                    to="/profile" 
+                                    onClick={closeSidebar}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '16px', textDecoration: 'none', color: 'inherit' }}
+                                >
+                                    <div style={{ width: '50px', height: '50px', border: '1px solid var(--glass-border)', borderRadius: '16px', background: 'var(--surface-color)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-color)' }}>
                                         <User size={24} />
                                     </div>
                                     <div>
                                         <h2 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>{currentUser?.displayName || 'Perfil'}</h2>
                                         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{currentUser?.email}</p>
                                     </div>
-                                </div>
+                                </Link>
                                 <button onClick={closeSidebar} style={{ padding: '8px', color: 'var(--text-muted)', border: 'none', background: 'transparent', cursor: 'pointer' }}>
                                     <X size={24} />
                                 </button>
@@ -1164,24 +1170,100 @@ const Home = () => {
                                     </div>
                                 </div>
 
-                                {/* Logout */}
-                                <button 
-                                    onClick={logout}
-                                    style={{ 
-                                        display: 'flex', alignItems: 'center', gap: '14px', padding: '20px', 
-                                        background: 'rgba(239, 68, 68, 0.05)', borderRadius: '24px', 
-                                        border: '1px solid rgba(239, 68, 68, 0.1)', cursor: 'pointer',
-                                        color: 'var(--danger-color)', fontWeight: '700', marginTop: '20px'
-                                    }}
-                                >
-                                    <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '8px', borderRadius: '10px' }}><LogOut size={20} /></div>
-                                    {t('logout')}
-                                </button>
+                                {/* Logout & Delete Account Area */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '20px' }}>
+                                    <button 
+                                        onClick={logout}
+                                        style={{ 
+                                            display: 'flex', alignItems: 'center', gap: '14px', padding: '18px 20px', 
+                                            background: 'rgba(239, 68, 68, 0.05)', borderRadius: '20px', 
+                                            border: '1px solid rgba(239, 68, 68, 0.1)', cursor: 'pointer',
+                                            color: 'var(--danger-color)', fontWeight: '700'
+                                        }}
+                                    >
+                                        <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '8px', borderRadius: '10px' }}><LogOut size={20} /></div>
+                                        {t('logout')}
+                                    </button>
+
+                                    <button 
+                                        onClick={() => setShowDeleteConfirm(true)}
+                                        style={{ 
+                                            display: 'flex', alignItems: 'center', gap: '14px', padding: '18px 20px', 
+                                            background: 'transparent', borderRadius: '20px', 
+                                            border: '1px solid var(--glass-border)', cursor: 'pointer',
+                                            color: 'var(--danger-color)', fontWeight: '600', fontSize: '0.9rem'
+                                        }}
+                                    >
+                                        <div style={{ padding: '8px', borderRadius: '10px' }}><Trash2 size={20} /></div>
+                                        Excluir Conta
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </>
                 )}
-            </div>
+
+                {/* Delete Account Confirmation Overlay */}
+                {showDeleteConfirm && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)',
+                        display: 'flex', justifyContent: 'center', alignItems: 'center',
+                        padding: '24px', zIndex: 20000
+                    }}>
+                        <div style={{
+                            background: 'var(--bg-color)', padding: '32px 24px',
+                            borderRadius: '32px', border: '1px solid var(--glass-border)',
+                            width: '100%', maxWidth: '340px', textAlign: 'center',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                            animation: 'bubblePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+                        }}>
+                            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'var(--danger-light)', color: 'var(--danger-color)', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto 20px' }}>
+                                <Trash2 size={32} />
+                            </div>
+                            <h2 style={{ fontSize: '1.4rem', marginBottom: '12px', color: 'var(--text-main)', fontFamily: "'Solway', serif" }}>Tem certeza?</h2>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '24px', lineHeight: '1.5' }}>
+                                Esta ação excluirá todos os seus dados permanentemente.
+                            </p>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <button
+                                    onClick={async () => {
+                                        setIsDeleting(true);
+                                        try {
+                                            await deleteAccount();
+                                        } catch (e) {
+                                            alert(e.message);
+                                        } finally {
+                                            setIsDeleting(false);
+                                            setShowDeleteConfirm(false);
+                                        }
+                                    }}
+                                    disabled={isDeleting}
+                                    style={{
+                                        height: '56px', borderRadius: '16px',
+                                        background: 'var(--danger-color)', color: 'white',
+                                        fontWeight: '700', fontSize: '1rem', border: 'none'
+                                    }}
+                                >
+                                    {isDeleting ? 'Excluindo...' : 'Sim, excluir permanentemente'}
+                                </button>
+                                <button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    disabled={isDeleting}
+                                    style={{
+                                        height: '56px', borderRadius: '16px',
+                                        background: 'var(--primary-light)', color: 'var(--primary-darker)',
+                                        fontWeight: '700', fontSize: '1rem', border: 'none'
+                                    }}
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Modal Dinâmico de Limite */}
                 {isLimitModalOpen && (
@@ -1326,6 +1408,7 @@ const Home = () => {
                         `}</style>
                     </>
                 )}
+            </div>
         </>
     );
 };
