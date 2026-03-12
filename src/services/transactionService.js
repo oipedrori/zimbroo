@@ -166,16 +166,19 @@ export const prepareMonthlyTransactions = (allTxs, targetMonth) => {
 
         return false;
     }).map(tx => {
+        // Retornar uma NOVA referência para evitar mutação em loops (como o de estatísticas anuais)
+        const txCopy = { ...tx };
+        
         // Normalizar a data virtualmente para cair dentro do mes buscado, caso seja recorrente,
         // para ordenar corretamente nos extratos (por exemplo, assumindo o mesmo dia do mes original)
-        if (tx.repeatType === 'recurring' || tx.repeatType === 'installment') {
-            const originalDay = tx.date.split('-')[2];
+        if (txCopy.repeatType === 'recurring' || txCopy.repeatType === 'installment') {
+            const originalDay = txCopy.date.split('-')[2];
             // Garante que o mes/ano corresponde ao targetMonth
-            tx.virtualDate = `${targetMonth}-${originalDay}`;
+            txCopy.virtualDate = `${targetMonth}-${originalDay}`;
         } else {
-            tx.virtualDate = tx.date;
+            txCopy.virtualDate = txCopy.date;
         }
-        return tx;
+        return txCopy;
     }).sort((a, b) => new Date(b.virtualDate) - new Date(a.virtualDate));
 };
 
