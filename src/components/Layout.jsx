@@ -71,45 +71,6 @@ const Layout = () => {
 
     return (
         <div className="app-container">
-            {/* Sidebar para Desktop */}
-            <aside className="desktop-sidebar">
-                <div className="sidebar-header">
-                    <img src="/Z.png" alt="Zimbroo" className="sidebar-logo" />
-                    <h1 className="sidebar-title">Zimbroo</h1>
-                </div>
-
-                <nav className="sidebar-nav">
-                    {NavLinks.map(link => (
-                        <NavLink 
-                            key={link.path} 
-                            to={link.path} 
-                            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                        >
-                            {link.icon}
-                            <span>{link.label}</span>
-                        </NavLink>
-                    ))}
-                </nav>
-
-                <div className="sidebar-footer">
-                    <button 
-                        className="sidebar-add-btn"
-                        onClick={() => setIsManualModalOpen(true)}
-                    >
-                        <Plus size={20} />
-                        <span>{t('add_transaction')}</span>
-                    </button>
-                    
-                    <button 
-                        className="sidebar-ai-btn"
-                        onClick={() => handleAiClick('voice')}
-                    >
-                        <Mic size={20} />
-                        <span>IA Zimbro</span>
-                    </button>
-                </div>
-            </aside>
-
             {/* O conteúdo das páginas (Home, Stats) será renderizado aqui */}
             <main
                 className="main-content"

@@ -353,3 +353,38 @@ body.modal-open .bottom-nav {
   0%, 80%, 100% { transform: scale(0); }
   40% { transform: scale(1); }
 }
+
+/* === Bento Dashboard & Desktop FABs === */
+@media (min-width: 1024px) {
+    .desktop-bento-container section {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .desktop-bento-container section:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    /* Floating Action Buttons */
+    .desktop-fab {
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .desktop-fab:hover {
+        transform: scale(1.1) translateY(-5px);
+        filter: brightness(1.1);
+    }
+
+    .desktop-fab:active {
+        transform: scale(0.95);
+    }
+
+    /* Filters refinement */
+    .filters-row::-webkit-scrollbar {
+        height: 4px;
+    }
+    .filters-row::-webkit-scrollbar-thumb {
+        background: var(--glass-border);
+        border-radius: 2px;
+    }
+}
