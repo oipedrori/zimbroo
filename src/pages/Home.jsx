@@ -9,7 +9,7 @@ import TransactionModal from '../components/TransactionModal';
 import SwipeableItem from '../components/SwipeableItem';
 import LoadingDots from '../components/LoadingDots';
 import { Plus, ChevronLeft, ChevronRight, User, Pointer, X, Trash2, PieChart, BarChart2, Shield, Mic, Keyboard, Moon, Globe, DollarSign, LogOut } from 'lucide-react';
-import { Link, useOutletContext } from 'react-router-dom';
+import { Link, useOutletContext, useNavigate } from 'react-router-dom';
 import { getEmojiForDescription } from '../utils/emojiUtils';
 import { prepareMonthlyTransactions } from '../services/transactionService';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -19,6 +19,7 @@ const Home = () => {
     const { currentUser, logout, deleteAccount } = useAuth();
     const { setIsAiActive } = useOutletContext();
     const { t, formatCurrency, locale, changeLocale, currency, changeCurrency } = useI18n();
+    const navigate = useNavigate();
 
     // --- State Declarations ---
     const [currentDate, setCurrentDate] = useState(new Date());
