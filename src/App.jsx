@@ -90,6 +90,7 @@ const AppRoutes = () => {
           <Route path="profile" element={<Profile />} />
           <Route path="notion-import" element={<NotionImport />} />
           <Route path="notion-callback" element={<NotionImport />} />
+          <Route path="mic" element={<Home />} />
         </Route>
       </Routes>
     </React.Suspense>

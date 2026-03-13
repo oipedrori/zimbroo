@@ -45,11 +45,27 @@ const Layout = () => {
 
 
     useEffect(() => {
-        if (location.hash === '#voice') {
+        if (location.hash === '#voice' || location.pathname === '/mic') {
             setIsAiActive(true);
-            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            
+            // Se for rota /mic, trocamos o ícone dinamicamente para facilitar o bookmark
+            if (location.pathname === '/mic') {
+                document.title = "Zimbroo Mic";
+                const link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+                link.type = 'image/png';
+                link.rel = 'apple-touch-icon';
+                link.href = '/mic-shortcut.png';
+                document.getElementsByTagName('head')[0].appendChild(link);
+            }
+
+            if (location.hash === '#voice') {
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+        } else {
+            // Restore default title if needed
+            document.title = "Zimbroo";
         }
-    }, [location.hash]);
+    }, [location.hash, location.pathname]);
 
     const handleAiClick = (mode = 'voice') => {
         setIsTextMode(mode === 'text');

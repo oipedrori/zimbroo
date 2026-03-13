@@ -23,10 +23,10 @@
             "name": "Nova Transação por Voz",
             "short_name": "Falar gasto",
             "description": "Adicionar um registro financeiro com a Inteligência Artificial",
-            "url": "/#voice",
+            "url": "/mic",
             "icons": [
                 {
-                    "src": "/favicon.png",
+                    "src": "/mic-shortcut.png",
                     "sizes": "192x192"
                 }
             ]
