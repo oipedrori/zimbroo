@@ -290,10 +290,13 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                     let totalAdded = 0;
                     for (const tx of txs) {
                         const finalDate = tx.date ? tx.date : format(new Date(), 'yyyy-MM-dd');
+                        // Capitalizar primeira letra da descrição
+                        const capitalizedDescription = tx.description.charAt(0).toUpperCase() + tx.description.slice(1);
+                        
                         await addTx({
                             type: tx.type,
                             amount: parseFloat(tx.amount),
-                            description: tx.description,
+                            description: capitalizedDescription,
                             category: tx.category,
                             date: finalDate,
                             repeatType: tx.repeatType,
@@ -376,9 +379,9 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                 <X size={28} />
             </button>
 
-            {/* Manual Mic Toggle (Center) - Hidden in Text Mode to avoid overlap */}
+            {/* Manual Mic Toggle (Center) - Fixed at bottom center */}
             {!isManualTextMode && (
-                <div style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 3001 }}>
+                <div style={{ position: 'fixed', bottom: '60px', left: '0', right: '0', zIndex: 3001, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <button
                         className={`ai-mic-btn ${isListening ? 'listening active' : ''}`}
                         onClick={toggleListen}

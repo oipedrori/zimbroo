@@ -71,60 +71,34 @@ const NotionImport = () => {
         setLoading(true);
         setError(null);
 
-        // Timeout de segurança para a UI (15 segundos)
-        const uiTimeout = setTimeout(() => {
-            setLoading(false);
-            if (foundDbs.length === 0) {
-                setError("A busca demorou demais. Verifique sua internet ou tente novamente.");
-            }
-        }, 15000);
-
         try {
-            console.log("Iniciando descoberta automática...");
-
-            // Tenta validar o token primeiro
-            const ws = await getNotionWorkspaceInfo(notionToken);
+            console.log("Buscando bases no Notion...");
+            const ws = await getNotionWorkspaceInfo(notionToken).catch(() => null);
             setWorkspaceInfo(ws);
 
             const results = await searchNotionDatabases(notionToken);
-            setDebugItems(results); // Guarda para o debug do usuário
+            setDebugItems(results);
 
-            // 1. Mostra logo o que veio na busca direta (MUITO mais rápido)
             const directDbs = results.filter(item => item.object === 'database');
+            
+            // Auto identification
+            directDbs.forEach(db => {
+                const title = (db.title?.[0]?.plain_text || '').toLowerCase();
+                if (title.includes('gastos') || title.includes('despesa') || title.includes('expense')) {
+                    if (!expenseDbId) assignDb(db.id, 'expense');
+                } else if (title.includes('receita') || title.includes('ganho') || title.includes('income')) {
+                    if (!incomeDbId) assignDb(db.id, 'income');
+                }
+            });
+
             setFoundDbs(directDbs);
 
-            // Sucesso na busca básica: tira o loading
-            clearTimeout(uiTimeout);
-            setLoading(false);
-
-            // 2. Busca profunda em background (não trava mais o spinner)
-            const pages = results.filter(item => item.object === 'page');
-            if (pages.length > 0) {
-                setSearchingBackground(true);
-                // Varremos as páginas autorizadas (as 5 primeiras)
-                for (const page of pages.slice(0, 5)) {
-                    const nested = await findDatabasesOnPage(notionToken, page.id).catch(() => []);
-                    if (nested.length > 0) {
-                        setFoundDbs(prev => {
-                            const combined = [...prev, ...nested];
-                            // Remove duplicatas
-                            const unique = Array.from(new Map(combined.map(d => [d.id, d])).values());
-                            return unique;
-                        });
-                    }
-                }
-                setSearchingBackground(false);
-            }
-
-            // A verificação final de erro (vazio) só faz sentido se realmente nada for encontrado após tudo
-            // Mas para o usuário não ver erro "falso", só mostramos se realmente não houver nada após o scan rápido
-            if (directDbs.length === 0 && results.length === 0) {
-                setError("O Notion não retornou nenhum item. Você já selecionou as páginas no checklist da autorização?");
+            if (directDbs.length === 0) {
+                setError("Nenhuma tabela encontrada. Certifique-se de que autorizou o acesso às tabelas corretas no Notion.");
             }
         } catch (e) {
-            clearTimeout(uiTimeout);
-            console.error("Erro na descoberta automática:", e);
-            setError(`Erro: ${e.message}`);
+            console.error("Discovery failed:", e);
+            setError(`Erro na conexão: ${e.message}`);
         } finally {
             setLoading(false);
         }
@@ -239,13 +213,21 @@ const NotionImport = () => {
         let txsI = [];
 
         try {
-            if (expenseDbId) txsE = await fetchNotionTransactions(notionToken, expenseDbId);
-            if (incomeDbId) txsI = await fetchNotionTransactions(notionToken, incomeDbId);
+            // Se já tivermos os IDs, vamos direto
+            if (expenseDbId) {
+                console.log("Buscando despesas...");
+                txsE = await fetchNotionTransactions(notionToken, expenseDbId);
+            }
+            if (incomeDbId) {
+                console.log("Buscando receitas...");
+                txsI = await fetchNotionTransactions(notionToken, incomeDbId);
+            }
 
             const total = txsE.length + txsI.length;
-            if (total === 0) throw new Error("Não encontramos transações para importar nestas bases.");
+            if (total === 0) throw new Error("Não encontramos transações pendentes para importar.");
 
             let current = 0;
+            // Batch processing loosely to show progress
             for (let tx of txsE) {
                 await addTransaction(currentUser.uid, { ...tx, type: 'expense' });
                 current++;
@@ -259,12 +241,22 @@ const NotionImport = () => {
 
             setSyncStats({ expenses: txsE.length, incomes: txsI.length });
             setStep(4);
+            haptic.success();
         } catch (err) {
-            setError(err.message);
+            console.error("Notion Sync Error:", err);
+            setError(err.message || "Erro na sincronização. Verifique suas tabelas no Notion.");
         } finally {
             setLoading(false);
         }
     };
+
+    // Auto-start discovery if connected
+    useEffect(() => {
+        if (notionToken && step === 2 && !hasInitialSearchDone && !loading) {
+            setHasInitialSearchDone(true);
+            refreshDatabases();
+        }
+    }, [notionToken, step]);
 
     return (
         <div style={{ padding: '24px', maxWidth: '600px', margin: '0 auto', minHeight: '100vh', paddingBottom: '120px' }}>

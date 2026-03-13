@@ -328,19 +328,20 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
         }
         .modal-content {
           width: 100%;
-          background: var(--bg-color); /* Usando bg-color que é opaco */
+          background: var(--bg-color);
           border-top-left-radius: 32px;
           border-top-right-radius: 32px;
           padding: 24px;
           padding-top: 32px;
-          padding-bottom: calc(40px + env(safe-area-inset-bottom, 20px));
-          max-height: 85vh;
+          padding-bottom: calc(60px + env(safe-area-inset-bottom, 20px));
+          max-height: 92vh;
           overflow-y: auto;
           box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
           overscroll-behavior: contain;
           position: relative;
           transform: translateY(100%);
-          transition: transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1);
+          transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+          z-index: 10002;
         }
         .modal-content.slide-up {
           transform: translateY(0);

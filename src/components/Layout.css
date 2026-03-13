@@ -77,8 +77,9 @@ body.modal-open .bottom-blur-layer {
     transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Hide FAB when modal is open */
-body.modal-open .bottom-nav {
+/* Hide FAB with vertical slide when modal or AI is open */
+body.modal-open .bottom-nav,
+body.hide-ai-btn .bottom-nav {
     opacity: 0;
     transform: translate(-50%, 150px);
     pointer-events: none;

@@ -71,7 +71,7 @@ const ConfirmDialog = ({
                                 onClose();
                             }}
                         >
-                            {confirmLabel || t('confirm')}
+                            {confirmLabel || "Confirmar"}
                         </button>
                     )}
                     
@@ -79,7 +79,7 @@ const ConfirmDialog = ({
                         className="confirm-btn confirm-btn-outline"
                         onClick={onClose}
                     >
-                        {cancelLabel || t('cancel')}
+                        {cancelLabel || "Cancelar"}
                     </button>
                 </div>
             </div>
@@ -97,7 +97,7 @@ const ConfirmDialog = ({
                     transition: background 0.3s ease;
                 }
                 .confirm-overlay.visible {
-                    background: rgba(0,0,0,0.6);
+                    background: rgba(0,0,0,0.7);
                 }
                 .confirm-content {
                     width: 100%;
@@ -144,6 +144,7 @@ const ConfirmDialog = ({
                     display: flex;
                     flex-direction: column;
                     gap: 12px;
+                    margin-bottom: 20px; /* Adiciona margem na base para evitar que fique colado no fundo no mobile */
                 }
                 .confirm-btn {
                     width: 100%;

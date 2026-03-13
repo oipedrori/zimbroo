@@ -502,10 +502,11 @@ const Home = () => {
                 </div>
             )}
 
-            <div
-                className={`page-container animate-fade-in`}
-                style={{ paddingBottom: '120px', animation: 'slideUp 0.3s forwards' }}
-            >
+            {!isFlipped && (
+                <div
+                    className={`page-container animate-fade-in`}
+                    style={{ paddingBottom: isDesktop ? '120px' : '180px', animation: 'slideUp 0.3s forwards' }}
+                >
                 {/* Header (Now always visible but behaves differently on desktop) */}
                 <header style={{ 
                     display: 'flex', 
@@ -1043,6 +1044,10 @@ const Home = () => {
                     from { opacity: 1; }
                     to { opacity: 0; }
                 }
+                @keyframes slideOutDown {
+                    from { transform: translateY(0); }
+                    to { transform: translateY(100%); }
+                }
                 .pointer-icon {
                     animation: subtlePulse 5s infinite ease-in-out;
                 }
@@ -1068,12 +1073,27 @@ const Home = () => {
                         
                         {/* Drawer Content */}
                         <div style={{
-                            position: 'fixed', top: 0, left: 0,
-                            width: isDesktop ? '360px' : '85%', height: '100%', background: 'var(--bg-color)',
-                            boxShadow: '10px 0 50px rgba(0,0,0,0.15)', zIndex: 11001,
-                            animation: isSidebarClosing ? 'slideOutLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                            padding: isDesktop ? '32px' : '24px', display: 'flex', flexDirection: 'column', overflowY: 'auto',
-                            overscrollBehavior: 'contain'
+                            position: 'fixed', 
+                            top: isDesktop ? 0 : 'auto', 
+                            bottom: 0, 
+                            left: 0,
+                            right: isDesktop ? 'auto' : 0,
+                            width: isDesktop ? '360px' : '100%', 
+                            height: isDesktop ? '100%' : 'auto', 
+                            maxHeight: isDesktop ? 'none' : '90dvh',
+                            background: 'var(--bg-color)',
+                            boxShadow: '0 -10px 50px rgba(0,0,0,0.15)', 
+                            zIndex: 11001,
+                            borderRadius: isDesktop ? '0' : '32px 32px 0 0',
+                            animation: isDesktop 
+                                ? (isSidebarClosing ? 'slideOutLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards')
+                                : (isSidebarClosing ? 'slideOutDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'),
+                            padding: isDesktop ? '32px' : '32px 24px 120px 24px', 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            overflowY: 'auto',
+                            overscrollBehavior: 'contain',
+                            borderTop: isDesktop ? 'none' : '1px solid var(--glass-border)'
                         }}>
                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -1095,10 +1115,12 @@ const Home = () => {
                                     <X size={24} />
                                 </button>
                             </div>
+                        </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 {/* Notion Sync Button */}
                                 <button 
+                                    onClick={() => { closeSidebar(); navigate('/notion-import'); }}
                                     style={{ 
                                         background: '#000', color: 'white', padding: '16px 20px', borderRadius: '20px', 
                                         display: 'flex', alignItems: 'center', gap: '14px', border: 'none', cursor: 'pointer',
@@ -1106,7 +1128,7 @@ const Home = () => {
                                     }}
                                 >
                                     <img src="/notion_logo.png" style={{ width: '20px', height: '20px' }} alt="Notion" />
-                                    Sincronizar com Notion
+                                    Integração Notion
                                 </button>
 
                                 {/* Theme Section */}
@@ -1171,7 +1193,7 @@ const Home = () => {
                                 </div>
 
                                 {/* Logout & Delete Account Area */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '20px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: 'auto', paddingTop: '40px', paddingBottom: '40px' }}>
                                     <button 
                                         onClick={logout}
                                         style={{ 
@@ -1409,8 +1431,9 @@ const Home = () => {
                     </>
                 )}
             </div>
-        </>
-    );
+        )}
+    </>
+);
 };
 
 export default Home;
