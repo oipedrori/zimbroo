@@ -47,7 +47,10 @@ const NotionImport = () => {
             const response = await fetch('/api/notion-token', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code })
+                body: JSON.stringify({ 
+                    code, 
+                    redirect_uri: NOTION_REDIRECT_URI 
+                })
             });
             
             let data;

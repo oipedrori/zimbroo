@@ -10,6 +10,10 @@ export default defineConfig({
         target: 'https://api.notion.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/notion-api/, '/v1'),
+      },
+      '/api': {
+        target: 'https://zimbroo.vercel.app',
+        changeOrigin: true,
       }
     }
   }
