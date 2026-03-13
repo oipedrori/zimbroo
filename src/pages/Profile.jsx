@@ -12,6 +12,7 @@ const Profile = () => {
     // States
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
     // Theme logic
     const [theme, setTheme] = useState(localStorage.getItem('zimbroo_theme') || 'system');
@@ -45,6 +46,7 @@ const Profile = () => {
             setShowDeleteConfirm(false);
         } finally {
             setIsDeleting(false);
+            setDeleteConfirmText('');
         }
     };
 
@@ -182,32 +184,41 @@ const Profile = () => {
             </div>
 
             {/* Account Management (Logout & Delete) */}
-            <section style={{ background: 'var(--surface-color)', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', marginTop: '24px' }}>
+            <section style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '32px' }}>
                 <div
                     onClick={logout}
                     style={{ 
-                        display: 'flex', alignItems: 'center', padding: '18px 20px', cursor: 'pointer',
-                        borderBottom: '1px solid var(--glass-border)'
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '18px 20px', cursor: 'pointer',
+                        background: 'var(--surface-color)', borderRadius: '20px', border: '1px solid var(--glass-border)',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.03)'
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--danger-color)' }}>
+                        <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '10px', background: 'var(--primary-light)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-darker)' }}>
                             <LogOut size={20} />
                         </div>
-                        <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{t('logout')}</span>
+                        <span style={{ fontWeight: '600', fontSize: '0.95rem', color: 'var(--text-main)' }}>{t('logout')}</span>
                     </div>
+                    <ArrowRight size={18} color="var(--text-muted)" opacity={0.5} />
                 </div>
 
                 <div
                     onClick={() => setShowDeleteConfirm(true)}
-                    style={{ display: 'flex', alignItems: 'center', padding: '18px 20px', cursor: 'pointer' }}
+                    style={{ 
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '18px 20px', cursor: 'pointer',
+                        background: 'var(--surface-color)', borderRadius: '20px', border: '1px solid var(--glass-border)',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.03)'
+                    }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '10px', background: 'rgba(239, 68, 68, 0.05)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--danger-color)' }}>
+                        <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--danger-color)' }}>
                             <Trash2 size={20} />
                         </div>
-                        <span style={{ fontWeight: '600', color: 'var(--danger-color)' }}>Excluir Minha Conta</span>
+                        <span style={{ fontWeight: '600', fontSize: '0.95rem', color: 'var(--danger-color)' }}>Excluir Minha Conta</span>
                     </div>
+                    <ArrowRight size={18} color="var(--danger-color)" opacity={0.5} />
                 </div>
             </section>
 
@@ -231,24 +242,44 @@ const Profile = () => {
                             <Trash2 size={32} />
                         </div>
                         <h2 style={{ fontSize: '1.4rem', marginBottom: '12px', color: 'var(--text-main)', fontFamily: "'Solway', serif" }}>Tem certeza?</h2>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '24px', lineHeight: '1.5' }}>
-                            Esta ação é <b>permanente</b> e não pode ser desfeita. Todos os seus dados serão apagados.
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '20px', lineHeight: '1.5' }}>
+                            Esta ação é <b>permanente</b>. Todos os seus dados serão apagados.
                         </p>
+
+                        <div style={{ marginBottom: '24px' }}>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                                Digite <b>DELETE</b> para confirmar:
+                            </p>
+                            <input 
+                                type="text"
+                                value={deleteConfirmText}
+                                onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                                placeholder="DELETE"
+                                style={{
+                                    width: '100%', padding: '14px', borderRadius: '12px',
+                                    border: '1px solid var(--glass-border)', background: 'var(--bg-color)',
+                                    color: 'var(--text-main)', fontSize: '1rem', fontWeight: '700',
+                                    textAlign: 'center', outline: 'none'
+                                }}
+                            />
+                        </div>
                         
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             <button
                                 onClick={handleDeleteAccount}
-                                disabled={isDeleting}
+                                disabled={isDeleting || deleteConfirmText !== 'DELETE'}
                                 style={{
                                     height: '56px', borderRadius: '16px',
-                                    background: 'var(--danger-color)', color: 'white',
-                                    fontWeight: '700', fontSize: '1rem', border: 'none'
+                                    background: deleteConfirmText === 'DELETE' ? 'var(--danger-color)' : 'var(--glass-border)', 
+                                    color: deleteConfirmText === 'DELETE' ? 'white' : 'var(--text-muted)',
+                                    fontWeight: '700', fontSize: '1rem', border: 'none',
+                                    transition: 'all 0.3s'
                                 }}
                             >
                                 {isDeleting ? 'Excluindo...' : 'Sim, excluir permanentemente'}
                             </button>
                             <button
-                                onClick={() => setShowDeleteConfirm(false)}
+                                onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}
                                 disabled={isDeleting}
                                 style={{
                                     height: '56px', borderRadius: '16px',
