@@ -550,7 +550,8 @@ const NotionImport = () => {
                                 background: 'var(--primary-color)', color: 'white',
                                 fontWeight: '800', fontSize: '1.1rem', border: 'none',
                                 display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px',
-                                opacity: (!expenseDbId && !incomeDbId) ? 0.6 : 1
+                                opacity: (!expenseDbId && !incomeDbId) ? 0.6 : 1,
+                                marginBottom: '40px'
                             }}
                         >
                             {loading ? `${progress}% Importando...` : `Importar Transações de ${new Date().getFullYear()}`}
