@@ -65,8 +65,10 @@ const AI_SUGGESTIONS = [
 const AiFace = () => (
     <div className="ai-face-container">
         <div className="ai-face">
-            <div className="ai-eye">.</div>
-            <div className="ai-eye">.</div>
+            <div className="ai-eyes-row">
+                <div className="ai-eye">.</div>
+                <div className="ai-eye">.</div>
+            </div>
             <div className="ai-mouth">)</div>
         </div>
     </div>
@@ -447,10 +449,6 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                             {t('listening_now', { defaultValue: 'OUVINDO...' })}
                         </p>
                     )}
-                    {!isListening && (
-                         <p style={{ color: 'white', fontSize: '0.8rem', fontWeight: '700', marginTop: '12px', textAlign: 'center', opacity: 0.7 }}>
-                            TOQUE NO X PARA FECHAR
-                        </p>
                     )}
                 </div>
             )}
@@ -479,7 +477,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'center', height: '100%' }}>
                                 <div style={{ textAlign: 'center', marginTop: '10px', flexShrink: 0 }}>
                                     <h3 style={{ color: 'white', fontSize: '1.4rem', fontWeight: '600', marginBottom: '8px', opacity: 0.9 }}>
-                                        {t('ai_type_details', { defaultValue: 'Detalhes da movimentação' })}
+                                        {t('ai_ready', { defaultValue: 'Zimbro está pronto para te ajudar' })}
                                     </h3>
                                     <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>
                                         {t('ai_processing_hint', { defaultValue: 'A Inteligência Artificial irá processar as informações' })}
@@ -538,7 +536,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center' }}>
                                 <div className="ai-status-header">
                                     <h3 style={{ color: 'white', fontSize: '1.4rem', fontWeight: '600', marginBottom: '8px', opacity: 0.9 }}>
-                                        {isListening ? t('listening_now', { defaultValue: 'Ouvindo...' }) : t('ai_ready', { defaultValue: 'Pronto para ajudar' })}
+                                        {isListening ? t('listening_now', { defaultValue: 'Ouvindo...' }) : t('ai_ready', { defaultValue: 'Zimbro está pronto para te ajudar' })}
                                     </h3>
                                     <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>
                                         {isListening ? t('ai_speak_now', { defaultValue: 'Fale os detalhes da movimentação' }) : t('ai_hint_voice', { defaultValue: 'Toque para falar ou digite os detalhes' })}
@@ -862,6 +860,12 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
             color: white;
             line-height: 0.5;
             font-weight: 800;
+        }
+
+        .ai-eyes-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: -15px;
         }
 
         .ai-eye {
