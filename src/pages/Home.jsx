@@ -1237,7 +1237,8 @@ const Home = () => {
                                         <select 
                                             value={locale} 
                                             onChange={(e) => changeLocale(e.target.value)}
-                                            style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'var(--bg-color)', border: '1px solid var(--glass-border)', color: 'var(--text-main)', fontSize: '0.9rem' }}
+                                            className="form-input"
+                                            style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'var(--bg-color)', color: 'var(--text-main)', fontSize: '0.9rem' }}
                                         >
                                             <option value="pt">Português</option>
                                             <option value="en">English</option>
@@ -1254,7 +1255,8 @@ const Home = () => {
                                         <select 
                                             value={currency} 
                                             onChange={(e) => changeCurrency(e.target.value)}
-                                            style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'var(--bg-color)', border: '1px solid var(--glass-border)', color: 'var(--text-main)', fontSize: '0.9rem' }}
+                                            className="form-input"
+                                            style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'var(--bg-color)', color: 'var(--text-main)', fontSize: '0.9rem' }}
                                         >
                                             <option value="BRL">R$ Real</option>
                                             <option value="USD">$ Dollar</option>
@@ -1426,9 +1428,8 @@ const Home = () => {
                                             className="form-input"
                                             style={{
                                                 width: '100%', padding: '16px 16px 16px 45px', borderRadius: '16px',
-                                                background: 'var(--surface-color)', border: '1.5px solid var(--glass-border)',
-                                                color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: '700', outline: 'none',
-                                                transition: 'all 0.3s'
+                                                background: 'var(--surface-color)',
+                                                color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: '700', outline: 'none'
                                             }}
                                             autoFocus
                                         />
