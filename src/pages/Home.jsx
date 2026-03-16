@@ -1105,7 +1105,7 @@ const Home = () => {
                             onClick={closeSidebar}
                             style={{ 
                                 position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-                                background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)',
+                                background: 'rgba(27, 69, 32, 0.4)', backdropFilter: 'blur(8px)',
                                 zIndex: 11000, 
                                 transition: 'all 0.3s ease',
                                 animation: isSidebarClosing ? 'fadeOut 0.3s forwards' : 'fadeIn 0.3s forwards' 
@@ -1309,7 +1309,7 @@ const Home = () => {
                             onClick={() => setIsLimitModalOpen(false)}
                             style={{ 
                                 position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-                                background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)',
+                                background: 'rgba(27, 69, 32, 0.4)', backdropFilter: 'blur(8px)',
                                 zIndex: 12000, transition: 'all 0.3s ease' 
                             }}
                         />

@@ -152,7 +152,7 @@ const ConfirmDialog = ({
                     -webkit-backdrop-filter: blur(0px);
                 }
                 .confirm-overlay.visible {
-                    background: rgba(0,0,0,0.4);
+                    background: rgba(27, 69, 32, 0.4);
                     backdrop-filter: blur(8px);
                     -webkit-backdrop-filter: blur(8px);
                 }

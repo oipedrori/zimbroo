@@ -26,5 +26,22 @@ export const AI_BUBBLE_PHRASES = [
     "Dinheiro sob controle é paz de espírito. 🧘‍♂️",
     "Cada registro é um tijolinho no seu castelo financeiro.",
     "Nada de 'gastos fantasmas'! Mantenha tudo no radar. 👻",
-    "A clareza financeira te dá liberdade."
+    "A clareza financeira te dá liberdade.",
+    "No mobile, toque nos filtros de 'Receitas' ou 'Despesas' para organizar sua visão.",
+    "Precisa de um resumo? Pergunte 'Quanto sobrou esse mês?'.",
+    "Você pode me pedir para 'Adicionar um bônus de 500 reais' como receita.",
+    "Eu aprendo com você: se eu errar uma categoria, pode me corrigir.",
+    "No desktop, você pode ver mais detalhes de cada categoria passando o mouse.",
+    "Tente dizer 'Quanto gastei no mercado semana passada?'",
+    "Cada transação com IA é processada em segundos para sua comodidade.",
+    "Esqueceu de anotar algo ontem? Diga 'Ontem gastei 30 reais na feira'.",
+    "Lembre-se de conferir seu saldo total no Menu lateral.",
+    "O Zimbroo funciona offline também para registros rápidos!",
+    "Se você tiver muitas transações, use a barra de busca para encontrar rápido.",
+    "Você sabia? Eu consigo calcular parcelas complexas se você me pedir.",
+    "Mantenha o app instalado como PWA para receber notificações e facilitar o uso.",
+    "A saúde do seu bolso começa com o registro de cada pequeno café. ☕",
+    "Quer economizar? Peça 'Dê uma dica para eu gastar menos esse mês'.",
+    "Eu posso te ajudar a planejar sua próxima viagem, basta perguntar!",
+    "O gráfico de linhas mostra a evolução do seu patrimônio ao longo dos meses."
 ];
