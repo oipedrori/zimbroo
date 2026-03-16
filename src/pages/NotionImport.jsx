@@ -278,7 +278,7 @@ const NotionImport = () => {
                 >
                     <ChevronLeft size={20} />
                 </button>
-                <h1 style={{ fontSize: '1.1rem', color: 'var(--text-main)', fontWeight: '600', flex: 1 }}>Integração Notion</h1>
+                <h1 style={{ fontSize: '1.1rem', color: 'var(--text-main)', fontWeight: '600', flex: 1 }}>Migrar do Notion</h1>
                 {notionToken && (
                     <button
                         onClick={handleDisconnect}
@@ -306,7 +306,7 @@ const NotionImport = () => {
                         </h2>
 
                         <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '32px', fontSize: '1.05rem' }}>
-                            Conecte seu Dashboard Financeiro e mantenha seu Notion sempre atualizado.
+                            Traga seus registros do Notion para o Zimbroo e centralize seu controle financeiro aqui.
                         </p>
 
                         <div style={{ background: 'var(--card-bg)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border-color)', textAlign: 'left' }}>
@@ -315,8 +315,8 @@ const NotionImport = () => {
                                     <img src="/notion_logo.png" style={{ width: '28px', height: '28px', objectFit: 'contain' }} alt="Notion" />
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Sincronização Ativa</h3>
-                                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Mão única ou via dupla configurável.</p>
+                                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Migração de Dados</h3>
+                                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Mão única: Notion → Zimbroo.</p>
                                 </div>
                             </div>
 
@@ -333,7 +333,7 @@ const NotionImport = () => {
                                 }}
                             >
                                 <img src="/notion_logo.png" style={{ width: '22px', height: '22px' }} alt="" />
-                                {loading ? <LoadingDots style={{ color: 'white' }} /> : 'Conectar Agora'}
+                                {loading ? <LoadingDots style={{ color: 'white' }} /> : 'Migrar meu Notion'}
                             </button>
                         </div>
                     </div>
@@ -533,7 +533,7 @@ const NotionImport = () => {
                                 opacity: (!expenseDbId && !incomeDbId) ? 0.6 : 1
                             }}
                         >
-                            {loading ? `${progress}% Sincronizando...` : 'Iniciar Importação Inicial'}
+                            {loading ? `${progress}% Importando...` : `Importar Transações de ${new Date().getFullYear()}`}
                         </button>
                     </div>
                 )}

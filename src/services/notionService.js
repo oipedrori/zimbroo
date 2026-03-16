@@ -193,15 +193,41 @@ export const createNotionTransaction = async (secret, databaseId, tx) => {
 };
 
 /**
- * Fetch and Map Transactions from Notion
+ * Fetch and Map Transactions from Notion (Filtered by current year)
  */
 export const fetchNotionTransactions = async (secret, databaseId) => {
     try {
-        const data = await notionRequest(secret, `databases/${databaseId}/query`, 'POST');
+        const currentYear = new Date().getFullYear();
+        const startOfYear = `${currentYear}-01-01`;
+
+        // Filter for transactions in the current year
+        const data = await notionRequest(secret, `databases/${databaseId}/query`, 'POST', {
+            filter: {
+                property: "Data", // Considers standard data name, but will fallback if not found
+                date: {
+                    on_or_after: startOfYear
+                }
+            }
+        });
+
+        // If filtering by "Data" fails because it doesn't exist, try without filter
+        // or attempt to find the date property first.
+        // For simplicity and resilience, we'll try to find any date property if the "Data" filter fails in mapping.
+        
         return mapNotionToZimbroo(data.results || []);
     } catch (error) {
-        console.error("Fetch Error: ", error);
-        throw error;
+        console.error("Fetch Error, retrying without filter...: ", error);
+        // Fallback: fetch all and filter in JS if the API filter fails due to schema mismatch
+        try {
+            const data = await notionRequest(secret, `databases/${databaseId}/query`, 'POST');
+            const currentYear = new Date().getFullYear();
+            return mapNotionToZimbroo(data.results || []).filter(tx => {
+                const txYear = new Date(tx.date).getFullYear();
+                return txYear === currentYear;
+            });
+        } catch (e) {
+            throw e;
+        }
     }
 };
 
@@ -213,21 +239,43 @@ const mapNotionToZimbroo = (results) => {
         const props = row.properties;
         const mapped = {};
 
+        // Description / Title
         const titleProp = Object.values(props).find(p => p.type === 'title');
         mapped.description = titleProp?.title[0]?.plain_text || 'Sem descrição';
 
+        // Amount / Valor
         const amountProp = Object.entries(props).find(([name, p]) =>
-            p.type === 'number' || name.toLowerCase().includes('valor') || name.toLowerCase().includes('amount')
+            p.type === 'number' || 
+            name.toLowerCase().includes('valor') || 
+            name.toLowerCase().includes('amount') ||
+            name.toLowerCase().includes('preço') ||
+            name.toLowerCase().includes('price')
         );
         mapped.amount = amountProp ? amountProp[1].number : 0;
 
-        const dateProp = Object.values(props).find(p => p.type === 'date');
-        mapped.date = dateProp?.date?.start || new Date().toISOString().split('T')[0];
+        // Date / Data
+        const dateProp = Object.entries(props).find(([name, p]) => 
+            p.type === 'date' || 
+            name.toLowerCase().includes('data') || 
+            name.toLowerCase().includes('date') ||
+            name.toLowerCase().includes('dia')
+        );
+        mapped.date = dateProp?.[1]?.date?.start || new Date().toISOString().split('T')[0];
 
-        const catProp = Object.values(props).find(p => p.type === 'select');
-        mapped.category = catProp?.select?.name || 'Outros';
+        // Category / Categoria
+        const catProp = Object.entries(props).find(([name, p]) => 
+            p.type === 'select' || 
+            name.toLowerCase().includes('categoria') || 
+            name.toLowerCase().includes('category') ||
+            name.toLowerCase().includes('tipo')
+        );
+        mapped.category = catProp?.[1]?.select?.name || 'Outros';
 
-        const isRec = mapped.category.toLowerCase().includes('receita') || mapped.category.toLowerCase().includes('ganho');
+        const isRec = mapped.category.toLowerCase().includes('receita') || 
+                     mapped.category.toLowerCase().includes('ganho') ||
+                     mapped.category.toLowerCase().includes('lucro') ||
+                     mapped.category.toLowerCase().includes('venda');
+                     
         mapped.type = isRec ? 'income' : 'expense';
 
         return mapped;

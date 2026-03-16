@@ -1,6 +1,5 @@
 import { collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { createNotionTransaction } from './notionService';
 
 const TRANSACTIONS_COLLECTION = 'transactions';
 
@@ -26,16 +25,6 @@ export const addTransaction = async (userId, data) => {
 
     try {
         const docRef = await addDoc(collection(db, TRANSACTIONS_COLLECTION), newTx);
-
-        // Smart Notion Sync (Side Effect)
-        const notionToken = localStorage.getItem('zimbroo_notion_token');
-        const dbTypeKey = newTx.type === 'income' ? 'zimbroo_notion_income_db_id' : 'zimbroo_notion_expense_db_id';
-        const targetDbId = localStorage.getItem(dbTypeKey);
-
-        if (notionToken && targetDbId) {
-            createNotionTransaction(notionToken, targetDbId, newTx)
-                .catch(err => console.error("Notion Sync Error:", err));
-        }
 
         return { id: docRef.id, ...newTx };
     } catch (error) {
