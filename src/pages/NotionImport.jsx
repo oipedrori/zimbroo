@@ -284,7 +284,7 @@ const NotionImport = () => {
     }, [notionToken, step]);
 
     return (
-        <div style={{ padding: '24px', maxWidth: '600px', margin: '0 auto', minHeight: '100vh', paddingBottom: '120px' }}>
+        <div style={{ padding: '24px', maxWidth: '600px', margin: '0 auto', minHeight: '100vh', paddingBottom: '160px' }}>
             {/* Header */}
             <header style={{ display: 'flex', alignItems: 'center', marginBottom: '40px', gap: '16px' }}>
                 <button
@@ -550,12 +550,13 @@ const NotionImport = () => {
                                 background: 'var(--primary-color)', color: 'white',
                                 fontWeight: '800', fontSize: '1.1rem', border: 'none',
                                 display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px',
-                                opacity: (!expenseDbId && !incomeDbId) ? 0.6 : 1,
-                                marginBottom: '40px'
+                                opacity: (!expenseDbId && !incomeDbId) ? 0.6 : 1
                             }}
                         >
                             {loading ? `${progress}% Importando...` : `Importar Transações de ${new Date().getFullYear()}`}
                         </button>
+
+                        <div style={{ height: '80px' }} aria-hidden="true" />
                     </div>
                 )}
 
