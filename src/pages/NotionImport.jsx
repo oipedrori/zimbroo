@@ -374,7 +374,6 @@ const NotionImport = () => {
                         {/* Discovery Status & Feedback */}
                         {loading && !foundDbs.length && !error && (
                             <div style={{ textAlign: 'center', padding: '40px', opacity: 0.6 }}>
-                                <Loader2 size={32} className="animate-spin" style={{ margin: '0 auto 12px' }} />
                                 <LoadingDots />
                             </div>
                         )}
@@ -443,7 +442,7 @@ const NotionImport = () => {
                                     </div>
                                 )}
                                 <button onClick={refreshDatabases} style={{ border: 'none', background: 'none', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary-color)', cursor: 'pointer', fontWeight: '700', fontSize: '0.8rem', marginTop: '8px' }}>
-                                    <RefreshCcw size={14} className={loading ? 'animate-spin' : ''} /> Buscar mais tabelas
+                                    {loading ? <LoadingDots style={{ transform: 'scale(0.7)' }} /> : <RefreshCcw size={14} />} Buscar mais tabelas
                                 </button>
                             </div>
                         )}

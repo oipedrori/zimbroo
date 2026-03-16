@@ -62,8 +62,10 @@ const notionRequest = async (secret, endpoint, method = 'GET', body = null) => {
  */
 export const extractNotionId = (input) => {
     if (!input) return '';
-    const match = input.match(/([a-f0-9]{32})/);
-    return match ? match[1] : input.trim();
+    // A regex that captures hex IDs (32 chars) even if they have dashes (36 chars)
+    // and correctly ignores the surrounding URL parts
+    const match = input.match(/([a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}|[a-f0-9]{32})/);
+    return match ? match[1].replace(/-/g, '') : input.trim();
 };
 
 /**
