@@ -405,15 +405,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
     };
 
     return (
-        <div 
-            className={`ai-overlay ${isActive ? 'active' : ''}`}
-            style={{ 
-                height: `${viewportHeight}px`,
-                position: 'fixed',
-                top: 0,
-                left: 0
-            }}
-        >
+        <div className={`ai-overlay ${isActive ? 'active' : ''}`}>
             {/* Close Button - Only in TEXT mode */}
             {isManualTextMode && (
                 <button 
@@ -435,9 +427,9 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                 </button>
             )}
 
-            {/* Mic Toggle (Center) */}
+            {/* Mic Toggle (Center) - In voice mode, this BECOMES the close button if not listening? Or just as requested: X replaces mic button when open. */}
             {!isManualTextMode && (
-                <div style={{ position: 'absolute', bottom: '60px', left: '0', right: '0', zIndex: 3001, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ position: 'fixed', bottom: '60px', left: '0', right: '0', zIndex: 3001, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     {isListening ? (
                         <button
                             className={`ai-mic-btn listening active`}
@@ -508,9 +500,13 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                                     className="messaging-input-container"
                                     style={{
                                         position: 'relative',
+                                        bottom: 'auto',
+                                        left: 'auto',
+                                        right: 'auto',
                                         width: '100%',
                                         marginTop: 'auto',
-                                        marginBottom: 'max(20px, env(safe-area-inset-bottom))',
+                                        marginBottom: viewportOffset > 0 ? `${viewportOffset + 10}px` : 'max(20px, env(safe-area-inset-bottom))',
+                                        transition: 'margin-bottom 0.1s ease-out'
                                     }}
                                 >
                                     <textarea
@@ -598,10 +594,10 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
         }
         .ai-overlay.active { 
           opacity: 1; 
-          background: rgba(5, 10, 6, 0.95); /* Dark and opaque for focus */
+          background: rgba(27, 69, 32, 0.4); /* Greenish brand overlay */
           pointer-events: auto; 
-          backdrop-filter: blur(30px);
-          -webkit-backdrop-filter: blur(30px);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
         }
         
         .mystical-aura {
@@ -763,16 +759,16 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
             bottom: max(20px, env(safe-area-inset-bottom));
             left: 16px;
             right: 16px;
-            background: rgba(255, 255, 255, 0.12); /* Brighter glass but opaque blur */
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 30px;
-            padding: 6px 6px 6px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 28px;
+            padding: 8px 8px 8px 16px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            gap: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
             animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 3010;
         }
