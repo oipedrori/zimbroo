@@ -851,33 +851,59 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
             user-select: none;
         }
 
-        .ai-face {
+        .ai-face-container {
+            width: 100px;
+            height: 60px;
+            margin: 0 auto 10px;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            font-family: 'Solway', serif;
-            color: white;
-            font-weight: 800;
-            gap: 0px;
+            animation: floatOrganic 6s ease-in-out infinite;
         }
 
-        .ai-eyes-row {
-            display: flex;
-            gap: 12px;
-            height: 30px;
-            align-items: center;
+        .ai-face-svg {
+            width: 100%;
+            height: 100%;
         }
 
-        .ai-eye {
-            font-size: 2.2rem;
-            animation: blinkEye 5s infinite;
+        .ai-eyes {
+            animation: eyesMove 8s ease-in-out infinite;
         }
 
-        .ai-mouth {
-            font-size: 1.8rem;
-            transform: rotate(90deg);
-            margin-top: -5px;
-            animation: smileNod 4s ease-in-out infinite;
+        .ai-eye-left, .ai-eye-right {
+           transform-origin: center;
+           animation: blinkOrganic 4s linear infinite;
+        }
+
+        .ai-eye-right {
+            animation-delay: 0.1s;
+        }
+
+        .ai-mouth-path {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 0;
+            animation: mouthBreath 6s ease-in-out infinite;
+        }
+
+        @keyframes floatOrganic {
+            0%, 100% { transform: translateY(0) rotate(-1deg); }
+            50% { transform: translateY(-8px) rotate(1deg); }
+        }
+
+        @keyframes blinkOrganic {
+            0%, 90%, 95%, 100% { transform: scaleY(1); }
+            92.5% { transform: scaleY(0.1); }
+        }
+
+        @keyframes eyesMove {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(1px); }
+            75% { transform: translateX(-1px); }
+        }
+
+        @keyframes mouthBreath {
+            0%, 100% { d: path("M 35 45 Q 50 55 65 45"); }
+            50% { d: path("M 32 46 Q 50 58 68 46"); }
         }
 
         @keyframes floatingFace {

@@ -16,7 +16,6 @@
     html.theme-light { background-color: #FBFEFB !important; color: #0E2210; }
     body { background-color: inherit; }
   </style>
-  <script>
     (function() {
       try {
         var theme = localStorage.getItem('zimbroo_theme') || 'system';
@@ -25,18 +24,28 @@
         
         var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         
-        if (theme === 'dark') {
+        // Remove transitions during initial theme application
+        root.style.transition = 'none';
+        
+        if (isDark) {
           root.classList.add('theme-dark');
-        } else if (theme === 'light') {
+          root.classList.remove('theme-light');
+          if (meta) meta.setAttribute('content', '#050a06');
+        } else {
           root.classList.add('theme-light');
+          root.classList.remove('theme-dark');
+          if (meta) meta.setAttribute('content', '#FBFEFB');
         }
         
-        if (meta) {
-          meta.setAttribute('content', isDark ? '#050a06' : '#FBFEFB');
-        }
+        // Force background early
+        root.style.backgroundColor = isDark ? '#050a06' : '#FBFEFB';
+        
+        // Restore transitions after a frame
+        requestAnimationFrame(function() {
+           root.style.transition = '';
+        });
       } catch (e) {}
     })();
-  </script>
 </head>
 
 <body>

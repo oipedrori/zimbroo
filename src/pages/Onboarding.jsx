@@ -107,7 +107,7 @@ const Onboarding = () => {
             display: 'flex',
             flexDirection: 'column',
             height: '100dvh',
-            backgroundColor: 'var(--primary-darker)',
+            backgroundColor: 'var(--bg-color)',
             color: 'white',
             position: 'relative',
             overflow: 'hidden'
