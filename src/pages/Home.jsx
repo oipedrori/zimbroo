@@ -543,7 +543,14 @@ const Home = () => {
                             <User size={22} />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                             <h1 style={{ fontSize: '1.2rem', color: 'var(--text-main)', fontWeight: '700', margin: 0 }}>{t('hello', { name: currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }) })}</h1>
+                             <h1 style={{ fontSize: '1.2rem', color: 'var(--text-main)', fontWeight: '700', margin: 0 }}>
+                                {(() => {
+                                    const hour = new Date().getHours();
+                                    const greetingKey = (hour >= 3 && hour < 12) ? 'good_morning' : 
+                                                       (hour >= 12 && hour < 18) ? 'good_afternoon' : 'good_night';
+                                    return t(greetingKey, { name: currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }) });
+                                })()}
+                             </h1>
                         </div>
                     </div>
 

@@ -10,6 +10,9 @@ export const translations = {
 
         // Home
         hello: "Olá, {name}",
+        good_morning: "Bom dia, {name}",
+        good_afternoon: "Boa tarde, {name}",
+        good_night: "Boa noite, {name}",
         monthly_balance: "Saldo Mensal",
         transactions: "Últimas Transações",
         see_all: "Ver Todas",
@@ -162,6 +165,9 @@ export const translations = {
         logout: "Logout",
 
         hello: "Hello, {name}",
+        good_morning: "Good morning, {name}",
+        good_afternoon: "Good afternoon, {name}",
+        good_night: "Good evening, {name}",
         monthly_balance: "Monthly Balance",
         transactions: "Recent Transactions",
         see_all: "See All",
@@ -301,6 +307,9 @@ export const translations = {
         logout: "Cerrar sesión",
 
         hello: "Hola, {name}",
+        good_morning: "¡Buenos días!, {name}",
+        good_afternoon: "¡Buenas tardes!, {name}",
+        good_night: "¡Buenas noches!, {name}",
         monthly_balance: "Saldo Mensual",
         transactions: "Transacciones Recientes",
         see_all: "Ver Todas",
@@ -440,6 +449,9 @@ export const translations = {
         logout: "Se déconnecter",
 
         hello: "Bonjour, {name}",
+        good_morning: "Bonjour, {name}",
+        good_afternoon: "Bon après-midi, {name}",
+        good_night: "Bonsoir, {name}",
         monthly_balance: "Solde Mensuel",
         transactions: "Transactions Récentes",
         see_all: "Voir Tout",
