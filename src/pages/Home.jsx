@@ -531,9 +531,9 @@ const Home = () => {
                     flexDirection: isDesktop ? 'row' : 'column',
                     justifyContent: 'space-between', 
                     alignItems: isDesktop ? 'center' : 'flex-start', 
-                    paddingTop: '10px', 
-                    marginBottom: isDesktop ? '24px' : '16px',
-                    gap: isDesktop ? '0' : '16px'
+                    paddingTop: '8px', 
+                    marginBottom: isDesktop ? '24px' : '10px',
+                    gap: isDesktop ? '0' : '10px'
                 }}>
                     <div 
                         onClick={() => setIsSidebarOpen(true)}

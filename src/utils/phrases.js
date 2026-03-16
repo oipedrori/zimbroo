@@ -31,7 +31,7 @@ export const AI_BUBBLE_PHRASES = [
     "Precisa de um resumo? Pergunte 'Quanto sobrou esse mês?'.",
     "Você pode me pedir para 'Adicionar um bônus de 500 reais' como receita.",
     "Eu aprendo com você: se eu errar uma categoria, pode me corrigir.",
-    "No desktop, você pode ver mais detalhes de cada categoria passando o mouse.",
+    "No computador, você pode ver mais detalhes de cada categoria passando o mouse.",
     "Tente dizer 'Quanto gastei no mercado semana passada?'",
     "Cada transação com IA é processada em segundos para sua comodidade.",
     "Esqueceu de anotar algo ontem? Diga 'Ontem gastei 30 reais na feira'.",
