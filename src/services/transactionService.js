@@ -1,4 +1,4 @@
-import { collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, query, where, orderBy } from 'firebase/firestore';
+import { collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, query, where, orderBy, writeBatch } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 const TRANSACTIONS_COLLECTION = 'transactions';
@@ -55,6 +55,36 @@ export const deleteTransaction = async (userId, transactionId, dateToSkip = null
         }
     } catch (error) {
         console.error("Error deleting transaction: ", error);
+        throw error;
+    }
+};
+
+/**
+ * Deleta todas as transações de um usuário específico de uma vez.
+ * Útil para resetar os dados ou limpar importações do Notion.
+ */
+export const deleteAllUserTransactions = async (userId) => {
+    try {
+        const q = query(
+            collection(db, TRANSACTIONS_COLLECTION),
+            where("userId", "==", userId)
+        );
+
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) return;
+
+        // Firestore batch limite é 500 operações. Como é um app pequeno, 
+        // faremos de forma simples, mas robusta.
+        const batch = writeBatch(db);
+        querySnapshot.forEach((document) => {
+            batch.delete(document.ref);
+        });
+
+        await batch.commit();
+        console.log(`Reset de dados concluído para o usuário ${userId}`);
+    } catch (error) {
+        console.error("Erro ao apagar todos os dados: ", error);
         throw error;
     }
 };

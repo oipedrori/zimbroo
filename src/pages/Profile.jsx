@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
-import { ChevronLeft, User, LogOut, Trash2, Moon, Globe, DollarSign, ArrowRight } from 'lucide-react';
+import { ChevronLeft, User, LogOut, Trash2, Moon, Globe, DollarSign, ArrowRight, RefreshCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { deleteAllUserTransactions } from '../services/transactionService';
+import { haptic } from '../utils/haptic';
 
 const Profile = () => {
     const { currentUser, logout, deleteAccount } = useAuth();
@@ -12,6 +14,8 @@ const Profile = () => {
     // States
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isResettingData, setIsResettingData] = useState(false);
+    const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
     // Theme logic
@@ -32,21 +36,17 @@ const Profile = () => {
         localStorage.setItem('zimbroo_theme', theme);
     }, [theme]);
 
-    const handleDeleteAccount = async () => {
-        setIsDeleting(true);
+    const handleResetData = async () => {
+        setIsResettingData(true);
         try {
-            await deleteAccount();
-            navigate('/onboarding');
+            await deleteAllUserTransactions(currentUser.uid);
+            haptic.success();
+            setShowResetConfirm(false);
+            alert('Todos os seus dados financeiros foram apagados com sucesso.');
         } catch (error) {
-            if (error.code === 'auth/requires-recent-login') {
-                alert('Para sua segurança, esta ação exige um login recente. Por favor, saia e entre novamente antes de excluir sua conta.');
-            } else {
-                alert('Ocorreu um erro ao excluir sua conta. Tente novamente mais tarde.');
-            }
-            setShowDeleteConfirm(false);
+            alert('Erro ao apagar dados. Tente novamente.');
         } finally {
-            setIsDeleting(false);
-            setDeleteConfirmText('');
+            setIsResettingData(false);
         }
     };
 
@@ -220,7 +220,87 @@ const Profile = () => {
                     </div>
                     <ArrowRight size={18} color="var(--danger-color)" opacity={0.5} />
                 </div>
+
+                <div
+                    onClick={() => setShowResetConfirm(true)}
+                    style={{ 
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '18px 20px', cursor: 'pointer',
+                        background: 'var(--surface-color)', borderRadius: '20px', border: '1px solid var(--glass-border)',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.03)'
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '10px', background: 'rgba(245, 158, 11, 0.1)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#f59e0b' }}>
+                            <RefreshCcw size={20} />
+                        </div>
+                        <span style={{ fontWeight: '600', fontSize: '0.95rem', color: '#f59e0b' }}>Resetar Dados Financeiros</span>
+                    </div>
+                    <ArrowRight size={18} color="#f59e0b" opacity={0.5} />
+                </div>
             </section>
+
+            {/* Reset Data Confirmation Overlay */}
+            {showResetConfirm && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    display: 'flex', justifyContent: 'center', 
+                    alignItems: window.innerWidth < 1024 ? 'flex-end' : 'center',
+                    padding: window.innerWidth < 1024 ? '0' : '24px', zIndex: 20000,
+                    animation: 'fadeIn 0.3s ease'
+                }}>
+                    <div style={{
+                        background: 'var(--bg-color)', padding: window.innerWidth < 1024 ? '32px 24px 48px' : '32px 24px',
+                        borderRadius: window.innerWidth < 1024 ? '32px 32px 0 0' : '32px', 
+                        border: '1px solid var(--glass-border)',
+                        width: '100%', maxWidth: window.innerWidth < 1024 ? 'none' : '340px', textAlign: 'center',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                        animation: window.innerWidth < 1024 ? 'slideUpSheet 0.4s cubic-bezier(0.16, 1, 0.3, 1)' : 'bubblePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+                        position: 'relative'
+                    }}>
+                        <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto 20px' }}>
+                            <RefreshCcw size={32} />
+                        </div>
+                        <h2 style={{ fontSize: '1.4rem', marginBottom: '12px', color: 'var(--text-main)', fontFamily: "'Solway', serif" }}>Apagar tudo?</h2>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: '1.5' }}>
+                            Isso removerá <b>todas</b> as suas transações, mas manterá sua conta e conexão com o Notion ativa. Esta ação não pode ser desfeita.
+                        </p>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <button
+                                onClick={handleResetData}
+                                disabled={isResettingData}
+                                style={{
+                                    height: '56px', borderRadius: '16px',
+                                    background: '#f59e0b', color: 'white',
+                                    fontWeight: '700', fontSize: '1rem', border: 'none',
+                                    transition: 'all 0.3s'
+                                }}
+                            >
+                                {isResettingData ? 'Apagando...' : 'Sim, apagar todos os dados'}
+                            </button>
+                            <button
+                                onClick={() => setShowResetConfirm(false)}
+                                disabled={isResettingData}
+                                style={{
+                                    height: '56px', borderRadius: '16px',
+                                    background: 'var(--primary-light)', color: 'var(--primary-darker)',
+                                    fontWeight: '700', fontSize: '1rem', border: 'none'
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {/* Adicionando RefreshCcw que não estava importado */}
+            <div style={{ display: 'none' }}>
+                <RefreshCcw />
+            </div>
 
             {/* Delete Account Confirmation Overlay */}
             {showDeleteConfirm && (

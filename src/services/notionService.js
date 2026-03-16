@@ -293,14 +293,24 @@ const mapNotionToZimbroo = (results) => {
             const dateProp = Object.entries(props).find(([name, p]) => {
                 const lowName = name.toLowerCase();
                 return p.type === 'date' || 
+                       p.type === 'created_time' ||
                        lowName.includes('data') || 
                        lowName.includes('date') ||
                        lowName.includes('dia') ||
+                       lowName.includes('compra') ||
+                       lowName.includes('vencimento') ||
                        lowName.includes('quando');
             });
 
-            if (dateProp?.[1]?.date?.start) {
-                mapped.date = dateProp[1].date.start;
+            if (dateProp) {
+                const p = dateProp[1];
+                if (p.type === 'date' && p.date?.start) {
+                    mapped.date = p.date.start;
+                } else if (p.type === 'created_time') {
+                    mapped.date = p.created_time.split('T')[0];
+                } else if (p.type === 'formula' && p.formula?.date?.start) {
+                    mapped.date = p.formula.date.start;
+                }
             }
 
             // 4. Category / Categoria

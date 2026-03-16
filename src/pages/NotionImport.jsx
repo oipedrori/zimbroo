@@ -6,6 +6,7 @@ import { useI18n } from '../contexts/I18nContext';
 import { getNotionDatabaseInfo, fetchNotionTransactions, orchestratedDiscovery, extractNotionId, findDatabasesOnPage, getNotionWorkspaceInfo } from '../services/notionService';
 import { addTransaction } from '../services/transactionService';
 import { useAuth } from '../contexts/AuthContext';
+import { haptic } from '../utils/haptic';
 
 const NotionImport = () => {
     const navigate = useNavigate();
@@ -77,7 +78,6 @@ const NotionImport = () => {
             setLoading(false);
         }
     };
-
     const refreshDatabases = async () => {
         setLoading(true);
         setError(null);
@@ -95,24 +95,34 @@ const NotionImport = () => {
             setDebugItems(discovered);
             const directDbs = discovered.filter(item => item.object === 'database');
             
-            // Auto identification
-            directDbs.forEach(db => {
+            // --- AUTO IDENTIFICATION LOGIC ---
+            // If we find a database with "despesa" or "gasto" or "expense", auto-assign it
+            const foundExpense = directDbs.find(db => {
                 const title = (db.title?.[0]?.plain_text || '').toLowerCase();
-                if (title.includes('gastos') || title.includes('despesa') || title.includes('expense')) {
-                    if (!expenseDbId) assignDb(db.id, 'expense');
-                } else if (title.includes('receita') || title.includes('ganho') || title.includes('income')) {
-                    if (!incomeDbId) assignDb(db.id, 'income');
-                }
+                return title.includes('despesa') || title.includes('gasto') || title.includes('expense');
             });
-
-            setFoundDbs(directDbs);
-
-            if (directDbs.length === 0) {
-                setError("Nenhuma tabela encontrada automaticamente. Tente colar o link da página principal ou verifique se autorizou o acesso às tabelas corretas no Notion.");
+            if (foundExpense) {
+                const cleanId = foundExpense.id.replace(/-/g, '');
+                setExpenseDbId(cleanId);
+                localStorage.setItem('zimbroo_notion_expense_db_id', cleanId);
             }
-        } catch (e) {
-            console.error("Discovery failed:", e);
-            setError(`Erro na conexão: ${e.message}`);
+
+            const foundIncome = directDbs.find(db => {
+                const title = (db.title?.[0]?.plain_text || '').toLowerCase();
+                return title.includes('receita') || title.includes('ganho') || title.includes('income');
+            });
+            if (foundIncome) {
+                const cleanId = foundIncome.id.replace(/-/g, '');
+                setIncomeDbId(cleanId);
+                localStorage.setItem('zimbroo_notion_income_db_id', cleanId);
+            }
+            // ----------------------------------
+
+            setFoundDbs(discovered.filter(item => item.object === 'database'));
+            haptic.light(); 
+        } catch (err) {
+            console.error("Discovery Error: ", err);
+            setError("Não conseguimos ler suas páginas do Notion. Tente desconectar e conectar novamente.");
         } finally {
             setLoading(false);
             setScanningPage('');
@@ -356,204 +366,141 @@ const NotionImport = () => {
 
                 {step === 2 && (
                     <div className="animate-fade-in">
-                        <div style={{ marginBottom: '24px' }}>
-                            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '8px', color: 'var(--text-main)' }}>
-                                Vincular Tabelas
+                        <div style={{ marginBottom: '32px', textAlign: 'center' }}>
+                            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '8px', color: 'var(--text-main)' }}>
+                                Tudo Pronto!
                             </h2>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-                                Precisamos saber qual tabela do Notion representa os seus gastos e ganhos.
+                            <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.5 }}>
+                                Identificamos suas tabelas automaticamente. Basta clicar em importar para começar.
                             </p>
                         </div>
 
-                        {/* Status Blocks */}
-                        <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
-                            <div style={{
-                                flex: 1, padding: '16px', borderRadius: '20px', background: expenseDbId ? 'rgba(239, 68, 68, 0.05)' : 'var(--surface-color)',
-                                border: `1px solid ${expenseDbId ? '#ef4444' : 'transparent'}`, textAlign: 'center'
-                            }}>
-                                <TrendingDown size={20} color={expenseDbId ? '#ef4444' : 'var(--text-muted)'} style={{ marginBottom: '8px' }} />
-                                <div style={{ fontSize: '0.75rem', fontWeight: '800', color: expenseDbId ? '#ef4444' : 'var(--text-muted)' }}>GASTOS</div>
-                                <div style={{ fontSize: '0.7rem', marginTop: '4px', opacity: 0.6 }}>{expenseDbId ? 'PRONTO' : 'PENDENTE'}</div>
+                        {/* Status Blocks Re-imagined as Selection Cards */}
+                        <div style={{ display: 'flex', gap: '16px', marginBottom: '40px' }}>
+                            <div 
+                                onClick={() => { /* haptic.light(); */ /* scroll to list? */ }}
+                                style={{
+                                    flex: 1, padding: '24px 16px', borderRadius: '24px', 
+                                    background: expenseDbId ? 'var(--danger-light)' : 'var(--surface-color)',
+                                    border: `2px solid ${expenseDbId ? 'var(--danger-color)' : 'var(--glass-border)'}`, 
+                                    textAlign: 'center', transition: 'all 0.3s ease',
+                                    boxShadow: expenseDbId ? '0 10px 20px rgba(239, 68, 68, 0.1)' : 'none',
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px'
+                                }}
+                            >
+                                <TrendingDown size={32} color={expenseDbId ? 'var(--danger-color)' : 'var(--text-muted)'} />
+                                <div style={{ fontSize: '0.85rem', fontWeight: '900', color: expenseDbId ? 'var(--danger-color)' : 'var(--text-muted)', letterSpacing: '1px' }}>GASTOS</div>
+                                <div style={{ fontSize: '0.75rem', fontWeight: '600', color: expenseDbId ? 'var(--danger-color)' : 'var(--text-muted)', opacity: 0.8 }}>
+                                    {expenseDbId ? 'CONECTADO' : 'SELECIONAR'}
+                                </div>
                             </div>
-                            <div style={{
-                                flex: 1, padding: '16px', borderRadius: '20px', background: incomeDbId ? 'rgba(34, 197, 94, 0.05)' : 'var(--surface-color)',
-                                border: `1px solid ${incomeDbId ? '#22c55e' : 'transparent'}`, textAlign: 'center'
-                            }}>
-                                <TrendingUp size={20} color={incomeDbId ? '#22c55e' : 'var(--text-muted)'} style={{ marginBottom: '8px' }} />
-                                <div style={{ fontSize: '0.75rem', fontWeight: '800', color: incomeDbId ? '#22c55e' : 'var(--text-muted)' }}>GANHOS</div>
-                                <div style={{ fontSize: '0.7rem', marginTop: '4px', opacity: 0.6 }}>{incomeDbId ? 'PRONTO' : 'PENDENTE'}</div>
+                            
+                            <div 
+                                onClick={() => { /* haptic.light(); */ }}
+                                style={{
+                                    flex: 1, padding: '24px 16px', borderRadius: '24px', 
+                                    background: incomeDbId ? 'var(--success-light)' : 'var(--surface-color)',
+                                    border: `2px solid ${incomeDbId ? 'var(--success-color)' : 'var(--glass-border)'}`, 
+                                    textAlign: 'center', transition: 'all 0.3s ease',
+                                    boxShadow: incomeDbId ? '0 10px 20px rgba(34, 197, 94, 0.1)' : 'none',
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px'
+                                }}
+                            >
+                                <TrendingUp size={32} color={incomeDbId ? 'var(--success-color)' : 'var(--text-muted)'} />
+                                <div style={{ fontSize: '0.85rem', fontWeight: '900', color: incomeDbId ? 'var(--success-color)' : 'var(--text-muted)', letterSpacing: '1px' }}>GANHOS</div>
+                                <div style={{ fontSize: '0.75rem', fontWeight: '600', color: incomeDbId ? 'var(--success-color)' : 'var(--text-muted)', opacity: 0.8 }}>
+                                    {incomeDbId ? 'CONECTADO' : 'SELECIONAR'}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Automatic Localized Lists */}
-                        {/* Discovery Status & Feedback */}
-                        {loading && !foundDbs.length && !error && (
-                            <div style={{ textAlign: 'center', padding: '40px', opacity: 0.6 }}>
+                        {loading && !foundDbs.length && (
+                            <div style={{ textAlign: 'center', padding: '20px 0 40px' }}>
                                 <LoadingDots />
-                                {scanningPage && (
-                                    <p style={{ marginTop: '16px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                        Procurando tabelas em: <span style={{ fontWeight: '700', color: 'var(--primary-color)' }}>{scanningPage}</span>
-                                    </p>
-                                )}
-                            </div>
-                        )}
-
-                        {error && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ef4444', marginBottom: '24px', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.05)', padding: '16px', borderRadius: '16px' }}>
-                                <AlertCircle size={18} />
-                                <span>{error}</span>
-                            </div>
-                        )}
-
-                        {/* Automatic Localized Lists */}
-                        {foundDbs.length > 0 && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
-                                <label style={{ fontSize: '0.85rem', fontWeight: '700', opacity: 0.6, display: 'flex', justifySelf: 'start', marginBottom: '4px' }}>
-                                    TABELAS FINANCEIRAS ENCONTRADAS
-                                </label>
-                                {foundDbs.map(db => (
-                                    <div
-                                        key={db.id}
-                                        className="animate-fade-in"
-                                        style={{
-                                            display: 'flex', alignItems: 'center', gap: '12px', padding: '14px',
-                                            background: 'var(--card-bg)', border: '1px solid var(--border-color)',
-                                            borderRadius: '20px', width: '100%'
-                                        }}
-                                    >
-                                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                            <img src="/notion_logo.png" style={{ width: '20px', height: '20px' }} alt="" />
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ fontWeight: '700', fontSize: '0.95rem', color: 'var(--text-main)' }}>
-                                                {db.title[0]?.plain_text || 'Tabela sem nome'}
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                                                <button
-                                                    onClick={() => assignDb(db.id, 'expense')}
-                                                    style={{
-                                                        fontSize: '0.65rem', fontWeight: '800', padding: '4px 10px', borderRadius: '8px',
-                                                        background: expenseDbId === db.id.replace(/-/g, '') ? '#ef4444' : 'var(--surface-color)',
-                                                        color: expenseDbId === db.id.replace(/-/g, '') ? 'white' : 'var(--text-main)',
-                                                        border: 'none', cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    {expenseDbId === db.id.replace(/-/g, '') ? '✓ GASTOS' : 'É GASTO'}
-                                                </button>
-                                                <button
-                                                    onClick={() => assignDb(db.id, 'income')}
-                                                    style={{
-                                                        fontSize: '0.65rem', fontWeight: '800', padding: '4px 10px', borderRadius: '8px',
-                                                        background: incomeDbId === db.id.replace(/-/g, '') ? '#22c55e' : 'var(--surface-color)',
-                                                        color: incomeDbId === db.id.replace(/-/g, '') ? 'white' : 'var(--text-main)',
-                                                        border: 'none', cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    {incomeDbId === db.id.replace(/-/g, '') ? '✓ GANHO' : 'É GANHO'}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                {searchingBackground && (
-                                    <div style={{ padding: '12px', background: 'var(--primary-light)', borderRadius: '12px', fontSize: '0.75rem', color: 'var(--primary-dark)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                                        <RefreshCcw size={14} className="animate-spin" />
-                                        <span>Procurando tabelas dentro de suas páginas...</span>
-                                    </div>
-                                )}
-                                <button onClick={refreshDatabases} style={{ border: 'none', background: 'none', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary-color)', cursor: 'pointer', fontWeight: '700', fontSize: '0.8rem', marginTop: '8px' }}>
-                                    {loading ? <LoadingDots style={{ transform: 'scale(0.7)' }} /> : <RefreshCcw size={14} />} Buscar mais tabelas
-                                </button>
-                            </div>
-                        )}
-
-                        {!loading && foundDbs.length === 0 && !error && (
-                            <div style={{ background: 'var(--surface-color)', padding: '24px', borderRadius: '24px', marginBottom: '32px', textAlign: 'center' }}>
-                                <AlertCircle size={32} color="var(--text-muted)" style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-                                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '16px' }}>Nenhuma tabela encontrada automaticamente.</p>
-                                <button onClick={refreshDatabases} style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', padding: '10px 20px', borderRadius: '14px', fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', margin: '0 auto' }}>
-                                    <RefreshCcw size={16} /> Tentar Novamente
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Debug Panel for User */}
-                        {(debugItems.length > 0 || workspaceInfo) && foundDbs.length === 0 && (
-                            <div style={{ padding: '16px', borderRadius: '16px', background: 'rgba(0,0,0,0.03)', marginBottom: '32px', border: '1px dashed var(--border-color)' }}>
-                                <h4 style={{ margin: '0 0 10px 0', fontSize: '0.75rem', fontWeight: '800', opacity: 0.5 }}>DIAGNÓSTICO DA CONEXÃO:</h4>
-
-                                {workspaceInfo && (
-                                    <div style={{ marginBottom: '12px', padding: '10px', background: '#e8f5e9', borderRadius: '10px', fontSize: '0.8rem', color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <CheckCircle2 size={16} />
-                                        <span>Conectado ao Workspace: <b>{workspaceInfo?.workspace_name || 'Privado'}</b></span>
-                                    </div>
-                                )}
-
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                    {debugItems.length > 0 ? debugItems.map((item, idx) => (
-                                        <div key={idx} style={{ fontSize: '0.65rem', padding: '4px 8px', background: 'white', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
-                                            {item.object === 'page' ? '📄 ' : '📊 '}
-                                            {item.object === 'page'
-                                                ? (item.properties?.title?.title?.[0]?.plain_text || item.properties?.Name?.title?.[0]?.plain_text || item.properties?.title?.id || 'Página')
-                                                : (item.title?.[0]?.plain_text || 'Database')}
-                                        </div>
-                                    )) : (
-                                        <p style={{ fontSize: '0.75rem', color: '#d32f2f', margin: '4px 0' }}>O Notion não enviou nenhum item autorizado.</p>
-                                    )}
-                                </div>
-                                <p style={{ fontSize: '0.7rem', marginTop: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                                    Se suas tabelas não aparecem acima, você precisa clicar em "Excluir" e reconectar, marcando o checkbox de cada tabela individualmente.
+                                <p style={{ marginTop: '16px', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                                    Vasculhando seu Notion...
                                 </p>
                             </div>
                         )}
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
-                            <label style={{ fontSize: '0.85rem', fontWeight: '700', opacity: 0.6, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <Link size={14} /> ADICIONAR COM LINK (PÁGINA OU TABELA)
-                            </label>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <input
-                                    type="text"
-                                    placeholder="Cole a URL da página do Notion aqui..."
-                                    value={manualUrl}
-                                    onChange={(e) => setManualUrl(e.target.value)}
-                                    style={{
-                                        flex: 1, padding: '16px', borderRadius: '16px',
-                                        background: 'var(--surface-color)', border: '1px solid var(--glass-border)',
-                                        color: 'var(--text-main)', fontSize: '0.95rem', outline: 'none'
-                                    }}
-                                />
-                                <button
-                                    onClick={handleManualLink}
-                                    disabled={loading}
-                                    style={{ padding: '0 20px', borderRadius: '16px', background: 'var(--primary-color)', color: 'white', border: 'none', fontWeight: '700', opacity: loading ? 0.6 : 1 }}
-                                >
-                                    Vincular
-                                </button>
+                        {error && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#ef4444', marginBottom: '32px', fontSize: '0.9rem', background: 'rgba(239, 68, 68, 0.05)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
+                                <AlertCircle size={20} />
+                                <span style={{ fontWeight: '600' }}>{error}</span>
                             </div>
-                        </div>
+                        )}
 
-
-                        {/* Tips */}
-                        <div style={{ background: 'rgba(59, 130, 246, 0.05)', padding: '16px', borderRadius: '20px', marginBottom: '32px', display: 'flex', gap: '12px' }}>
-                            <HelpCircle size={20} color="#3b82f6" style={{ flexShrink: 0 }} />
-                            <p style={{ fontSize: '0.8rem', color: '#1e40af', margin: 0, lineHeight: 1.4 }}>
-                                <b>Dica:</b> Se não encontrar nada, certifique-se de que clicou em <b>"Selecionar Páginas"</b> e marcou os checkboxes das suas tabelas durante a autorização.
-                            </p>
-                        </div>
+                        {foundDbs.length > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '40px' }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: '800', opacity: 0.5, letterSpacing: '1px', marginBottom: '4px' }}>
+                                    TABELAS DISPONÍVEIS
+                                </label>
+                                {foundDbs.map(db => {
+                                    const isExpense = expenseDbId === db.id.replace(/-/g, '');
+                                    const isIncome = incomeDbId === db.id.replace(/-/g, '');
+                                    
+                                    return (
+                                        <div
+                                            key={db.id}
+                                            className="animate-fade-in"
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '16px', padding: '16px',
+                                                background: 'var(--surface-color)', border: '1px solid var(--glass-border)',
+                                                borderRadius: '24px', width: '100%', transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+                                                <img src="/notion_logo.png" style={{ width: '24px', height: '24px' }} alt="" />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--text-main)', marginBottom: '6px' }}>
+                                                    {db.title[0]?.plain_text || 'Tabela sem nome'}
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <button
+                                                        onClick={() => assignDb(db.id, 'expense')}
+                                                        style={{
+                                                            fontSize: '0.7rem', fontWeight: '800', padding: '6px 14px', borderRadius: '10px',
+                                                            background: isExpense ? 'var(--danger-color)' : 'rgba(0,0,0,0.05)',
+                                                            color: isExpense ? 'white' : 'var(--text-main)',
+                                                            border: 'none', cursor: 'pointer', transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        {isExpense ? 'É GASTO ✓' : 'VINCULAR GASTO'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => assignDb(db.id, 'income')}
+                                                        style={{
+                                                            fontSize: '0.7rem', fontWeight: '800', padding: '6px 14px', borderRadius: '10px',
+                                                            background: isIncome ? 'var(--success-color)' : 'rgba(0,0,0,0.05)',
+                                                            color: isIncome ? 'white' : 'var(--text-main)',
+                                                            border: 'none', cursor: 'pointer', transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        {isIncome ? 'É GANHO ✓' : 'VINCULAR GANHO'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
 
                         <button
                             onClick={startSync}
                             disabled={(!expenseDbId && !incomeDbId) || loading}
                             style={{
-                                width: '100%', padding: '20px', borderRadius: '20px',
+                                width: '100%', padding: '24px', borderRadius: '24px',
                                 background: 'var(--primary-color)', color: 'white',
-                                fontWeight: '800', fontSize: '1.1rem', border: 'none',
-                                display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px',
-                                opacity: (!expenseDbId && !incomeDbId) ? 0.6 : 1
+                                fontWeight: '900', fontSize: '1.2rem', border: 'none',
+                                display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '14px',
+                                opacity: (!expenseDbId && !incomeDbId) ? 0.6 : 1,
+                                boxShadow: (!expenseDbId && !incomeDbId) ? 'none' : '0 12px 24px rgba(0,210,140,0.3)',
+                                transition: 'all 0.3s ease'
                             }}
                         >
-                            {loading ? `${progress}% Importando...` : `Importar Transações de ${new Date().getFullYear()}`}
+                            {loading ? `${progress}% Importando...` : `Importar Dados de ${new Date().getFullYear()}`}
                         </button>
 
                         <div style={{ height: '80px' }} aria-hidden="true" />
