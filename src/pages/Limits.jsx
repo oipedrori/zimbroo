@@ -144,7 +144,7 @@ const Limits = () => {
                                     type="button"
                                     onClick={() => setSelectedCat(cat.id)}
                                     style={{
-                                        padding: '12px 4px', borderRadius: '16px', border: '2px solid',
+                                        padding: '12px 4px', borderRadius: '16px', border: '1px solid',
                                         borderColor: selectedCat === cat.id ? cat.color : 'transparent',
                                         background: selectedCat === cat.id ? cat.color + '20' : 'var(--bg-color)',
                                         cursor: 'pointer', transition: 'all 0.2s',

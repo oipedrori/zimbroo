@@ -413,7 +413,7 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
         }
 
         .form-input {
-            border: 1.5px solid var(--glass-border) !important;
+            border: 1px solid var(--glass-border) !important;
             transition: all 0.2s ease-in-out;
         }
 

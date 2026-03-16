@@ -77,7 +77,7 @@ const Wallet = () => {
             {!isAdding ? (
                 <button
                     onClick={() => setIsAdding(true)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '16px', borderRadius: '16px', background: 'var(--surface-color)', border: '2px dashed var(--primary-color)', color: 'var(--primary-color)', fontWeight: '600', marginBottom: '24px', cursor: 'pointer' }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '16px', borderRadius: '16px', background: 'var(--surface-color)', border: '1px dashed var(--primary-color)', color: 'var(--primary-color)', fontWeight: '600', marginBottom: '24px', cursor: 'pointer' }}
                 >
                     <Plus size={20} />
                     {t('add_new_account')}

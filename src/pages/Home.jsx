@@ -1099,7 +1099,7 @@ const Home = () => {
                     to { transform: translateX(-100%); opacity: 0; }
                 }
                 .form-input {
-                    border: 1.5px solid var(--glass-border) !important;
+                    border: 1px solid var(--glass-border) !important;
                     transition: all 0.2s ease-in-out !important;
                 }
                 .form-input:focus {
@@ -1408,7 +1408,7 @@ const Home = () => {
                                                 onClick={() => setTempLimit({ ...tempLimit, categoryId: cat.id })}
                                                 title={t(cat.label)}
                                                 style={{
-                                                    padding: '12px 4px', borderRadius: '16px', border: '2px solid',
+                                                    padding: '12px 4px', borderRadius: '16px', border: '1px solid',
                                                     borderColor: tempLimit.categoryId === cat.id ? cat.color : 'transparent',
                                                     background: tempLimit.categoryId === cat.id ? cat.color + '20' : 'var(--surface-color)',
                                                     cursor: 'pointer', transition: 'all 0.2s',
@@ -1472,7 +1472,7 @@ const Home = () => {
                                         )}
                                         {isAiLoading && (
                                             <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary-color)', animation: 'spin 1s linear infinite' }}>
-                                                <div style={{ width: '20px', height: '20px', border: '2px solid transparent', borderTopColor: 'currentColor', borderRadius: '50%' }} />
+                                                <div style={{ width: '20px', height: '20px', border: '1px solid transparent', borderTopColor: 'currentColor', borderRadius: '50%' }} />
                                             </div>
                                         )}
                                     </div>

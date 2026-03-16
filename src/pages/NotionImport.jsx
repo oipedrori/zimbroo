@@ -354,7 +354,7 @@ const NotionImport = () => {
                         <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
                             <div style={{
                                 flex: 1, padding: '16px', borderRadius: '20px', background: expenseDbId ? 'rgba(239, 68, 68, 0.05)' : 'var(--surface-color)',
-                                border: `2px solid ${expenseDbId ? '#ef4444' : 'transparent'}`, textAlign: 'center'
+                                border: `1px solid ${expenseDbId ? '#ef4444' : 'transparent'}`, textAlign: 'center'
                             }}>
                                 <TrendingDown size={20} color={expenseDbId ? '#ef4444' : 'var(--text-muted)'} style={{ marginBottom: '8px' }} />
                                 <div style={{ fontSize: '0.75rem', fontWeight: '800', color: expenseDbId ? '#ef4444' : 'var(--text-muted)' }}>GASTOS</div>
@@ -362,7 +362,7 @@ const NotionImport = () => {
                             </div>
                             <div style={{
                                 flex: 1, padding: '16px', borderRadius: '20px', background: incomeDbId ? 'rgba(34, 197, 94, 0.05)' : 'var(--surface-color)',
-                                border: `2px solid ${incomeDbId ? '#22c55e' : 'transparent'}`, textAlign: 'center'
+                                border: `1px solid ${incomeDbId ? '#22c55e' : 'transparent'}`, textAlign: 'center'
                             }}>
                                 <TrendingUp size={20} color={incomeDbId ? '#22c55e' : 'var(--text-muted)'} style={{ marginBottom: '8px' }} />
                                 <div style={{ fontSize: '0.75rem', fontWeight: '800', color: incomeDbId ? '#22c55e' : 'var(--text-muted)' }}>GANHOS</div>
