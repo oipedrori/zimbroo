@@ -763,16 +763,16 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
             bottom: max(20px, env(safe-area-inset-bottom));
             left: 16px;
             right: 16px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 28px;
-            padding: 8px 8px 8px 16px;
+            background: rgba(255, 255, 255, 0.12); /* Brighter glass but opaque blur */
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 30px;
+            padding: 6px 6px 6px 20px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            gap: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 3010;
         }
