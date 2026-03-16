@@ -598,10 +598,10 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
         }
         .ai-overlay.active { 
           opacity: 1; 
-          background: rgba(27, 69, 32, 0.4); /* Greenish brand overlay */
+          background: rgba(5, 10, 6, 0.95); /* Dark and opaque for focus */
           pointer-events: auto; 
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
+          backdrop-filter: blur(30px);
+          -webkit-backdrop-filter: blur(30px);
         }
         
         .mystical-aura {
