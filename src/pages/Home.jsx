@@ -1083,6 +1083,15 @@ const Home = () => {
                     from { transform: translateX(0); opacity: 1; }
                     to { transform: translateX(-100%); opacity: 0; }
                 }
+                .form-input {
+                    border: 1.5px solid var(--glass-border) !important;
+                    transition: all 0.2s ease-in-out !important;
+                }
+                .form-input:focus {
+                    border-color: var(--primary-color) !important;
+                    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1) !important;
+                    background: var(--surface-color) !important;
+                }
                 @keyframes fadeIn {
                     from { opacity: 0; }
                     to { opacity: 1; }
@@ -1414,9 +1423,10 @@ const Home = () => {
                                             value={tempLimit.amount}
                                             onChange={(e) => setTempLimit({ ...tempLimit, amount: e.target.value })}
                                             placeholder="0,00"
+                                            className="form-input"
                                             style={{
                                                 width: '100%', padding: '16px 16px 16px 45px', borderRadius: '16px',
-                                                background: 'var(--surface-color)', border: '1px solid var(--glass-border)',
+                                                background: 'var(--surface-color)', border: '1.5px solid var(--glass-border)',
                                                 color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: '700', outline: 'none',
                                                 transition: 'all 0.3s'
                                             }}

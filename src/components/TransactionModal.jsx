@@ -187,7 +187,8 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                         <input
                             type="text" value={description} onChange={e => setDescription(e.target.value)}
                             placeholder="" required
-                            style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '14px', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)', fontSize: '1rem', outline: 'none' }}
+                            className="form-input"
+                            style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '14px', borderRadius: 'var(--border-radius-md)', background: 'var(--bg-color)', fontSize: '1rem', outline: 'none' }}
                         />
                     </div>
 
@@ -201,7 +202,8 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                             value={amount} 
                             onChange={e => setAmount(e.target.value)}
                             placeholder="0,00" required
-                            style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '14px', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)', fontSize: '1rem', outline: 'none' }}
+                            className="form-input"
+                            style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '14px', borderRadius: 'var(--border-radius-md)', background: 'var(--bg-color)', fontSize: '1rem', outline: 'none' }}
                         />
                         {repeatType === 'installment' && amount && installments > 1 && (
                             <p style={{ fontSize: '0.85rem', color: 'var(--primary-dark)', marginTop: '8px', fontWeight: '600' }}>
@@ -215,7 +217,8 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                             <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>{t('date')}</label>
                             <input
                                 type="date" value={date} onChange={e => setDate(e.target.value)} required
-                                style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '14px', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)', fontSize: '1rem', outline: 'none', appearance: 'none', minHeight: '48px' }}
+                                className="form-input"
+                                style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '14px', borderRadius: 'var(--border-radius-md)', background: 'var(--bg-color)', fontSize: '1rem', outline: 'none', appearance: 'none', minHeight: '48px' }}
                             />
                         </div>
                         <div style={{ position: 'relative' }}>
@@ -223,13 +226,13 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                             <select
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value)}
+                                className="form-input"
                                 style={{ 
                                     color: 'var(--text-main)', 
                                     boxSizing: 'border-box', 
                                     width: '100%', 
                                     padding: '14px', 
                                     borderRadius: 'var(--border-radius-md)', 
-                                    border: '1px solid var(--glass-border)', 
                                     background: 'var(--bg-color)', 
                                     fontSize: '1rem', 
                                     outline: 'none', 
@@ -255,7 +258,8 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                         <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>{t('repeat')}</label>
                         <select
                             value={repeatType} onChange={e => setRepeatType(e.target.value)}
-                            style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '14px', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)', fontSize: '1rem', outline: 'none', appearance: 'none', minHeight: '48px' }}
+                            className="form-input"
+                            style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '14px', borderRadius: 'var(--border-radius-md)', background: 'var(--bg-color)', fontSize: '1rem', outline: 'none', appearance: 'none', minHeight: '48px' }}
                         >
                             <option value="none">{t('none')}</option>
                             <option value="recurring">{t('recurring')}</option>
@@ -268,7 +272,8 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                             <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>{t('installments_amount')}</label>
                             <input
                                 type="number" min="2" max="120" value={installments} onChange={e => setInstallments(e.target.value)} required
-                                style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '14px', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--glass-border)', background: 'var(--bg-color)', fontSize: '1rem', outline: 'none' }}
+                                className="form-input"
+                                style={{ color: 'var(--text-main)', boxSizing: 'border-box', width: '100%', padding: '14px', borderRadius: 'var(--border-radius-md)', background: 'var(--bg-color)', fontSize: '1rem', outline: 'none' }}
                             />
                             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '6px' }}>
                                 {t('installments_hint', { count: installments, defaultValue: `O valor será cobrado mensalmente por ${installments} meses.` })}
@@ -408,6 +413,17 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
             .modal-content::before {
                 display: none;
             }
+        }
+
+        .form-input {
+            border: 1.5px solid var(--glass-border) !important;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+            background: var(--surface-color) !important;
         }
 
         .modal-content::before {
