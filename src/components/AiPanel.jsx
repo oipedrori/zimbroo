@@ -505,7 +505,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                                         right: 'auto',
                                         width: '100%',
                                         marginTop: 'auto',
-                                        marginBottom: viewportOffset > 0 ? `${viewportOffset + 410}px` : 'max(150px, env(safe-area-inset-bottom))',
+                                        marginBottom: viewportOffset > 0 ? `${viewportOffset + 100}px` : 'max(40px, env(safe-area-inset-bottom))',
                                         transition: 'margin-bottom 0.1s ease-out'
                                     }}
                                 >
