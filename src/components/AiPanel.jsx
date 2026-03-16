@@ -418,7 +418,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
     };
 
     return (
-        <div className={`ai-overlay ${isActive ? 'active' : ''}`}>
+        <div className={`ai-overlay ${isActive ? 'active' : ''} ${viewportOffset > 0 ? 'keyboard-active' : ''}`}>
             {/* Close Button - Only in TEXT mode */}
             {isManualTextMode && (
                 <button 
@@ -692,9 +692,14 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
           display: flex; flex-direction: column;
           justify-content: flex-start;
           align-items: center;
-          padding: 20vh 24px 80px;
+          padding: 15vh 24px 80px;
           /* Relative for sticky child */
           position: relative;
+          transition: padding-top 0.3s ease;
+        }
+
+        .ai-overlay.keyboard-active .ai-minimal-content {
+          padding-top: 5vh;
         }
         @media (min-width: 1024px) {
             .ai-minimal-content {
@@ -877,7 +882,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
             display: flex;
             justify-content: center;
             align-items: center;
-            animation: floatOrganic 6s ease-in-out infinite;
+            /* animation: floatOrganic 6s ease-in-out infinite; */
         }
 
         .ai-face-svg {
@@ -886,22 +891,22 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
         }
 
         .ai-eyes {
-            animation: eyesMove 8s ease-in-out infinite;
+            /* animation: eyesMove 8s ease-in-out infinite; */
         }
 
         .ai-eye-left, .ai-eye-right {
            transform-origin: center;
-           animation: blinkOrganic 4s linear infinite;
+           /* animation: blinkOrganic 4s linear infinite; */
         }
 
         .ai-eye-right {
-            animation-delay: 0.1s;
+            /* animation-delay: 0.1s; */
         }
 
         .ai-mouth-path {
             stroke-dasharray: 100;
             stroke-dashoffset: 0;
-            animation: mouthBreath 6s ease-in-out infinite;
+            /* animation: mouthBreath 6s ease-in-out infinite; */
         }
 
         @keyframes floatOrganic {
