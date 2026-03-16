@@ -532,7 +532,7 @@ const Home = () => {
                     justifyContent: 'space-between', 
                     alignItems: isDesktop ? 'center' : 'flex-start', 
                     paddingTop: '10px', 
-                    marginBottom: isDesktop ? '24px' : '12px',
+                    marginBottom: isDesktop ? '24px' : '8px',
                     gap: isDesktop ? '0' : '8px'
                 }}>
                     <div 
