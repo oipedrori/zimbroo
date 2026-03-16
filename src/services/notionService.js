@@ -10,8 +10,9 @@ const API_BASE = '/notion-api';
  */
 const notionRequest = async (secret, endpoint, method = 'GET', body = null) => {
     // Remove leading/trailing slashes and ensure /v1/ is handled by the proxy/rewrite
+    const cleanBase = API_BASE.replace(/\/$/, '');
     const cleanEndpoint = endpoint.replace(/^\//, '').replace(/\/$/, '');
-    const url = `${API_BASE}/${cleanEndpoint}`;
+    const url = `${cleanBase}/${cleanEndpoint}`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
