@@ -317,7 +317,7 @@ const Profile = () => {
                     onMouseEnter={(e) => e.target.style.opacity = 1}
                     onMouseLeave={(e) => e.target.style.opacity = 0.5}
                 >
-                    Zimbroo v1.0 • Feito no Brasil
+                    Zimbroo v1.8.4 • Feito no Brasil
                 </p>
                 
                 {showEasterEgg && (

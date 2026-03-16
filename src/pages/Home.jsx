@@ -1309,11 +1309,11 @@ const Home = () => {
                                     </button>
 
                                     <div 
-                                        onClick={() => alert("Porque onde estiver o teu tesouro, aí estará também o teu coração. (Mateus 6:21)")}
+                                        onClick={() => alert("Deitou-se e dormiu debaixo do zimbro; eis que um anjo o tocou e lhe disse: Levanta-te e come. (1 Reis 19.5)")}
                                         style={{ marginTop: '24px', textAlign: 'center', cursor: 'pointer', userSelect: 'none' }}
                                     >
-                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px', opacity: 0.6 }}>v1.8.4</p>
-                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', opacity: 0.8 }}>Feito no Brasil 🇧🇷</p>
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px', opacity: 0.6 }}>v1.8.4 • Feito no Brasil</p>
+
                                     </div>
                                 </div>
                             </div>
