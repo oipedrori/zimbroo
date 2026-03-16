@@ -9,10 +9,12 @@ const API_BASE = '/notion-api';
  * Notion API Helper - Centralizes requests and avoids malformed URLs
  */
 const notionRequest = async (secret, endpoint, method = 'GET', body = null) => {
-    // Remove leading/trailing slashes and ensure /v1/ is handled by the proxy/rewrite
+    // Sanitize endpoint and ensure base URL doesn't have trailing slash
     const cleanBase = API_BASE.replace(/\/$/, '');
     const cleanEndpoint = endpoint.replace(/^\//, '').replace(/\/$/, '');
     const url = `${cleanBase}/${cleanEndpoint}`;
+
+    console.log(`[NotionRequest] ${method} ${url}`);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -97,47 +99,56 @@ export const findDatabasesOnPage = async (secret, blockId) => {
         const MAX_TOTAL_BLOCKS = 100;
 
         const scan = async (id, level) => {
-            if (!id || visited.has(id) || level > MAX_DEPTH || totalBlocksScanned > MAX_TOTAL_BLOCKS) return;
-            visited.add(id);
+            const cleanId = id.replace(/-/g, '');
+            if (!cleanId || visited.has(cleanId) || level > MAX_DEPTH || totalBlocksScanned > MAX_TOTAL_BLOCKS) return;
+            visited.add(cleanId);
 
             try {
-                const data = await notionRequest(secret, `blocks/${id}/children?page_size=100`);
+                const data = await notionRequest(secret, `blocks/${cleanId}/children?page_size=100`);
                 if (!data.results) return;
 
                 for (const block of data.results) {
                     totalBlocksScanned++;
                     if (totalBlocksScanned > MAX_TOTAL_BLOCKS) break;
 
+                    // Standard Child Database
                     if (block.type === 'child_database') {
                         const dbTitle = block.child_database?.title || 'Tabela sem nome';
                         const simpleDb = {
-                            id: block.id,
+                            id: block.id.replace(/-/g, ''),
                             object: 'database',
-                            title: [{ plain_text: dbTitle }],
-                            properties: {
-                                "Valor": { type: "number" },
-                                "Data": { type: "date" }
-                            }
+                            title: [{ plain_text: dbTitle }]
                         };
                         if (!databases.some(d => d.id === simpleDb.id)) {
                             databases.push(simpleDb);
                         }
+                    } 
+                    // Linked Database (common in dashboards)
+                    else if (block.type === 'link_to_database') {
+                        const dbId = block.link_to_database?.database_id || block.link_to_database?.id;
+                        if (dbId) {
+                            try {
+                                const directDb = await getNotionDatabaseInfo(secret, dbId.replace(/-/g, ''));
+                                if (!databases.some(d => d.id === directDb.id.replace(/-/g, ''))) {
+                                    databases.push({ ...directDb, id: directDb.id.replace(/-/g, '') });
+                                }
+                            } catch (e) {
+                                console.warn("Erro ao buscar info de database vinculada:", e);
+                            }
+                        }
                     }
 
-                    const isContainer = [
-                        'column_list', 'column', 'toggle', 'synced_block', 'group', 'child_page'
-                    ].includes(block.type);
-
-                    if (isContainer && block.has_children && level < MAX_DEPTH) {
+                    // Scan child blocks if it's a known container or has children
+                    if (block.has_children && level < MAX_DEPTH) {
                         await scan(block.id, level + 1);
                     }
                 }
             } catch (e) {
-                console.warn(`Aviso no scan do bloco ${id}:`, e.message);
+                console.warn(`Aviso no scan do bloco ${cleanId}:`, e.message);
             }
         };
 
-        await scan(blockId, 0);
+        await scan(blockId.replace(/-/g, ''), 0);
         return databases;
     } catch (error) {
         console.error("Deep Scan Error: ", error);

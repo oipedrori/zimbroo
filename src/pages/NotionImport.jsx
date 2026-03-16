@@ -157,7 +157,11 @@ const NotionImport = () => {
 
         setLoading(true);
         setError(null);
+        console.log("[NotionImport] Tentando vincular URL manual:", manualUrl);
         try {
+            const id = extractNotionId(manualUrl);
+            console.log("[NotionImport] ID Extraído:", id);
+            
             console.log("Notion Deep Scan Iniciado para o ID:", id);
             // Tenta buscar bases dentro dessa página
             const childrenDbs = await findDatabasesOnPage(notionToken, id);
@@ -192,14 +196,20 @@ const NotionImport = () => {
                 // Se não achou filhos, tenta ver se o ID já é de uma database direta
                 try {
                     console.log("Tentando busca direta como Database ID...");
-                    const directDb = await getNotionDatabaseInfo(notionToken, id);
-                    if (directDb) {
-                        setFoundDbs(prev => [directDb, ...prev]);
+                    const sanitizedId = id.replace(/-/g, '');
+                    const directDb = await getNotionDatabaseInfo(notionToken, sanitizedId);
+                    if (directDb && directDb.object === 'database') {
+                        setFoundDbs(prev => {
+                            if (prev.some(d => d.id.replace(/-/g, '') === sanitizedId)) return prev;
+                            return [{ ...directDb, id: sanitizedId }, ...prev];
+                        });
                         setError("Link identificado como uma base direta! Vincule-a como Despesa ou Receita abaixo.");
+                    } else {
+                        throw new Error("O link fornecido não parece ser uma base de dados.");
                     }
                 } catch (e) {
                     console.error("Direct fetch failed:", e);
-                    setError(`Não detectamos bases no ID [${id.substring(0, 8)}...]. Tente recriar a conexão e marcar explicitamente as tabelas na tela do Notion.`);
+                    setError(`Não detectamos bases no ID informado. Se for uma página, certifique-se de que as tabelas de Despesas/Receitas estão dentro dela como blocos reais ou vinculados.`);
                 }
             }
         } catch (err) {
