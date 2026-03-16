@@ -175,9 +175,16 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
 
             // Se for modo texto, foca o input
             if (isTextMode) {
-                setTimeout(() => {
-                    if (inputRef.current) inputRef.current.focus();
-                }, 100);
+                const focusInput = () => {
+                    if (inputRef.current) {
+                        inputRef.current.focus();
+                        // Trick for mobile to really show keyboard
+                        inputRef.current.click();
+                    }
+                };
+                focusInput();
+                setTimeout(focusInput, 50);
+                setTimeout(focusInput, 300);
             }
 
             // Try starting mic only if NOT in text mode
@@ -505,14 +512,13 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                                 <div 
                                     className="messaging-input-container"
                                     style={{
-                                        position: 'relative',
-                                        bottom: 'auto',
-                                        left: 'auto',
-                                        right: 'auto',
-                                        width: '100%',
-                                        marginTop: 'auto',
-                                        marginBottom: viewportOffset > 0 ? `${viewportOffset + 50}px` : 'max(30px, env(safe-area-inset-bottom))',
-                                        transition: 'margin-bottom 0.1s ease-out'
+                                        position: 'absolute',
+                                        bottom: viewportOffset > 0 ? `${viewportOffset + 50}px` : 'max(50px, env(safe-area-inset-bottom))',
+                                        left: '24px',
+                                        right: '24px',
+                                        width: 'auto',
+                                        transition: 'bottom 0.1s ease-out',
+                                        zIndex: 10
                                     }}
                                 >
                                     <textarea
@@ -684,9 +690,9 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
         .ai-minimal-content {
           width: 100%; height: 100%;
           display: flex; flex-direction: column;
-          justify-content: center;
+          justify-content: flex-start;
           align-items: center;
-          padding: 80px 24px;
+          padding: 20vh 24px 80px;
           /* Relative for sticky child */
           position: relative;
         }
