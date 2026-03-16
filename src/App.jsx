@@ -49,47 +49,6 @@ const PrivateRoute = ({ children }) => {
 
 const AppRoutes = () => {
   const { currentUser } = useAuth();
-  const [showSplash, setShowSplash] = React.useState(true);
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (showSplash) {
-    return (
-      <div style={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: '#1B4520',
-        color: 'white',
-        zIndex: 9999,
-        position: 'fixed',
-        top: 0, left: 0, right: 0, bottom: 0,
-        // animation: 'fadeOut 0.5s ease 1.6s forwards' // Optional, kept logic simple
-      }}>
-        <img
-          src="/Z.png"
-          alt="Logo"
-          style={{
-            width: '80px',
-            height: '80px',
-            animation: 'softPulse 2s infinite ease-in-out'
-          }}
-        />
-        <style>{`
-                    @keyframes softPulse {
-                        0% { transform: scale(1); opacity: 0.8; }
-                        50% { transform: scale(1.1); opacity: 1; }
-                        100% { transform: scale(1); opacity: 0.8; }
-                    }
-                `}</style>
-      </div>
-    );
-  }
 
   return (
     <React.Suspense fallback={
