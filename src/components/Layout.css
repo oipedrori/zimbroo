@@ -55,7 +55,8 @@
     background: rgba(5, 10, 6, 0.5); /* Sutil fundo escuro para destacar o blur no modo escuro */
 }
 
-body.modal-open .bottom-blur-layer {
+body.modal-open .bottom-blur-layer,
+.bottom-blur-layer.hidden-state {
     opacity: 0;
     pointer-events: none;
 }
