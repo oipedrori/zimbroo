@@ -176,7 +176,7 @@ const Profile = () => {
                             <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '10px', background: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', border: 'none' }}>
                                 <img src="/notion_logo.png" style={{ width: '22px', height: '22px', objectFit: 'contain' }} alt="Notion" loading="eager" />
                             </div>
-                            <span style={{ fontWeight: '600', fontSize: '1rem' }}>Sincronizar com Notion</span>
+                            <span style={{ fontWeight: '600', fontSize: '1rem' }}>Importar Hub Financeiro</span>
                         </div>
                         <ArrowRight size={20} opacity={0.6} />
                     </div>
