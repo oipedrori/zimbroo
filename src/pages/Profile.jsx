@@ -317,7 +317,7 @@ const Profile = () => {
                     onMouseEnter={(e) => e.target.style.opacity = 1}
                     onMouseLeave={(e) => e.target.style.opacity = 0.5}
                 >
-                    Zimbroo v1.0
+                    Zimbroo v1.0 • Feito no Brasil
                 </p>
                 
                 {showEasterEgg && (
@@ -341,10 +341,10 @@ const Profile = () => {
                         }}
                     >
                         <p style={{ fontSize: '0.95rem', color: 'var(--text-main)', fontStyle: 'italic', lineHeight: '1.5', margin: 0 }}>
-                            "Deitou-se e dormiu sob o zimbro. De repente um anjo o tocou e disse: 'Levante-se e coma'."
+                            "Deitou-se e dormiu debaixo do zimbro; eis que um anjo o tocou e lhe disse: Levanta-te e come."
                         </p>
                         <p style={{ fontSize: '0.75rem', color: 'var(--primary-color)', fontWeight: '700', marginTop: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                            — 1 Reis 19:5
+                            — 1 Reis 19.5
                         </p>
                     </div>
                 )}
