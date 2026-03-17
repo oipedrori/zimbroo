@@ -428,12 +428,33 @@ const Home = () => {
                                 const conicStops = [];
                                 let cumPercent = 0;
 
+                                // Cores fixas e distintas por categoria para o pie chart
+                                const PIE_COLORS = {
+                                    alimentacao:   '#F97316',
+                                    comunicacao:   '#6366F1',
+                                    doacao:        '#EC4899',
+                                    educacao:      '#3B82F6',
+                                    equipamentos:  '#14B8A6',
+                                    impostos:      '#78716C',
+                                    investimento:  '#D946EF',
+                                    lazer:         '#EF4444',
+                                    moradia:       '#0EA5E9',
+                                    pet:           '#FB923C',
+                                    saude:         '#A855F7',
+                                    seguro:        '#06B6D4',
+                                    transporte:    '#22C55E',
+                                    vestuario:     '#F59E0B',
+                                    higiene:       '#84CC16',
+                                    indeterminado: '#94A3B8',
+                                    outros:        '#6B7280',
+                                };
+                                const getPieColor = (id) => PIE_COLORS[id] || '#94A3B8';
+
                                 if (totalExpenses > 0) {
                                     const sortedCats = Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a);
                                     sortedCats.forEach(([catId, amount]) => {
-                                        const category = getCategoryInfo(catId, 'expense');
                                         const pct = (amount / totalExpenses) * 100;
-                                        conicStops.push(`${category.color} ${cumPercent}% ${cumPercent + pct}%`);
+                                        conicStops.push(`${getPieColor(catId)} ${cumPercent}% ${cumPercent + pct}%`);
                                         cumPercent += pct;
                                     });
                                 }
@@ -497,6 +518,7 @@ const Home = () => {
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '24px' }}>
                                             {Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a).map(([catId, amount]) => {
                                                 const cat = getCategoryInfo(catId, 'expense');
+                                                const pieColor = PIE_COLORS[catId] || '#94A3B8';
                                                 const isSelected = selectedPieCat === catId;
                                                 return (
                                                     <div 
@@ -504,16 +526,16 @@ const Home = () => {
                                                         onClick={() => { haptic.light(); setSelectedPieCat(isSelected ? null : catId); }}
                                                         style={{ 
                                                             display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', 
-                                                            background: isSelected ? cat.color + '20' : 'var(--surface-color)', 
+                                                            background: isSelected ? pieColor + '20' : 'var(--surface-color)', 
                                                             padding: '6px 14px', borderRadius: '16px', 
-                                                            border: `1px solid ${isSelected ? cat.color : 'var(--glass-border)'}`,
-                                                            color: isSelected ? cat.color : 'var(--text-main)',
+                                                            border: `1px solid ${isSelected ? pieColor : 'var(--glass-border)'}`,
+                                                            color: isSelected ? pieColor : 'var(--text-main)',
                                                             fontWeight: isSelected ? '700' : '500',
                                                             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                                                             cursor: 'pointer'
                                                         }}
                                                     >
-                                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: cat.color }}></div>
+                                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: pieColor }}></div>
                                                         <span>{t(cat.label, { defaultValue: cat.label })}</span>
                                                     </div>
                                                 );
@@ -526,59 +548,57 @@ const Home = () => {
 
                         <section className="glass-panel" style={{ padding: '24px' }}>
                             <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '24px' }}>{t('monthly_balances_current_year', { defaultValue: 'Saldos Mensais' })}</h3>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '180px', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px', position: 'relative' }}>
-                                
-                                
+                            {/* Aumentado para 280px para dar espaço às barras e labels */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '280px', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px', position: 'relative' }}>
                                 {yearlyStats.map((stat, i) => {
                                     const isNegative = stat.balance < 0;
+                                    const isCurrent = stat.month === (currentDate.getMonth() + 1);
                                     const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 2000); 
                                     const h = Math.max(2, (Math.abs(stat.balance) / maxVal) * 45); 
-                                    
+
+                                    // Símbolo de moeda
+                                    const valFormatted = formatCurrency(Math.abs(stat.balance));
+
                                     return (
                                         <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', position: 'relative' }}>
-                                            
-                                            {/* Value Label Label Outside Bar */}
-                                            <span style={{ 
-                                                position: 'absolute', 
-                                                top: isNegative ? 'calc(50% + ' + h + '% + 1px)' : 'auto',
-                                                bottom: !isNegative ? 'calc(50% + ' + h + '% + 1px)' : 'auto',
-                                                fontSize: '0.6rem', fontWeight: '800', 
-                                                color: isNegative ? 'var(--danger-color)' : 'var(--primary-dark)',
-                                                whiteSpace: 'nowrap',
-                                                writingMode: 'vertical-rl',
-                                                transform: 'rotate(180deg)',
-                                                zIndex: 5
-                                            }}>
-                                                {Math.abs(stat.balance) >= 10000 ? `${(stat.balance/1000).toFixed(2)}k` : Number(stat.balance).toFixed(2)}
-                                            </span>
-
                                             <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                                                 {/* Top Half (Positive) */}
-                                                <div style={{ height: '50%', width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                                <div style={{ height: '50%', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end' }}>
+                                                    {/* Valor acima da barra positiva — só para o mês atual */}
+                                                    {!isNegative && stat.balance > 0 && isCurrent && (
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: '800', color: 'var(--primary-dark)', whiteSpace: 'nowrap', marginBottom: '5px', textAlign: 'center' }}>
+                                                            {valFormatted}
+                                                        </span>
+                                                    )}
                                                     {!isNegative && stat.balance > 0 && (
                                                         <div style={{
                                                             width: '12px', height: `${h * 2}%`,
                                                             background: 'var(--primary-dark)',
                                                             borderRadius: '4px 4px 0 0',
-                                                            opacity: stat.month === (currentDate.getMonth() + 1) ? 1 : 0.4,
+                                                            opacity: isCurrent ? 1 : 0.4,
                                                             transition: 'height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                                                         }} />
                                                     )}
                                                 </div>
                                                 {/* Bottom Half (Negative) */}
-                                                <div style={{ height: '50%', width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                                                <div style={{ height: '50%', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
                                                     {isNegative && (
                                                         <div style={{
                                                             width: '12px', height: `${h * 2}%`,
                                                             background: 'var(--danger-color)',
                                                             borderRadius: '0 0 4px 4px',
-                                                            opacity: stat.month === (currentDate.getMonth() + 1) ? 1 : 0.4,
+                                                            opacity: isCurrent ? 1 : 0.4,
                                                             transition: 'height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                                                         }} />
                                                     )}
+                                                    {/* Valor abaixo da barra negativa — só para o mês atual */}
+                                                    {isNegative && isCurrent && (
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: '800', color: 'var(--danger-color)', whiteSpace: 'nowrap', marginTop: '5px', textAlign: 'center' }}>
+                                                            {valFormatted}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
-
                                             {/* Rótulo do Mês na Base */}
                                             <span style={{ fontSize: '0.7rem', marginTop: '6px', color: 'var(--text-muted)', fontWeight: '600' }}>
                                                 {stat.label.charAt(0)}
