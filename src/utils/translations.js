@@ -473,5 +473,16 @@ export const currencySymbols = {
     'USD': '$',
     'EUR': '€',
     'GBP': '£',
-    'JPY': '¥'
+    'JPY': '¥',
+    'MXN': '$',
+    'ARS': '$',
+    'CLP': '$',
+    'COP': '$',
+    'PEN': 'S/',
+    'UYU': '$',
+    'CAD': '$',
+    'AUD': '$',
+    'AOA': 'Kz',
+    'MZN': 'MT',
+    'INR': '₹'
 };

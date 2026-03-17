@@ -160,6 +160,17 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                         <option value="USD">Dólar ($)</option>
                         <option value="EUR">Euro (€)</option>
                         <option value="GBP">Libra (£)</option>
+                        <option value="MXN">Peso Mexicano ($)</option>
+                        <option value="ARS">Peso Argentino ($)</option>
+                        <option value="CLP">Peso Chileno ($)</option>
+                        <option value="COP">Peso Colombiano ($)</option>
+                        <option value="PEN">Sol Peruano (S/)</option>
+                        <option value="UYU">Peso Uruguaio ($)</option>
+                        <option value="CAD">Dólar Canadense ($)</option>
+                        <option value="AUD">Dólar Australiano ($)</option>
+                        <option value="AOA">Kwanza (Kz)</option>
+                        <option value="MZN">Metical (MT)</option>
+                        <option value="INR">Rupia (₹)</option>
                         <option value="JPY">Iene (¥)</option>
                     </select>
                 </div>
