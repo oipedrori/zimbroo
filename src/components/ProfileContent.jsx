@@ -15,6 +15,7 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [theme, setTheme] = useState(localStorage.getItem('zimbroo_theme') || 'system');
+    const [showVerse, setShowVerse] = useState(false);
 
     useEffect(() => {
         const root = document.documentElement;
@@ -214,8 +215,23 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
             </div>
 
             {/* Overlays (Inline for Sheet) */}
-            {(showResetConfirm || showDeleteConfirm) && (
+            {(showResetConfirm || showDeleteConfirm || showVerse) && (
                 <div style={{ position: 'absolute', inset: 0, background: 'var(--bg-color)', zIndex: 10, padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center' }}>
+                    {showVerse && (
+                        <div className="animate-fade-in" onClick={() => setShowVerse(false)}>
+                            <Sparkles size={48} color="var(--primary-color)" style={{ margin: '0 auto 24px', opacity: 0.8 }} />
+                            <p style={{ fontSize: '1.2rem', fontWeight: '500', lineHeight: 1.6, color: 'var(--text-main)', fontStyle: 'italic', marginBottom: '16px' }}>
+                                "Deitou-se e dormiu debaixo do zimbro; eis que um anjo o tocou e lhe disse: Levanta-te e come."
+                            </p>
+                            <p style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--primary-color)' }}>1Reis 19.5</p>
+                            <button 
+                                onClick={() => setShowVerse(false)}
+                                style={{ marginTop: '40px', padding: '12px 24px', borderRadius: '12px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: '600' }}
+                            >
+                                Fechar
+                            </button>
+                        </div>
+                    )}
                     {showResetConfirm && (
                         <>
                             <RefreshCcw size={48} color="#f59e0b" style={{ margin: '0 auto 20px' }} />
@@ -247,8 +263,12 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
             
             {/* App Version & Easter Egg */}
             <div style={{ marginTop: '32px', textAlign: 'center', opacity: 0.3, paddingBottom: '20px' }}>
-                <p style={{ fontSize: '0.75rem', fontWeight: '700', margin: '0 0 4px 0', letterSpacing: '0.5px' }}>ZIMBROO v1.8.4</p>
-                <p style={{ fontSize: '0.65rem', fontStyle: 'italic', margin: 0 }}>"Levanta-te e come..." (1Rs 19:5)</p>
+                <button 
+                    onClick={() => { setShowVerse(true); haptic.medium(); }}
+                    style={{ fontSize: '0.75rem', fontWeight: '700', margin: 0, letterSpacing: '0.5px', color: 'inherit', border: 'none', background: 'none', cursor: 'pointer' }}
+                >
+                    ZIMBROO v1.8.4
+                </button>
             </div>
         </div>
     );
