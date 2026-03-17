@@ -135,22 +135,37 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
             {/* Destructive Actions */}
             <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <button
-                    onClick={() => setShowResetConfirm(true)}
-                    style={{ width: '100%', padding: '16px', borderRadius: '16px', background: 'rgba(245, 158, 11, 0.05)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.2)', fontWeight: '700', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                >
-                    <RefreshCcw size={18} /> <span style={{ fontSize: '1rem' }}>Resetar Dados</span>
-                </button>
-                <button
                     onClick={() => logout()}
-                    style={{ width: '100%', padding: '16px', borderRadius: '16px', background: 'var(--surface-color)', color: 'var(--text-main)', border: '1px solid var(--glass-border)', fontWeight: '700', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                    style={{ 
+                        width: '100%', padding: '16px', borderRadius: '16px', 
+                        background: 'rgba(34, 197, 94, 0.1)', color: 'var(--primary-color)', 
+                        border: '1px solid rgba(34, 197, 94, 0.3)', fontWeight: '700', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' 
+                    }}
                 >
                     <LogOut size={18} /> <span style={{ fontSize: '1rem' }}>Sair</span>
                 </button>
                 <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    style={{ width: '100%', padding: '16px', borderRadius: '16px', background: 'transparent', color: 'var(--danger-color)', border: 'none', fontWeight: '700', fontSize: '1rem', marginTop: '10px' }}
+                    onClick={() => setShowResetConfirm(true)}
+                    style={{ 
+                        width: '100%', padding: '16px', borderRadius: '16px', 
+                        background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', 
+                        border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: '700', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' 
+                    }}
                 >
-                    Excluir Conta
+                    <RefreshCcw size={18} /> <span style={{ fontSize: '1rem' }}>Resetar Dados</span>
+                </button>
+                <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    style={{ 
+                        width: '100%', padding: '16px', borderRadius: '16px', 
+                        background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger-color)', 
+                        border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: '700', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' 
+                    }}
+                >
+                    <Trash2 size={18} /> <span style={{ fontSize: '1rem' }}>Excluir Conta</span>
                 </button>
             </div>
 
