@@ -3,7 +3,7 @@ import { useTransactions } from '../hooks/useTransactions';
 import { useAuth } from '../contexts/AuthContext';
 import { format, addMonths, subMonths } from 'date-fns';
 import { ptBR, enUS, es, fr } from 'date-fns/locale';
-import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA } from '../utils/categories';
+import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA, getCategoryInfo } from '../utils/categories';
 import { useI18n } from '../contexts/I18nContext';
 import TransactionModal from '../components/TransactionModal';
 import SwipeableItem from '../components/SwipeableItem';
@@ -356,7 +356,7 @@ const Home = () => {
     if (totalStatsExpenses > 0) {
         const sortedCats = Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a);
         sortedCats.forEach(([catId, amount]) => {
-            const category = CATEGORIAS_DESPESA.find(c => c.id === catId) || { color: '#999' };
+            const category = getCategoryInfo(catId, 'expense');
             const pct = (amount / totalStatsExpenses) * 100;
             conicStops.push(`${category.color} ${cumPercent}% ${cumPercent + pct}%`);
             cumPercent += pct;
@@ -365,10 +365,7 @@ const Home = () => {
     const pieChartBg = totalStatsExpenses > 0 ? `conic-gradient(${conicStops.join(', ')})` : 'var(--glass-border)';
 
     const getCategoryTheme = (id, type) => {
-        const defaultColor = '#9ca3af';
-        const list = type === 'income' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
-        const cat = list.find(c => c.id === id);
-        return cat ? cat : { label: t('others', { defaultValue: 'Outros' }), color: defaultColor };
+        return getCategoryInfo(id, type);
     };
 
     const dateLocales = { pt: ptBR, en: enUS, es: es, fr: fr };
@@ -433,7 +430,7 @@ const Home = () => {
                                 if (totalExpenses > 0) {
                                     const sortedCats = Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a);
                                     sortedCats.forEach(([catId, amount]) => {
-                                        const category = CATEGORIAS_DESPESA.find(c => c.id === catId) || { color: '#999' };
+                                        const category = getCategoryInfo(catId, 'expense');
                                         const pct = (amount / totalExpenses) * 100;
                                         conicStops.push(`${category.color} ${cumPercent}% ${cumPercent + pct}%`);
                                         cumPercent += pct;
@@ -1079,8 +1076,8 @@ const Home = () => {
                                         {/* Value Label Label */}
                                         <span style={{ 
                                             position: 'absolute', 
-                                            top: isNeg ? 'calc(50% + ' + (h * 2) + '% + 4px)' : 'auto',
-                                            bottom: !isNeg ? 'calc(50% + ' + (h * 2) + '% + 4px)' : 'auto',
+                                            top: isNeg ? 'calc(50% + ' + (h * 2) + '% + 8px)' : 'auto',
+                                            bottom: !isNeg ? 'calc(50% + ' + (h * 2) + '% + 8px)' : 'auto',
                                             fontSize: '0.7rem', fontWeight: '800', 
                                             color: isNeg ? 'var(--danger-color)' : 'var(--primary-dark)',
                                             whiteSpace: 'nowrap',
@@ -1089,12 +1086,12 @@ const Home = () => {
                                             {formatCurrency(stat.balance).split(',')[0]}
                                         </span>
 
-                                        <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                        <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                                             {/* Top Half (Positive) */}
                                             <div style={{ height: '50%', width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
                                                 {!isNeg && stat.balance > 0 && (
                                                     <div style={{
-                                                        width: '100%', height: `${h * 2}%`,
+                                                        width: '32px', height: `${h * 2}%`,
                                                         background: 'var(--primary-color)',
                                                         borderRadius: '6px 6px 0 0',
                                                         opacity: isCurrent ? 1 : 0.4,
@@ -1107,7 +1104,7 @@ const Home = () => {
                                             <div style={{ height: '50%', width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
                                                 {isNeg && (
                                                     <div style={{
-                                                        width: '100%', height: `${h * 2}%`,
+                                                        width: '32px', height: `${h * 2}%`,
                                                         background: 'var(--danger-color)',
                                                         borderRadius: '0 0 6px 6px',
                                                         opacity: isCurrent ? 1 : 0.4,
@@ -1117,7 +1114,7 @@ const Home = () => {
                                             </div>
                                         </div>
 
-                                        <span style={{ fontSize: '0.8rem', color: isCurrent ? 'var(--primary-dark)' : 'var(--text-muted)', fontWeight: isCurrent ? '700' : '500', marginTop: '12px' }}>
+                                        <span style={{ fontSize: '0.8rem', color: isCurrent ? 'var(--primary-dark)' : 'var(--text-muted)', fontWeight: isCurrent ? '700' : '500', marginTop: '16px' }}>
                                             {format(new Date(2024, stat.month - 1, 1), 'MMM', { locale: { pt: ptBR, en: enUS, es: es, fr: fr }[locale] || ptBR }).substring(0, 3).toUpperCase()}
                                         </span>
                                     </div>
