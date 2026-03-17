@@ -244,6 +244,12 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                     )}
                 </div>
             )}
+            
+            {/* App Version & Easter Egg */}
+            <div style={{ marginTop: '32px', textAlign: 'center', opacity: 0.3, paddingBottom: '20px' }}>
+                <p style={{ fontSize: '0.75rem', fontWeight: '700', margin: '0 0 4px 0', letterSpacing: '0.5px' }}>ZIMBROO v1.8.4</p>
+                <p style={{ fontSize: '0.65rem', fontStyle: 'italic', margin: 0 }}>"Levanta-te e come..." (1Rs 19:5)</p>
+            </div>
         </div>
     );
 };
