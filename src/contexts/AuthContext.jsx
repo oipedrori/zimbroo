@@ -98,20 +98,7 @@ export const AuthProvider = ({ children }) => {
 
 
     if (loading) {
-        return (
-            <div style={{
-                height: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                background: 'var(--bg-color)',
-                color: 'var(--primary-color)',
-                fontFamily: 'sans-serif'
-            }}>
-                <LoadingDots />
-            </div>
-        );
+        return null; // Don't render anything in AuthProvider while loading, let index.html splash handle it
     }
 
     return (
