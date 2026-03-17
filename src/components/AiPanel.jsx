@@ -93,9 +93,20 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
     const { transactions, addTx, deleteTx } = useTransactions(format(new Date(), 'yyyy-MM'));
     const { t, locale } = useI18n();
 
+    const [micPermission, setMicPermission] = useState('prompt'); // 'prompt', 'granted', 'denied'
+
+    // Check permission state on mount
+    useEffect(() => {
+        if (navigator.permissions && navigator.permissions.query) {
+            navigator.permissions.query({ name: 'microphone' }).then(result => {
+                setMicPermission(result.state);
+                result.onchange = () => setMicPermission(result.state);
+            }).catch(err => console.warn("Permissions API not supported for mic:", err));
+        }
+    }, []);
+
     // Setup Speech Recognition
     useEffect(() => {
-        // Verificar suporte da API nativa do navegador
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             const recognition = new SpeechRecognition();
@@ -105,6 +116,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
 
             recognition.onstart = () => {
                 setIsListening(true);
+                setMicPermission('granted');
             };
 
             recognition.onresult = (event) => {
@@ -115,10 +127,8 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                 setTranscript(currentTranscript);
                 transcriptRef.current = currentTranscript;
 
-                // Clear existing silence timeout
                 if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
 
-                // Set new timeout to autosubmit after 2 seconds of silence
                 silenceTimeoutRef.current = setTimeout(() => {
                     if (transcriptRef.current.trim().length > 0 && !isProcessing) {
                         processTextRef.current(transcriptRef.current);
@@ -129,18 +139,19 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
             recognition.onerror = (event) => {
                 console.error('Speech recognition error', event.error);
                 setIsListening(false);
+                if (event.error === 'not-allowed') {
+                    setMicPermission('denied');
+                }
                 if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
             };
 
             recognition.onend = () => {
-                // If it was supposed to be listening and it wasn't triggered by a stop()
-                // we don't force restart to avoid infinite loops, but we let the user know
                 setIsListening(false);
             };
 
             recognitionRef.current = recognition;
         }
-    }, [isProcessing]); // Re-bind if necessary
+    }, [isProcessing]);
 
     // Monitora mudança na prop isActive do bottom-nav para ligar o microfone automaticamente
     useEffect(() => {
@@ -435,6 +446,19 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                             <div className="mystical-aura"></div>
                             <Mic size={32} color="white" />
                         </button>
+                    ) : micPermission === 'denied' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                            <button
+                                className="ai-voice-close-btn"
+                                onClick={onClose}
+                                style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444' }}
+                            >
+                                <X size={32} color="#ef4444" />
+                            </button>
+                            <p style={{ color: '#ef4444', fontSize: '0.9rem', fontWeight: '700', textAlign: 'center', background: 'rgba(0,0,0,0.4)', padding: '12px 20px', borderRadius: '16px', maxWidth: '80%' }}>
+                                {t('mic_blocked', { defaultValue: 'Microfone bloqueado. Ative nas configurações do navegador para usar voz.' })}
+                            </p>
+                        </div>
                     ) : (
                         <button
                             className="ai-voice-close-btn"

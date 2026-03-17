@@ -6,8 +6,15 @@ import { useAuth } from '../contexts/AuthContext';
 
 export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
     const { currentUser } = useAuth();
-    const [transactions, setTransactions] = useState([]);
-    const [allTransactions, setAllTransactions] = useState([]);
+    const [allTransactions, setAllTransactions] = useState(() => {
+        if (!currentUser) return [];
+        const cached = localStorage.getItem(`zimbroo_txs_${currentUser.uid}`);
+        return cached ? JSON.parse(cached) : [];
+    });
+    const [transactions, setTransactions] = useState(() => {
+        if (!allTransactions.length) return [];
+        return prepareMonthlyTransactions(allTransactions, currentMonth);
+    });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -17,7 +24,10 @@ export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
             return;
         }
 
+        // Se já temos cache, desativamos o loading visual pesado (opcional)
+        // mas mantemos o loading para sincronizar.
         setLoading(true);
+
         const q = query(
             collection(db, 'transactions'),
             where("userId", "==", currentUser.uid)
@@ -29,6 +39,9 @@ export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
                 allTxs.push({ id: doc.id, ...doc.data() });
             });
             
+            // Salvar no Cache
+            localStorage.setItem(`zimbroo_txs_${currentUser.uid}`, JSON.stringify(allTxs));
+
             const processed = prepareMonthlyTransactions(allTxs, currentMonth);
             setAllTransactions(allTxs);
             setTransactions(processed);

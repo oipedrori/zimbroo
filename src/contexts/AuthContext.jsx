@@ -25,6 +25,9 @@ export const AuthProvider = ({ children }) => {
     // Logout
     const logout = async () => {
         try {
+            if (currentUser) {
+                localStorage.removeItem(`zimbroo_txs_${currentUser.uid}`);
+            }
             await signOut(auth);
         } catch (error) {
             console.error("Erro no logout:", error);
