@@ -1,19 +1,28 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA } from '../utils/categories';
+import { AI_BUBBLE_PHRASES } from '../utils/phrases';
 
-// Lendo a chave de um arquivo .env para evitar vazamentos.
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const callBackendAi = async (type, payload) => {
+  try {
+    const response = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, payload })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error || 'Erro no servidor de IA');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`[GeminiService] ${type} failed:`, error);
+    throw error;
+  }
+};
 
 export const analyzeTextWithGemini = async (text, transactions = [], conversationContext = null, locale = 'pt') => {
-  if (!API_KEY) {
-    console.error("Gemini API Key is missing! Check your .env file.");
-    return { error: "Erro de configuração: Chave de API não encontrada." };
-  }
-
   try {
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
     const categoriesExpenseStr = CATEGORIAS_DESPESA.map(c => c.id).join(', ');
     const categoriesIncomeStr = CATEGORIAS_RECEITA.map(c => c.id).join(', ');
 
@@ -21,7 +30,7 @@ export const analyzeTextWithGemini = async (text, transactions = [], conversatio
       `ID: ${t.id} | Tipo: ${t.type === 'expense' ? 'Despesa' : 'Receita'} | Valor: R$${t.amount} | Desc: ${t.description} | Cat: ${t.category}`
     ).join('\n');
 
-    const currentDateStr = new Date().toLocaleDateString('pt-BR'); // Ex: 04/03/2026
+    const currentDateStr = new Date().toLocaleDateString('pt-BR');
 
     const prompt = `
 Você é um assistente financeiro do aplicativo Zimbroo. O usuário enviará uma transcrição de voz.
@@ -61,50 +70,35 @@ MODELO 1: ADICIONAR NOVA(S) TRANSAÇÃO(ÕES)
       "date": "2026-03-04",
       "repeatType": "none", // "none", "recurring", "installment"
       "installments": 1 // Quantidade de parcelas se for installment.
-    },
-    {
-      "type": "expense",
-      "amount": 120.00,
-      "description": "Ex: Energia",
-      "category": "ID_CATEGORIA",
-      "date": "2026-03-04",
-      "repeatType": "recurring",
-      "installments": 1
     }
   ]
 }
 
-MODELO 2: PEDIR MAIS INFORMAÇÕES (Sugerir Recorrência ou falta de dados)
+MODELO 2: PEDIR MAIS INFORMAÇÕES
 {
   "action": "need_info",
-  "message": "Notei que esse é um gasto fixo. Deseja que eu coloque como recorrente todos os meses?",
-  "pendingData": { 
-     "type": "expense",
-     "amount": 1200,
-     "description": "Aluguel",
-     "category": "moradia",
-     "repeatType": "recurring"
-  }
+  "message": "Deseja que eu coloque como recorrente todos os meses?",
+  "pendingData": { "type": "expense", "amount": 1200, "description": "Aluguel", "category": "moradia", "repeatType": "recurring" }
 }
 
 MODELO 3: DELETAR UMA TRANSAÇÃO
 {
   "action": "delete",
-  "targetId": "ID_DA_TRANSACAO_NA_LISTA_RECENTE",
-  "message": "Ok, apaguei o Spotify do seu registro."
+  "targetId": "ID_DA_TRANSACAO",
+  "message": "Ok, apaguei o registro."
 }
 
-MODELO 4: ANÁLISE GENÉRICA / DICAS FINACEIRAS
+MODELO 4: ANÁLISE GENÉRICA
 {
   "action": "analysis",
-  "message": "Seu resumo e dicas sobre o texto."
+  "message": "Resumo aqui..."
 }
 
 Mensagem do usuário: "${text}"
 `;
 
-    const result = await model.generateContent(prompt);
-    let responseText = result.response.text();
+    const result = await callBackendAi('analyze', { prompt, model: "gemini-2.0-flash" });
+    let responseText = result.text;
 
     // Fallback: strip markdown ticks if Gemini included them despite instructions
     responseText = responseText.replace(/\`\`\`json/gi, '').replace(/\`\`\`/g, '').trim();
@@ -114,32 +108,22 @@ Mensagem do usuário: "${text}"
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
     } else {
-      console.error("Gemini didn't return a valid JSON object:", responseText);
-      throw new Error("Invalid output format");
+      throw new Error("Invalid output format from AI");
     }
 
   } catch (error) {
     console.error("Gemini AI Error:", error);
-    return { error: `Erro na IA: ${error.message || "Tente novamente mais tarde."}` };
+    return { error: `IA protegida: ${error.message || "Tente novamente."}` };
   }
 };
 
-import { AI_BUBBLE_PHRASES } from '../utils/phrases';
-
 export const generateInsightMessage = async (transactions = [], locale = 'pt') => {
-  // Para economizar tokens, agora usamos frases estáticas e amigáveis
-  // em vez de gerar via IA toda vez que o app abre.
   const randomIndex = Math.floor(Math.random() * AI_BUBBLE_PHRASES.length);
   return AI_BUBBLE_PHRASES[randomIndex];
 };
 
 export const suggestCategoryLimit = async (category, transactions = [], locale = 'pt') => {
-  if (!API_KEY) return { amount: null };
-
   try {
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
     const recentTxs = transactions
       .filter(t => t.category === category)
       .slice(0, 20)
@@ -155,8 +139,8 @@ export const suggestCategoryLimit = async (category, transactions = [], locale =
       Ex: {"amount": 150.00, "reason": "Sua média é R$130, deixamos uma margem extra."}
     `;
 
-    const result = await model.generateContent(prompt);
-    let text = result.response.text();
+    const result = await callBackendAi('suggest_limit', { prompt, model: "gemini-1.5-flash" });
+    let text = result.text;
     text = text.replace(/\`\`\`json/gi, '').replace(/\`\`\`/g, '').trim();
     
     return JSON.parse(text);
