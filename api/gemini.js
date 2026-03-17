@@ -25,20 +25,11 @@ export default async function handler(req, res) {
     try {
         const genAI = new GoogleGenerativeAI(API_KEY);
 
-        if (type === 'analyze') {
-            const { prompt, model: modelName = "gemini-1.5-flash" } = payload;
-            const model = genAI.getGenerativeModel({ model: modelName });
+        if (type === 'analyze' || type === 'suggest_limit') {
+            // Forçamos o modelo flash 1.5 que é o mais compatível globalmente
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
             
-            const result = await model.generateContent(prompt);
-            const responseText = result.response.text();
-            
-            return res.status(200).json({ text: responseText });
-        } 
-        
-        if (type === 'suggest_limit') {
-            const { prompt, model: modelName = "gemini-1.5-flash" } = payload;
-            const model = genAI.getGenerativeModel({ model: modelName });
-            
+            const { prompt } = payload;
             const result = await model.generateContent(prompt);
             const responseText = result.response.text();
             
