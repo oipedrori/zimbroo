@@ -69,6 +69,7 @@ const Home = () => {
         return saved ? JSON.parse(saved) : {};
     });
     const [chartType, setChartType] = useState('bar'); // 'bar' or 'line'
+    const [selectedPieCat, setSelectedPieCat] = useState(null);
 
     // --- Derived Variables ---
     const monthPrefix = format(currentDate, 'yyyy-MM');
@@ -441,18 +442,78 @@ const Home = () => {
 
                                 return (
                                     <>
-                                        <div style={{ width: '180px', height: '180px', borderRadius: '50%', background: pieBg, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', overflow: 'hidden', transform: 'translateZ(0)', boxShadow: '0 0 0 1px var(--glass-border)' }}>
-                                            <div style={{ width: '120px', height: '120px', background: 'var(--bg-color)', borderRadius: '50%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t('total')}</span>
-                                                <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{formatCurrency(totalExpenses)}</span>
+                                        <div 
+                                            onClick={(e) => {
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                const x = e.clientX - rect.left - rect.width / 2;
+                                                const y = e.clientY - rect.top - rect.height / 2;
+                                                let angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
+                                                if (angle < 0) angle += 360;
+
+                                                const sortedCats = Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a);
+                                                let cumulativePct = 0;
+                                                for (const [id, amount] of sortedCats) {
+                                                    const pct = (amount / totalExpenses) * 100;
+                                                    const startAngle = (cumulativePct / 100) * 360;
+                                                    const endAngle = ((cumulativePct + pct) / 100) * 360;
+                                                    if (angle >= startAngle && angle < endAngle) {
+                                                        setSelectedPieCat(id);
+                                                        haptic.light();
+                                                        return;
+                                                    }
+                                                    cumulativePct += pct;
+                                                }
+                                                setSelectedPieCat(null);
+                                            }}
+                                            style={{ 
+                                                width: '180px', height: '180px', borderRadius: '50%', background: pieBg, 
+                                                display: 'flex', justifyContent: 'center', alignItems: 'center', 
+                                                position: 'relative', overflow: 'hidden', transform: 'translateZ(0)', 
+                                                boxShadow: '0 8px 32px rgba(0,0,0,0.1)', cursor: 'pointer',
+                                                transition: 'all 0.3s ease'
+                                            }}
+                                        >
+                                            <div style={{ width: '120px', height: '120px', background: 'var(--bg-color)', borderRadius: '50%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '10px', textAlign: 'center' }}>
+                                                {selectedPieCat ? (() => {
+                                                    const cat = getCategoryInfo(selectedPieCat, 'expense');
+                                                    const amount = expensesByCategory[selectedPieCat];
+                                                    const pct = Math.round((amount / totalExpenses) * 100);
+                                                    return (
+                                                        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                                            <span style={{ fontSize: '1.4rem' }}>{cat.icon}</span>
+                                                            <span style={{ fontSize: '0.8rem', fontWeight: '800', color: cat.color }}>{t(cat.label, { defaultValue: cat.label })}</span>
+                                                            <span style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-main)' }}>{formatCurrency(amount)}</span>
+                                                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{pct}%</span>
+                                                        </div>
+                                                    );
+                                                })() : (
+                                                    <div className="animate-fade-in">
+                                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t('total')}</span>
+                                                        <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{formatCurrency(totalExpenses)}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', marginTop: '24px' }}>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '24px' }}>
                                             {Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a).map(([catId, amount]) => {
-                                                const cat = CATEGORIAS_DESPESA.find(c => c.id === catId) || { label: catId, color: '#999' };
+                                                const cat = getCategoryInfo(catId, 'expense');
+                                                const isSelected = selectedPieCat === catId;
                                                 return (
-                                                    <div key={catId} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', background: 'var(--surface-color)', padding: '6px 12px', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-                                                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: cat.color }}></div>
+                                                    <div 
+                                                        key={catId} 
+                                                        onClick={() => { haptic.light(); setSelectedPieCat(isSelected ? null : catId); }}
+                                                        style={{ 
+                                                            display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', 
+                                                            background: isSelected ? cat.color + '20' : 'var(--surface-color)', 
+                                                            padding: '6px 14px', borderRadius: '16px', 
+                                                            border: `1px solid ${isSelected ? cat.color : 'var(--glass-border)'}`,
+                                                            color: isSelected ? cat.color : 'var(--text-main)',
+                                                            fontWeight: isSelected ? '700' : '500',
+                                                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: cat.color }}></div>
                                                         <span>{t(cat.label, { defaultValue: cat.label })}</span>
                                                     </div>
                                                 );
@@ -944,23 +1005,82 @@ const Home = () => {
                                     </h3>
                                     {totalStatsExpenses > 0 ? (
                                         <>
-                                            <div style={{ position: 'relative', width: '220px', height: '220px', marginBottom: '32px', borderRadius: '50%', background: pieChartBg, display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 12px 40px rgba(0,0,0,0.1)' }}>
-                                                <div style={{ width: '150px', height: '150px', background: 'var(--bg-color)', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-                                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('total')}</span>
-                                                    <span style={{ fontSize: '1.3rem', fontWeight: '800' }}>{formatCurrency(totalStatsExpenses)}</span>
+                                            <div 
+                                                onClick={(e) => {
+                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                    const x = e.clientX - rect.left - rect.width / 2;
+                                                    const y = e.clientY - rect.top - rect.height / 2;
+                                                    let angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
+                                                    if (angle < 0) angle += 360;
+
+                                                    const sortedCats = Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a);
+                                                    let cumulativePct = 0;
+                                                    for (const [id, amount] of sortedCats) {
+                                                        const pct = (amount / totalStatsExpenses) * 100;
+                                                        const startAngle = (cumulativePct / 100) * 360;
+                                                        const endAngle = ((cumulativePct + pct) / 100) * 360;
+                                                        if (angle >= startAngle && angle < endAngle) {
+                                                            setSelectedPieCat(id);
+                                                            haptic.light();
+                                                            return;
+                                                        }
+                                                        cumulativePct += pct;
+                                                    }
+                                                    setSelectedPieCat(null);
+                                                }}
+                                                style={{ 
+                                                    position: 'relative', width: '220px', height: '220px', marginBottom: '32px', 
+                                                    borderRadius: '50%', background: pieChartBg, display: 'flex', 
+                                                    justifyContent: 'center', alignItems: 'center', 
+                                                    boxShadow: '0 12px 40px rgba(0,0,0,0.1)', cursor: 'pointer',
+                                                    transition: 'all 0.3s ease'
+                                                }}
+                                            >
+                                                <div style={{ width: '150px', height: '150px', background: 'var(--bg-color)', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', padding: '20px', textAlign: 'center' }}>
+                                                    {selectedPieCat ? (() => {
+                                                        const cat = getCategoryInfo(selectedPieCat, 'expense');
+                                                        const amount = expensesByCategory[selectedPieCat];
+                                                        const pct = Math.round((amount / totalStatsExpenses) * 100);
+                                                        return (
+                                                            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                                                                <span style={{ fontSize: '1.8rem' }}>{cat.icon}</span>
+                                                                <span style={{ fontSize: '0.9rem', fontWeight: '800', color: cat.color }}>{t(cat.label, { defaultValue: cat.label })}</span>
+                                                                <span style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-main)' }}>{formatCurrency(amount)}</span>
+                                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{pct}%</span>
+                                                            </div>
+                                                        );
+                                                    })() : (
+                                                        <div className="animate-fade-in">
+                                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('total')}</span>
+                                                            <span style={{ fontSize: '1.3rem', fontWeight: '800' }}>{formatCurrency(totalStatsExpenses)}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '12px', width: '100%', marginTop: 'auto' }}>
                                         {Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a).slice(0, 4).map(([catId, amount]) => {
-                                            const cat = CATEGORIAS_DESPESA.find(c => c.id === catId) || { label: catId, color: '#999', icon: '📌' };
+                                            const cat = getCategoryInfo(catId, 'expense');
                                             const pct = Math.round((amount / totalStatsExpenses) * 100);
+                                            const isSelected = selectedPieCat === catId;
                                             return (
-                                                <div key={catId} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', background: 'var(--surface-color)', padding: '12px 16px', borderRadius: '16px', border: '1px solid var(--glass-border)', justifyContent: 'space-between' }}>
+                                                <div 
+                                                    key={catId} 
+                                                    onClick={() => { haptic.light(); setSelectedPieCat(isSelected ? null : catId); }}
+                                                    style={{ 
+                                                        display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', 
+                                                        background: isSelected ? cat.color + '10' : 'var(--surface-color)', 
+                                                        padding: '12px 16px', borderRadius: '16px', 
+                                                        border: `1px solid ${isSelected ? cat.color : 'var(--glass-border)'}`,
+                                                        justifyContent: 'space-between',
+                                                        transition: 'all 0.2s ease',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                         <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: cat.color + '15', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                                             <span style={{ fontSize: '1.1rem' }}>{cat.icon}</span>
                                                         </div>
-                                                        <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{t(cat.label, { defaultValue: cat.label })}</span>
+                                                        <span style={{ fontWeight: '600', color: isSelected ? cat.color : 'var(--text-main)' }}>{t(cat.label, { defaultValue: cat.label })}</span>
                                                     </div>
                                                     <span style={{ fontWeight: '800', color: cat.color }}>{formatCurrency(amount)} ({pct}%)</span>
                                                 </div>
