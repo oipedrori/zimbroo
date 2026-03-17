@@ -98,7 +98,7 @@ MODELO 4: ANÁLISE GENÉRICA
 Mensagem do usuário: "${text}"
 `;
 
-    const result = await callBackendAi('analyze', { prompt, model: "gemini-2.0-flash" });
+    const result = await callBackendAi('analyze', { prompt, model: "gemini-1.5-flash" });
     let responseText = result.text;
 
     // Fallback: strip markdown ticks if Gemini included them despite instructions
