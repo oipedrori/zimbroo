@@ -143,13 +143,30 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                         <option value="pt">Português</option>
                         <option value="en">English</option>
                         <option value="es">Español</option>
-                        <option value="fr">Français</option>
+                    </select>
+                </div>
+
+                <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', opacity: 0.6 }}>
+                        <DollarSign size={16} />
+                        <span style={{ fontSize: '0.8rem', fontWeight: '700', letterSpacing: '0.5px' }}>MOEDA</span>
+                    </div>
+                    <select
+                        value={currency}
+                        onChange={(e) => changeCurrency(e.target.value)}
+                        style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--glass-border)', padding: '14px', borderRadius: '12px', color: 'var(--text-main)', fontWeight: '600', fontSize: '0.85rem' }}
+                    >
+                        <option value="BRL">Real (R$)</option>
+                        <option value="USD">Dólar ($)</option>
+                        <option value="EUR">Euro (€)</option>
+                        <option value="GBP">Libra (£)</option>
+                        <option value="JPY">Iene (¥)</option>
                     </select>
                 </div>
             </div>
 
             {/* Destructive Actions */}
-            <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ paddingTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <button
                     onClick={() => logout()}
                     style={{ 
