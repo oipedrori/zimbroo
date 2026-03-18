@@ -10,7 +10,7 @@ import SwipeableItem from '../components/SwipeableItem';
 import LoadingDots from '../components/LoadingDots';
 import ProfileContent from '../components/ProfileContent';
 import NotionImportContent from '../components/NotionImportContent';
-import { Plus, ChevronLeft, ChevronRight, User, Pointer, X, Trash2, PieChart, BarChart2, Shield, Mic, Keyboard, Moon, Globe, DollarSign, LogOut } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, User, Pointer, X, Trash2, PieChart, BarChart2, Shield, Mic, Keyboard, Moon, Globe, DollarSign, LogOut, ArrowUp, ArrowDown } from 'lucide-react';
 import { Link, useOutletContext, useNavigate } from 'react-router-dom';
 import { getEmojiForDescription } from '../utils/emojiUtils';
 import { prepareMonthlyTransactions } from '../services/transactionService';
@@ -771,14 +771,14 @@ const Home = () => {
                         <div style={{ display: 'flex', gap: '24px', opacity: 0.9 }}>
                             <div style={{ flex: 1 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4ade80' }}></div>
+                                    <ArrowUp size={16} color="#4ade80" />
                                     <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
                                 </div>
                                 <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(incomes)}</p>
                             </div>
                             <div style={{ flex: 1 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f87171' }}></div>
+                                    <ArrowDown size={16} color="#f87171" />
                                     <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
                                 </div>
                                 <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(expenses)}</p>

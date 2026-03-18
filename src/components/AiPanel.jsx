@@ -67,6 +67,7 @@ const AI_SUGGESTIONS = [
 const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onListeningChange }) => {
     const [isListening, setIsListening] = useState(false);
     const { currentUser } = useAuth();
+    const firstName = currentUser?.displayName?.split(' ')[0] || '';
 
     useEffect(() => {
         if (onListeningChange) {
@@ -513,7 +514,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'center' }}>
                                 <div style={{ textAlign: 'center', marginTop: '10px', flexShrink: 0 }}>
                                     <h3 style={{ color: 'white', fontSize: '1.4rem', fontWeight: '600', marginBottom: '8px', opacity: 0.9 }}>
-                                        {t('ai_ready', { defaultValue: 'Zimbro está pronto para te ajudar' })}
+                                        {t('ai_ready', { defaultValue: `Como posso ajudar${firstName ? ', ' + firstName : ''}?` })}
                                     </h3>
                                     <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>
                                         {t('ai_processing_hint', { defaultValue: 'A Inteligência Artificial irá processar as informações' })}
@@ -571,7 +572,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center' }}>
                                 <div className="ai-status-header">
                                     <h3 style={{ color: 'white', fontSize: '1.4rem', fontWeight: '600', marginBottom: '8px', opacity: 0.9 }}>
-                                        {isListening ? t('listening_now', { defaultValue: 'Ouvindo...' }) : t('ai_ready', { defaultValue: 'Zimbro está pronto para te ajudar' })}
+                                        {isListening ? t('listening_now', { defaultValue: 'Ouvindo...' }) : t('ai_ready', { defaultValue: `Como posso ajudar${firstName ? ', ' + firstName : ''}?` })}
                                     </h3>
                                 </div>
 
