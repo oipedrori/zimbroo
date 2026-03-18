@@ -119,8 +119,11 @@ const Statistics = () => {
     return (
         <div className="page-container animate-fade-in no-scrollbar" style={{ paddingBottom: '110px', animation: 'fadeIn 0.4s forwards' }}>
             <style>{`
-                .no-scrollbar::-webkit-scrollbar { display: none; }
-                .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                .no-scrollbar::-webkit-scrollbar { display: none !important; width: 0 !important; background: transparent !important; }
+                .no-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
+                body::-webkit-scrollbar { display: none !important; width: 0 !important; }
+                html::-webkit-scrollbar { display: none !important; width: 0 !important; }
+                *::-webkit-scrollbar { display: none !important; }
                 .pie-slice { cursor: pointer; }
                 .pie-slice:hover { opacity: 0.9; }
             `}</style>
