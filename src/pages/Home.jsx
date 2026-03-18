@@ -558,8 +558,9 @@ const Home = () => {
                                         }
                                         if (rawVal > 0) barHeightPct = Math.max(4, barHeightPct);
 
-                                        // Format value string (currency symbol omitted for space, format to k)
-                                        let valStr = rawVal >= 1000 ? `${(rawVal/1000).toFixed(1)}k` : rawVal.toFixed(0);
+                                        // Format value string with currency symbol
+                                        const currSym = currency === 'BRL' ? 'R$' : currency === 'EUR' ? '€' : '$';
+                                        let valStr = rawVal >= 1000 ? `${currSym}${(rawVal/1000).toFixed(1)}k` : `${currSym}${rawVal.toFixed(0)}`;
                                         if (rawVal === 0) valStr = '';
 
                                         // Whether the label sits inside or outside (rotated text needs more space)
