@@ -497,20 +497,12 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                             position: 'relative',
                             maxHeight: '55vh',
                             marginBottom: (!isProcessing && conversationContext) ? '20px' : '0',
+                            overflowY: 'auto',
+                            padding: '10px 0',
+                            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
+                            maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)'
                         }}>
-                            {/* Fade top */}
-                            <div style={{
-                                position: 'absolute', top: 0, left: 0, right: 0, height: '40px',
-                                background: 'linear-gradient(to bottom, rgba(27,69,32,0.6) 0%, transparent 100%)',
-                                pointerEvents: 'none', zIndex: 1, borderRadius: '8px 8px 0 0'
-                            }} />
-                            {/* Fade bottom */}
-                            <div style={{
-                                position: 'absolute', bottom: 0, left: 0, right: 0, height: '40px',
-                                background: 'linear-gradient(to top, rgba(27,69,32,0.6) 0%, transparent 100%)',
-                                pointerEvents: 'none', zIndex: 1, borderRadius: '0 0 8px 8px'
-                            }} />
-                            <p className="ai-system-message animate-fade-in">
+                            <p className="ai-system-message animate-fade-in" style={{ padding: '20px 10px', maxHeight: 'none', overflowY: 'visible' }}>
                                 {aiMessage}
                             </p>
                         </div>
