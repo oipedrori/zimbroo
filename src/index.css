@@ -4,24 +4,24 @@
   --bg-color: #FBFEFB;
   --surface-color: #ffffff;
 
-  /* LIGHT MODE (Padrão) -> Destaque ADF7B8 */
-  --primary-darkest: #86efac;
-  --primary-darker: #ADF7B8;
-  --primary-dark: #74B87A; /* Legível se precisar de texto em fundo claro */
-  --primary-color: #ADF7B8;
-  --primary-rgb: 173, 247, 184;
-  --highlight-color: #ADF7B8;
+  /* LIGHT MODE (Padrão) -> Destaque 4BB45A */
+  --primary-darkest: #2D7D39;
+  --primary-darker: #388E3C;
+  --primary-dark: #1B4520;
+  --primary-color: #4BB45A;
+  --primary-rgb: 75, 180, 90;
+  --highlight-color: #4BB45A;
 
   --primary-light: #e6f7e9;
-  --primary-gradient: linear-gradient(135deg, #ADF7B8 0%, #86efac 100%);
-  --highlight-gradient: linear-gradient(135deg, #ADF7B8 0%, #74B87A 100%);
+  --primary-gradient: linear-gradient(135deg, #4BB45A 0%, #2D7D39 100%);
+  --highlight-gradient: linear-gradient(135deg, #4BB45A 0%, #388E3C 100%);
   --secondary-gradient: linear-gradient(180deg, var(--bg-color) 0%, #d4f0db 100%);
 
   --accent-color: var(--primary-color);
 
   --text-main: #0E2210;
   --text-muted: #1B4520;
-  --btn-text: #0E2210; /* Fundo claro da primary = texto escuro */
+  --btn-text: #ffffff; /* Fundo médio da primary = texto branco para contraste */
 
   --danger-color: #d32f2f;
   --danger-light: #fdeded;
@@ -29,7 +29,7 @@
   --success-light: var(--primary-light);
 
   --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(173, 247, 184, 0.4);
+  --glass-border: rgba(75, 180, 90, 0.4);
   --shadow-sm: 0 4px 6px -1px rgba(14, 34, 16, 0.05);
   --shadow-md: 0 10px 15px -3px rgba(14, 34, 16, 0.08);
   --shadow-lg: 0 20px 25px -5px rgba(14, 34, 16, 0.1);
@@ -97,18 +97,18 @@
   --surface-color: #ffffff;
   --text-main: #0E2210;
   --text-muted: #1B4520;
-  --btn-text: #0E2210;
+  --btn-text: #ffffff;
   --glass-bg: rgba(255, 255, 255, 0.75);
-  --glass-border: rgba(173, 247, 184, 0.4);
+  --glass-border: rgba(75, 180, 90, 0.4);
 
-  --primary-darkest: #86efac;
-  --primary-darker: #ADF7B8;
-  --primary-dark: #74B87A;
-  --primary-color: #ADF7B8;
-  --primary-rgb: 173, 247, 184;
-  --highlight-color: #ADF7B8;
-  --primary-gradient: linear-gradient(135deg, #ADF7B8 0%, #86efac 100%);
-  --highlight-gradient: linear-gradient(135deg, #ADF7B8 0%, #74B87A 100%);
+  --primary-darkest: #2D7D39;
+  --primary-darker: #388E3C;
+  --primary-dark: #1B4520;
+  --primary-color: #4BB45A;
+  --primary-rgb: 75, 180, 90;
+  --highlight-color: #4BB45A;
+  --primary-gradient: linear-gradient(135deg, #4BB45A 0%, #2D7D39 100%);
+  --highlight-gradient: linear-gradient(135deg, #4BB45A 0%, #388E3C 100%);
 }
 
 * {
