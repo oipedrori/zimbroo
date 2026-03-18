@@ -27,19 +27,36 @@ export const analyzeTextWithGemini = async (text, transactions = [], conversatio
     const categoriesExpenseStr = CATEGORIAS_DESPESA.map(c => c.id).join(', ');
     const categoriesIncomeStr = CATEGORIAS_RECEITA.map(c => c.id).join(', ');
 
-    const recentTxsStr = transactions.slice(0, 15).map(t =>
-      `ID: ${t.id} | Tipo: ${t.type === 'expense' ? 'Despesa' : 'Receita'} | Valor: R$${t.amount} | Desc: ${t.description} | Cat: ${t.category}`
+    // ✅ Calcular resumo financeiro a partir de TODAS as transações do mês
+    const totalIncome = transactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = transactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+    const monthlyBalance = totalIncome - totalExpenses;
+
+    // Enviar até 50 transações (em vez de 15) com ID para permitir deletar
+    const recentTxsStr = transactions.slice(0, 50).map(t =>
+      `ID: ${t.id} | Tipo: ${t.type === 'expense' ? 'Despesa' : 'Receita'} | Valor: R$${t.amount.toFixed(2)} | Desc: ${t.description} | Cat: ${t.category} | Data: ${t.date || ''}`
     ).join('\n');
 
     const currentDateStr = new Date().toLocaleDateString('pt-BR');
 
     const prompt = `
-Você é um assistente financeiro do aplicativo Zimbroo. O usuário enviará uma transcrição de voz.
+Você é um assistente financeiro do aplicativo Zimbroo. O usuário enviará uma mensagem de texto ou voz.
 
 Data de Hoje: ${currentDateStr}. Sempre que o usuário mencionar uma data específica (ex: "dia 10", "10 de marco"), calcule a data correta no formato YYYY-MM-DD considerando o mês/ano atual. Se não falar data, retorne um texto vazio "".
 
-CONTEXTO FINANCEIRO RECENTE (Últimas transações):
-${recentTxsStr || "Nenhuma transação recente"}
+═══ RESUMO FINANCEIRO DO MÊS ATUAL ═══
+• Total de Receitas: R$${totalIncome.toFixed(2)}
+• Total de Despesas: R$${totalExpenses.toFixed(2)}
+• Saldo do Mês: R$${monthlyBalance.toFixed(2)} ${monthlyBalance >= 0 ? '(positivo ✓)' : '(negativo ✗)'}
+• Número de transações: ${transactions.length}
+═══════════════════════════════════════
+
+TRANSAÇÕES DO MÊS (últimas ${Math.min(transactions.length, 50)} de ${transactions.length}):
+${recentTxsStr || "Nenhuma transação registrada este mês"}
 
 Categorias de Despesa: [${categoriesExpenseStr}]
 Categorias de Receita: [${categoriesIncomeStr}]
@@ -51,6 +68,7 @@ REGRAS DE OURO:
 1. PARCELAMENTO: Se o usuário falar que algo foi "parcelado em X vezes", "em 10x", etc., você DEVE calcular o valor de CADA parcela (Valor Total / X) e retornar no campo "amount". Defina "repeatType": "installment" e "installments": X.
 2. RECORRÊNCIA: Se a transação parece ser um gasto fixo mensal (Aluguel, Energia, Internet, Plano de Celular, Condomínio, Netflix, Spotify, etc.) e o usuário AINDA não especificou se é recorrente, você DEVE retornar "action": "need_info" com uma mensagem perguntando se ele deseja tornar recorrente.
 3. Se o usuário confirmar algo que você sugeriu (ex: "Sim", "Pode ser"), complete a ação usando o contexto anterior.
+4. SALDO E ANÁLISES: Ao responder sobre saldo, receitas, despesas ou qualquer análise financeira, use SEMPRE os valores do RESUMO FINANCEIRO acima. Nunca tente calcular da lista de transações.
 
 REGRAS ESTRITAS:
 1. Você DEVE retornar APENAS um ÚNICO objeto JSON válido. NÃO inclua marcações markdown (\`\`\`json), nem texto antes ou depois. APENAS o JSON puro.

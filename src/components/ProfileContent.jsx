@@ -16,11 +16,17 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [theme, setTheme] = useState(localStorage.getItem('zimbroo_theme') || 'system');
     const [showVerse, setShowVerse] = useState(false);
+    const [verseHiding, setVerseHiding] = useState(false);
+
+    const hideVerse = () => {
+        setVerseHiding(true);
+        setTimeout(() => { setShowVerse(false); setVerseHiding(false); }, 240);
+    };
 
     // Auto-dismiss do balão do versículo após 5s
     useEffect(() => {
         if (showVerse) {
-            const timer = setTimeout(() => setShowVerse(false), 5000);
+            const timer = setTimeout(hideVerse, 5000);
             return () => clearTimeout(timer);
         }
     }, [showVerse]);
@@ -256,14 +262,17 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
             
             {/* App Version, Easter Egg e Feito no Brasil */}
             <div style={{ marginTop: '32px', textAlign: 'center', paddingBottom: '20px', position: 'relative' }}>
+                <style>{`
+                    @keyframes bubbleIn { from { opacity:0; transform:translateX(-50%) translateY(10px) scale(0.9); } to { opacity:1; transform:translateX(-50%) translateY(0) scale(1); } }
+                    @keyframes bubbleOut { from { opacity:1; transform:translateX(-50%) translateY(0) scale(1); } to { opacity:0; transform:translateX(-50%) translateY(10px) scale(0.9); } }
+                `}</style>
+
                 {/* Balão do versículo */}
                 {showVerse && (
                     <div
-                        className="animate-fade-in"
-                        onClick={() => setShowVerse(false)}
+                        onClick={hideVerse}
                         style={{
                             position: 'absolute', bottom: '100%', left: '50%',
-                            transform: 'translateX(-50%)',
                             marginBottom: '12px',
                             background: 'var(--surface-color)',
                             border: '1px solid var(--glass-border)',
@@ -273,7 +282,9 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                             boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
                             cursor: 'pointer',
                             zIndex: 20,
-                            animation: 'fadeIn 0.25s ease-out forwards',
+                            animation: verseHiding
+                                ? 'bubbleOut 0.24s ease forwards'
+                                : 'bubbleIn 0.24s ease forwards',
                         }}
                     >
                         {/* Rabo do balão */}
@@ -294,7 +305,7 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                 )}
 
                 <button
-                    onClick={() => { setShowVerse(!showVerse); haptic.medium(); }}
+                    onClick={() => { if (showVerse) { hideVerse(); } else { setShowVerse(true); haptic.medium(); } }}
                     style={{ fontSize: '0.75rem', fontWeight: '700', letterSpacing: '0.5px', color: 'var(--text-muted)', border: 'none', background: 'none', cursor: 'pointer', opacity: 0.4 }}
                 >
                     ZIMBROO v1.8.4

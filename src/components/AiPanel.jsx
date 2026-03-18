@@ -493,9 +493,27 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                     )}
                     
                     {aiMessage && (
-                        <p className="ai-system-message animate-fade-in" style={{ marginBottom: (!isProcessing && conversationContext) ? '20px' : '0' }}>
-                            {aiMessage}
-                        </p>
+                        <div style={{
+                            position: 'relative',
+                            maxHeight: '55vh',
+                            marginBottom: (!isProcessing && conversationContext) ? '20px' : '0',
+                        }}>
+                            {/* Fade top */}
+                            <div style={{
+                                position: 'absolute', top: 0, left: 0, right: 0, height: '40px',
+                                background: 'linear-gradient(to bottom, rgba(27,69,32,0.6) 0%, transparent 100%)',
+                                pointerEvents: 'none', zIndex: 1, borderRadius: '8px 8px 0 0'
+                            }} />
+                            {/* Fade bottom */}
+                            <div style={{
+                                position: 'absolute', bottom: 0, left: 0, right: 0, height: '40px',
+                                background: 'linear-gradient(to top, rgba(27,69,32,0.6) 0%, transparent 100%)',
+                                pointerEvents: 'none', zIndex: 1, borderRadius: '0 0 8px 8px'
+                            }} />
+                            <p className="ai-system-message animate-fade-in">
+                                {aiMessage}
+                            </p>
+                        </div>
                     )}
 
                     {(!aiMessage || (conversationContext && !isProcessing)) ? (
