@@ -62,7 +62,9 @@ const Statistics = () => {
     const expensesByCategory = transactions
         .filter(t => t.type === 'expense')
         .reduce((acc, t) => {
-            acc[t.category] = (acc[t.category] || 0) + t.amount;
+            // Garante que variações como 'Alimentação', 'alimentação', 'alimentacao' caiam no mesmo balde
+            const catId = getCategoryInfo(t.category, 'expense').id;
+            acc[catId] = (acc[catId] || 0) + t.amount;
             return acc;
         }, {});
 
@@ -85,12 +87,17 @@ const Statistics = () => {
     function describeArc(startPct, endPct, r = 90, cx = 100, cy = 100) {
         const toRad = deg => (deg * Math.PI) / 180;
         const startAngle = toRad((startPct / 100) * 360 - 90);
-        const endAngle   = toRad((endPct   / 100) * 360 - 90);
+        // Resolve o problema de sumir quando tem 100% (-0.001 evita sobreposição exata que quebra o SVG)
+        const endAngle   = toRad(endPct === 100 ? (endPct - 0.001) / 100 * 360 - 90 : (endPct   / 100) * 360 - 90);
         const largeArc   = endPct - startPct > 50 ? 1 : 0;
         const x1 = cx + r * Math.cos(startAngle);
         const y1 = cy + r * Math.sin(startAngle);
         const x2 = cx + r * Math.cos(endAngle);
         const y2 = cy + r * Math.sin(endAngle);
+        if (endPct - startPct === 100) {
+            // Full circle special case
+            return `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx} ${cy + r} A ${r} ${r} 0 1 1 ${cx} ${cy - r} Z`;
+        }
         return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
     }
 
@@ -114,10 +121,10 @@ const Statistics = () => {
             <style>{`
                 .no-scrollbar::-webkit-scrollbar { display: none; }
                 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-                .pie-slice { cursor: pointer; transition: transform 0.2s ease; transform-origin: 100px 100px; }
-                .pie-slice.selected { transform: scale(1.08); }
+                .pie-slice { cursor: pointer; }
                 .pie-slice:hover { opacity: 0.9; }
             `}</style>
+
             <header style={{ marginBottom: '24px', textAlign: 'center', paddingTop: 'env(safe-area-inset-top, 10px)' }}>
                 <h1 style={{ fontSize: '1.4rem', color: 'var(--text-main)', fontWeight: '700' }}>{t('statistics')}</h1>
             </header>
@@ -218,16 +225,34 @@ const Statistics = () => {
                         {/* SVG Pie Chart interativo */}
                         <div style={{ position: 'relative', width: '220px', height: '220px', margin: '24px 0' }}>
                             <svg viewBox="0 0 200 200" width="220" height="220" style={{ overflow: 'visible' }}>
-                                {segments.map(seg => (
-                                    <path
-                                        key={seg.catId}
-                                        d={describeArc(seg.start, seg.end)}
-                                        fill={seg.color}
-                                        className={`pie-slice${selectedSlice === seg.catId ? ' selected' : ''}`}
-                                        onClick={() => setSelectedSlice(selectedSlice === seg.catId ? null : seg.catId)}
-                                        style={{ transformOrigin: '100px 100px' }}
-                                    />
-                                ))}
+                                {segments.map(seg => {
+                                    const isSelected = selectedSlice === seg.catId;
+                                    // Math for popping the slice out
+                                    const toRad = deg => (deg * Math.PI) / 180;
+                                    const midAngle = toRad((seg.start + seg.pct / 2) / 100 * 360 - 90);
+                                    // Distance to pop out
+                                    const popOutDist = 12; 
+                                    const tx = isSelected ? Math.cos(midAngle) * popOutDist : 0;
+                                    const ty = isSelected ? Math.sin(midAngle) * popOutDist : 0;
+                                    // Slight extra scale for emphasis
+                                    const scale = isSelected ? 1.05 : 1;
+
+                                    return (
+                                        <path
+                                            key={seg.catId}
+                                            d={describeArc(seg.start, seg.end)}
+                                            fill={seg.color}
+                                            className="pie-slice"
+                                            onClick={() => setSelectedSlice(isSelected ? null : seg.catId)}
+                                            style={{ 
+                                                transformOrigin: '100px 100px',
+                                                transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                                transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
+                                                filter: isSelected ? `drop-shadow(0px 4px 8px rgba(0,0,0,0.3))` : 'none'
+                                            }}
+                                        />
+                                    );
+                                })}
                                 {/* Buraco central */}
                                 <circle cx="100" cy="100" r="58" fill="var(--bg-color)" />
                                 {/* Texto central */}
