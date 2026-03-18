@@ -893,11 +893,11 @@ const Home = () => {
                                 <LoadingDots />
                             </div>
                         ) : filteredTransactions.length === 0 ? (
-                            <div className="glass-panel" style={{ padding: '30px', textAlign: 'center', border: 'none', background: 'transparent', boxShadow: 'none' }}>
+                            <div className="glass-panel" style={{ padding: '30px', textAlign: 'center', border: 'none' }}>
                                 <p style={{ color: 'var(--text-muted)' }}>{t('no_transactions')}</p>
                             </div>
                         ) : (
-                            <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', border: 'none', background: 'transparent', boxShadow: 'none' }}>
+                            <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', border: 'none' }}>
                                 {filteredTransactions.map((tx, i) => (
                                     <SwipeableItem key={tx.id} onDelete={() => handleConfirmDelete(tx)} onEdit={() => handleEditTx(tx)}>
                                         <div 
