@@ -14,7 +14,7 @@ const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
-// Detecta se é dispositivo mobile/Android (onde popups são bloqueados)
+// Detecta mobile/Android (onde popups são bloqueados pelo Chrome)
 const isMobile = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
 export const AuthProvider = ({ children }) => {
@@ -25,9 +25,8 @@ export const AuthProvider = ({ children }) => {
     const loginWithGoogle = async () => {
         try {
             if (isMobile()) {
-                // No Android/mobile, usamos redirect (evita bloqueio de popup)
+                // No Android/mobile: redireciona para o Google (volta via getRedirectResult)
                 await signInWithRedirect(auth, googleProvider);
-                // A página vai recarregar e o resultado será capturado no useEffect abaixo
             } else {
                 const result = await signInWithPopup(auth, googleProvider);
                 return result.user;
@@ -61,41 +60,31 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // Monitorar estado da autenticação + capturar resultado do redirect (Android)
     useEffect(() => {
-        console.log("🎬 AuthProvider useEffect triggered (auth exists:", !!auth, ")");
-
-        // Safety timeout: if auth state doesn't resolve in 5s, let the app mount anyway
-        const timeout = setTimeout(() => {
-            if (loading) {
-                console.warn("⏳ Auth resolution timeout reached. Forcing loading false.");
-                setLoading(false);
-            }
-        }, 5000);
-
         if (!auth) {
-            console.warn("⚠️ Auth service not available, skipping listener.");
             setLoading(false);
-            clearTimeout(timeout);
             return;
         }
 
-        // Captura resultado do signInWithRedirect (volta do redirect do Google no Android)
-        getRedirectResult(auth)
-            .then((result) => {
-                if (result?.user) {
-                    console.log("✅ Redirect result captured:", result.user.email);
-                }
-            })
-            .catch((error) => {
-                if (error.code !== 'auth/no-current-user') {
-                    console.error("❌ Redirect result error:", error);
-                }
-            });
+        let unsubscribe;
+        const timeout = setTimeout(() => setLoading(false), 6000);
 
-        try {
-            const unsubscribe = onAuthStateChanged(auth, (user) => {
-                console.log("👤 Auth state changed:", user ? user.email : "No user");
+        const init = async () => {
+            // CRÍTICO: aguardar o resultado do redirect ANTES de configurar o listener.
+            // Sem isso, onAuthStateChanged dispara com null e o app mostra o onboarding.
+            try {
+                const result = await getRedirectResult(auth);
+                if (result?.user) {
+                    console.log("✅ Login via redirect:", result.user.email);
+                }
+            } catch (e) {
+                // Erro esperado quando não há redirect ativo — pode ignorar
+                console.log("ℹ️ Sem redirect ativo:", e.code);
+            }
+
+            // Auth agora está estabilizado. Configura o listener.
+            unsubscribe = onAuthStateChanged(auth, (user) => {
+                console.log("👤 Auth state:", user ? user.email : "Não autenticado");
                 setCurrentUser(user);
                 setLoading(false);
                 clearTimeout(timeout);
@@ -104,25 +93,17 @@ export const AuthProvider = ({ children }) => {
                 setLoading(false);
                 clearTimeout(timeout);
             });
-            return () => {
-                unsubscribe();
-                clearTimeout(timeout);
-            };
-        } catch (err) {
-            console.error("❌ Auth listener critical failure:", err);
-            setLoading(false);
+        };
+
+        init();
+
+        return () => {
+            unsubscribe?.();
             clearTimeout(timeout);
-        }
-    }, [auth]);
+        };
+    }, []);
 
-
-    const value = {
-        currentUser,
-        loginWithGoogle,
-        logout,
-        deleteAccount,
-        loading
-    };
+    const value = { currentUser, loginWithGoogle, logout, deleteAccount, loading };
 
     if (loading) {
         return (
