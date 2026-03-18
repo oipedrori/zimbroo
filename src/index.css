@@ -394,6 +394,40 @@ button {
   40% { transform: scale(1); }
 }
 
+/* === Glassmorphism Utilities === */
+.glass-chip {
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  transition: all 0.3s ease;
+}
+
+.glass-chip:active, .glass-chip.active {
+  background: var(--primary-color) !important;
+  color: var(--btn-text) !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3) !important;
+}
+
+.glass-fab {
+  background: rgba(var(--primary-rgb), 0.85) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 8px 32px rgba(var(--primary-rgb), 0.3) !important;
+  color: var(--btn-text) !important;
+}
+
+.glass-btn-close {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
 /* === Bento Dashboard & Desktop FABs === */
 @media (min-width: 1024px) {
     .page-container {

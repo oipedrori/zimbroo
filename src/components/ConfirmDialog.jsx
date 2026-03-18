@@ -48,12 +48,11 @@ const ConfirmDialog = ({
                 <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 10 }}>
                     <button 
                         onClick={onClose} 
+                        className="glass-btn-close"
                         style={{ 
                             width: '44px', 
                             height: '44px', 
                             borderRadius: '50%', 
-                            background: 'var(--surface-color)', 
-                            border: '1px solid var(--glass-border)',
                             color: 'var(--text-main)', 
                             display: 'flex',
                             alignItems: 'center',

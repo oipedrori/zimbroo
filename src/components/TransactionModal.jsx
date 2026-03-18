@@ -134,12 +134,11 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                     <h2 style={{ fontSize: '1.2rem', fontWeight: '700' }}>{initialData ? t('edit_transaction') : t('add_transaction')}</h2>
                     <button 
                         onClick={onClose} 
+                        className="glass-btn-close"
                         style={{ 
                             width: '44px', 
                             height: '44px', 
                             borderRadius: '50%', 
-                            background: 'var(--surface-color)', 
-                            border: '1px solid var(--glass-border)',
                             color: 'var(--text-main)', 
                             display: 'flex',
                             alignItems: 'center',

@@ -10,7 +10,7 @@ import SwipeableItem from '../components/SwipeableItem';
 import LoadingDots from '../components/LoadingDots';
 import ProfileContent from '../components/ProfileContent';
 import NotionImportContent from '../components/NotionImportContent';
-import { Plus, ChevronLeft, ChevronRight, User, Pointer, X, Trash2, PieChart, BarChart2, Shield, Mic, Keyboard, Moon, Globe, DollarSign, LogOut } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, User, Pointer, X, Trash2, PieChart, BarChart2, Shield, Mic, Keyboard, Moon, Globe, DollarSign, LogOut, ArrowUp, ArrowDown } from 'lucide-react';
 import { Link, useOutletContext, useNavigate } from 'react-router-dom';
 import { getEmojiForDescription } from '../utils/emojiUtils';
 import { prepareMonthlyTransactions } from '../services/transactionService';
@@ -771,15 +771,15 @@ const Home = () => {
                         <div style={{ display: 'flex', gap: '24px', opacity: 0.9 }}>
                             <div style={{ flex: 1 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4ade80' }}></div>
-                                    <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
+                                    <ArrowUp size={16} color="var(--success-color)" />
+                                    <p style={{ fontSize: '0.8rem', opacity: 0.9, margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
                                 </div>
                                 <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(incomes)}</p>
                             </div>
                             <div style={{ flex: 1 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f87171' }}></div>
-                                    <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
+                                    <ArrowDown size={16} color="var(--danger-color)" />
+                                    <p style={{ fontSize: '0.8rem', opacity: 0.9, margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
                                 </div>
                                 <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(expenses)}</p>
                             </div>
@@ -873,13 +873,10 @@ const Home = () => {
                                 ].map(f => (
                                     <button
                                         key={f.id}
+                                        className={`glass-chip ${activeFilter === f.id ? 'active' : ''}`}
                                         onClick={() => { haptic.light(); setActiveFilter(f.id); }}
                                         style={{
-                                            whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600',
-                                            background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--surface-color)',
-                                            color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
-                                            border: '1px solid var(--glass-border)', flexShrink: 0,
-                                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                                            whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600', flexShrink: 0
                                         }}
                                     >
                                         {t(f.label)}
@@ -969,14 +966,14 @@ const Home = () => {
                                     <div style={{ display: 'flex', gap: '32px', opacity: 0.9 }}>
                                         <div style={{ flex: 1 }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#4ade80' }}></div>
+                                                <ArrowUp size={18} color="var(--success-color)" />
                                                 <p style={{ fontSize: '0.9rem', margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
                                             </div>
                                             <p style={{ fontWeight: '700', fontSize: '1.3rem', margin: 0 }}>{formatCurrency(incomes)}</p>
                                         </div>
                                         <div style={{ flex: 1 }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f87171' }}></div>
+                                                <ArrowDown size={18} color="var(--danger-color)" />
                                                 <p style={{ fontSize: '0.9rem', margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
                                             </div>
                                             <p style={{ fontWeight: '700', fontSize: '1.3rem', margin: 0 }}>{formatCurrency(expenses)}</p>
@@ -1016,13 +1013,10 @@ const Home = () => {
                                         ].map(f => (
                                             <button
                                                 key={f.id}
+                                                className={`glass-chip ${activeFilter === f.id ? 'active' : ''}`}
                                                 onClick={() => setActiveFilter(f.id)}
                                                 style={{
-                                                    whiteSpace: 'nowrap', padding: '10px 18px', borderRadius: '24px', fontSize: '0.9rem', fontWeight: '600',
-                                                    background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--bg-color)',
-                                                    color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
-                                                    border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)',
-                                                    transition: 'all 0.2s'
+                                                    whiteSpace: 'nowrap', padding: '10px 18px', borderRadius: '24px', fontSize: '0.9rem', fontWeight: '600'
                                                 }}
                                             >
                                                 {t(f.label, { defaultValue: f.label })}
@@ -1567,9 +1561,9 @@ const Home = () => {
                                 </div>
                                 <button 
                                     onClick={() => setIsLimitModalOpen(false)}
+                                    className="glass-btn-close"
                                     style={{ 
                                         width: '44px', height: '44px', borderRadius: '50%', 
-                                        background: 'var(--surface-color)', border: '1px solid var(--glass-border)',
                                         color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                         cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
                                     }}

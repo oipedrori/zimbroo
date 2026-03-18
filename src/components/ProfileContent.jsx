@@ -80,9 +80,9 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                 <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>{t('profile')}</h2>
                 <button 
                     onClick={onClose}
+                    className="glass-btn-close"
                     style={{ 
                         width: '44px', height: '44px', borderRadius: '50%', 
-                        background: 'var(--surface-color)', border: '1px solid var(--glass-border)',
                         color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                         cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
                     }}
