@@ -258,10 +258,10 @@ const Statistics = () => {
                                     const isSelected = selectedSlice === seg.catId;
                                     const toRad = deg => (deg * Math.PI) / 180;
                                     const midAngle = toRad((seg.start + seg.pct / 2) / 100 * 360 - 90);
-                                    const popOutDist = 14; // Aumentado levemente para ver melhor no desktop
+                                    const popOutDist = 18; // Aumentado para um "zoom" mais forte
                                     const tx = isSelected ? Math.cos(midAngle) * popOutDist : 0;
                                     const ty = isSelected ? Math.sin(midAngle) * popOutDist : 0;
-                                    const scale = isSelected ? 1.08 : 1; // Aumentado para 1.08
+                                    const scale = isSelected ? 1.12 : 1; // Aumentado para 1.12
 
                                     return (
                                         <path
@@ -307,20 +307,20 @@ const Statistics = () => {
                                         key={seg.catId}
                                         onClick={() => setSelectedSlice(selectedSlice === seg.catId ? null : seg.catId)}
                                         style={{
-                                            display: 'flex', alignItems: 'center', gap: '8px',
-                                            fontSize: '0.85rem', color: 'var(--text-main)',
+                                            display: 'flex', alignItems: 'center', gap: '6px',
+                                            fontSize: '0.8rem', color: 'var(--text-main)',
                                             background: isActive ? `${seg.color}22` : 'var(--bg-color)',
-                                            padding: '8px 14px', borderRadius: '14px',
-                                            border: `1.5px solid ${isActive ? seg.color : 'var(--glass-border)'}`,
+                                            padding: '6px 14px', borderRadius: '20px',
+                                            border: `1px solid ${isActive ? seg.color : 'transparent'}`,
                                             boxShadow: isActive ? `0 4px 12px ${seg.color}30` : '0 2px 5px rgba(0,0,0,0.05)',
-                                            cursor: 'pointer', transition: 'all 0.3s ease',
+                                            cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                             transform: isActive ? 'scale(1.05)' : 'scale(1)',
-                                            fontWeight: isActive ? '700' : '500'
+                                            fontWeight: isActive ? '700' : '500',
+                                            whiteSpace: 'nowrap'
                                         }}
                                     >
-                                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: seg.color, flexShrink: 0, boxShadow: isActive ? `0 0 8px ${seg.color}` : 'none' }}></div>
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: seg.color, flexShrink: 0, boxShadow: isActive ? `0 0 8px ${seg.color}` : 'none' }}></div>
                                         <span>{category.icon} {t(category.label, { defaultValue: category.label })}</span>
-                                        <span style={{ opacity: 0.6, fontSize: '0.75rem' }}>{seg.pct.toFixed(0)}%</span>
                                     </div>
                                 );
                             })}
