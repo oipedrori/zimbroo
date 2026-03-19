@@ -74,6 +74,25 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
         }
     };
 
+    const [notificationsEnabled, setNotificationsEnabled] = useState(
+        localStorage.getItem('zimbroo_notifications_enabled') === 'true' && Notification.permission === 'granted'
+    );
+
+    const handleToggleNotifications = async () => {
+        haptic.medium();
+        
+        if (!notificationsEnabled) {
+            const token = await requestNotificationPermission();
+            if (token) {
+                setNotificationsEnabled(true);
+                localStorage.setItem('zimbroo_notifications_enabled', 'true');
+            }
+        } else {
+            setNotificationsEnabled(false);
+            localStorage.setItem('zimbroo_notifications_enabled', 'false');
+        }
+    };
+
     return (
         <div className="animate-fade-in" style={{ paddingBottom: '40px' }}>
             {/* Header with Close Button */}
@@ -191,39 +210,37 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                     </select>
                 </div>
 
-                <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', opacity: 0.6 }}>
-                        <Bell size={16} />
-                        <span style={{ fontSize: '0.8rem', fontWeight: '700', letterSpacing: '0.5px' }}>NOTIFICAÇÕES</span>
+                <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Bell size={18} style={{ opacity: 0.6 }} />
+                        <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)' }}>NOTIFICAÇÕES</span>
                     </div>
-                    {Notification.permission === 'granted' ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary-color)', fontSize: '0.85rem', fontWeight: '600', padding: '10px 0' }}>
-                           <Sparkles size={16} /> Ativadas
-                        </div>
-                    ) : (
-                        <button
-                            onClick={async () => {
-                                haptic.medium();
-                                const token = await requestNotificationPermission();
-                                if (token) {
-                                    alert('Notificações ativadas com sucesso!');
-                                    // Força re-render para mostrar o status "Ativado"
-                                    onClose(); 
-                                }
-                            }}
-                            style={{ 
-                                width: '100%', padding: '14px', borderRadius: '12px', 
-                                background: 'var(--primary-color)', color: 'white', 
-                                border: 'none', fontWeight: '700', fontSize: '0.85rem',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Ativar Notificações
-                        </button>
-                    )}
-                    <p style={{ margin: '8px 0 0', fontSize: '0.7rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-                        Necessário para lembretes e avisos importantes.
-                    </p>
+
+                    <div 
+                        onClick={handleToggleNotifications}
+                        style={{
+                            width: '56px',
+                            height: '32px',
+                            background: notificationsEnabled ? 'var(--primary-color)' : 'var(--bg-color)',
+                            borderRadius: '10px', // Quadrado com cantos arredondados
+                            border: '1px solid var(--glass-border)',
+                            position: 'relative',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1)'
+                        }}
+                    >
+                        <div style={{
+                            position: 'absolute',
+                            top: '4px',
+                            left: notificationsEnabled ? '28px' : '4px',
+                            width: '22px',
+                            height: '22px',
+                            background: 'white',
+                            borderRadius: '6px', // Mantendo o estilo quadrado arredondado
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1)'
+                        }} />
+                    </div>
                 </div>
             </div>
 

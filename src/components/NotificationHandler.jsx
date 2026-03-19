@@ -29,8 +29,9 @@ const NotificationHandler = () => {
   useEffect(() => {
     // No iOS, não pedimos automaticamente no mount, apenas via clique
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const notificationsEnabledPref = localStorage.getItem('zimbroo_notifications_enabled') !== 'false';
     
-    if (!isIOS) {
+    if (!isIOS && notificationsEnabledPref) {
       requestNotificationPermission();
     }
 
