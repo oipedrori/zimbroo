@@ -68,6 +68,7 @@ const Home = () => {
         return saved ? JSON.parse(saved) : {};
     });
     const [chartType, setChartType] = useState('bar'); // 'bar' or 'line'
+    const [isFlipped, setIsFlipped] = useState(false);
 
     // --- Derived Variables ---
     const monthPrefix = format(currentDate, 'yyyy-MM');
@@ -408,15 +409,19 @@ const Home = () => {
                         onTouchStart={onTouchStart}
                         onTouchMove={onTouchMove}
                         onTouchEnd={onTouchEnd}
+                        onClick={() => !isDesktop && setIsFlipped(!isFlipped)}
                         style={{ 
-                            flexShrink: 0, padding: '24px', background: cardGradient, color: 'var(--btn-text)', border: 'none', 
-                            position: 'relative', overflow: 'hidden', cursor: 'default',
+                            flexShrink: 0, padding: isFlipped ? '0' : '24px', background: cardGradient, color: 'var(--btn-text)', border: 'none', 
+                            position: 'relative', overflow: 'hidden', cursor: !isDesktop ? 'pointer' : 'default',
                             touchAction: 'pan-y',
                             transform: `translateX(${swipeOffset}px)`,
                             transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1)',
-                            animation: !isSwiping ? (swipeDirection === 'left' ? 'slideLeftIn 0.3s ease-out' : swipeDirection === 'right' ? 'slideRightIn 0.3s ease-out' : 'none') : 'none'
+                            animation: !isSwiping ? (swipeDirection === 'left' ? 'slideLeftIn 0.3s ease-out' : swipeDirection === 'right' ? 'slideRightIn 0.3s ease-out' : 'none') : 'none',
+                            minHeight: isFlipped ? '500px' : 'auto'
                         }}
                     >
+                        {!isFlipped ? (
+                            <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
                                 <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '8px' }}>{t('monthly_balance')}</p>
@@ -461,17 +466,55 @@ const Home = () => {
                                 </span>
                             </div>
                         )}
+                        </>
+                    ) : (
+                        <div style={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', margin: 0 }}>{t('statistics')}</h3>
+                                <div style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 14px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '600' }}>
+                                    {t('back')}
+                                </div>
+                            </div>
+                            
+                            {/* Gráfico de Barras Mensal */}
+                            <div style={{ height: '160px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px', marginBottom: '32px', padding: '0 10px' }}>
+                                {yearlyStats.map((stat, i) => {
+                                    const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 5000);
+                                    const h = Math.max(2, (Math.abs(stat.balance) / maxVal) * 50); 
+                                    const isCurrent = stat.month === (currentDate.getMonth() + 1);
+                                    const isNeg = stat.balance < 0;
+
+                                    return (
+                                        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', position: 'relative' }}>
+                                            <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                                                <div style={{ height: '50%', width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                                    {!isNeg && stat.balance > 0 && (
+                                                        <div style={{ width: '80%', height: `${h * 2}%`, background: 'white', borderRadius: '4px 4px 0 0', opacity: isCurrent ? 1 : 0.5 }} />
+                                                    )}
+                                                </div>
+                                                <div style={{ height: '50%', width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                                                    {isNeg && (
+                                                        <div style={{ width: '80%', height: `${h * 2}%`, background: 'rgba(255,255,255,0.4)', borderRadius: '0 0 4px 4px', opacity: isCurrent ? 1 : 0.5 }} />
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span style={{ fontSize: '0.6rem', color: 'white', opacity: isCurrent ? 1 : 0.6, marginTop: '8px', fontWeight: isCurrent ? '800' : '400' }}>
+                                                {format(new Date(2024, stat.month - 1, 1), 'MMM', { locale: ptBR }).substring(0, 3).toUpperCase()}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Gráfico de Pizza */}
+                            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '20px', padding: '16px', marginTop: 'auto' }}>
+                                <BudgetPieChart transactions={transactions} currentDate={currentDate} />
+                            </div>
+                        </div>
+                    )}
                     </section>
                 )}
 
-                {!isDesktop && totalStatsExpenses > 0 && (
-                    <section className="glass-panel" style={{ marginTop: '24px', padding: '24px' }}>
-                        <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '20px' }}>
-                            {t('expenses_by_category', { defaultValue: 'Gastos por Categoria' })}
-                        </h3>
-                        <BudgetPieChart transactions={transactions} currentDate={currentDate} />
-                    </section>
-                )}
 
                 {!isDesktop && (
                     <section style={{ marginTop: '24px' }}>
