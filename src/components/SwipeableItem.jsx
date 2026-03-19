@@ -13,11 +13,14 @@ const SwipeableItem = ({ children, onDelete, onEdit }) => {
     const handleDragEnd = (event, info) => {
         const { offset, velocity } = info;
         
-        // Thresholds para "magnetismo"
-        // Se a velocidade for alta ou o arraste passar de 40px, ele "estala" para a posição
-        if (offset.x < -40 || velocity.x < -500) {
+        // Thresholds ajustados para maior estabilidade no centro (mais "magnetismo" no zero)
+        // Aumentamos o deslocamento necessário e a velocidade para evitar saltos acidentais
+        const actionThreshold = 60; // Antes era 40
+        const velocityThreshold = 800; // Antes era 500
+
+        if (offset.x < -actionThreshold || velocity.x < -velocityThreshold) {
             animate(x, -80, { type: 'spring', bounce: 0.2, duration: 0.4 });
-        } else if (onEdit && (offset.x > 40 || velocity.x > 500)) {
+        } else if (onEdit && (offset.x > actionThreshold || velocity.x > velocityThreshold)) {
             animate(x, 80, { type: 'spring', bounce: 0.2, duration: 0.4 });
         } else {
             animate(x, 0, { type: 'spring', bounce: 0.2, duration: 0.4 });
