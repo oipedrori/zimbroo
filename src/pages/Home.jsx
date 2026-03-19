@@ -1,4 +1,3 @@
-// Final check and trigger for isFlipped removal and Pie Chart relocation
 import React, { useState, useEffect } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 import { useAuth } from '../contexts/AuthContext';
@@ -69,7 +68,6 @@ const Home = () => {
         return saved ? JSON.parse(saved) : {};
     });
     const [chartType, setChartType] = useState('bar'); // 'bar' or 'line'
-    const [selectedPieCat, setSelectedPieCat] = useState(null);
 
     // --- Derived Variables ---
     const monthPrefix = format(currentDate, 'yyyy-MM');
@@ -328,25 +326,12 @@ const Home = () => {
         }, {});
 
     const totalStatsExpenses = Object.values(expensesByCategory).reduce((acc, val) => acc + val, 0);
-    const conicStops = [];
-    let cumPercent = 0;
-
-    if (totalStatsExpenses > 0) {
-        const sortedCats = Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a);
-        sortedCats.forEach(([catId, amount]) => {
-            const category = getCategoryInfo(catId, 'expense');
-            const pct = (amount / totalStatsExpenses) * 100;
-            conicStops.push(`${category.color} ${cumPercent}% ${cumPercent + pct}%`);
-            cumPercent += pct;
-        });
-    }
-    const pieChartBg = totalStatsExpenses > 0 ? `conic-gradient(${conicStops.join(', ')})` : 'var(--glass-border)';
+    const dateLocales = { pt: ptBR, en: enUS, es: es, fr: fr };
 
     const getCategoryTheme = (id, type) => {
         return getCategoryInfo(id, type);
     };
 
-    const dateLocales = { pt: ptBR, en: enUS, es: es, fr: fr };
     const monthLabel = format(currentDate, 'MMMM yyyy', { locale: dateLocales[locale] || enUS });
     // Capitaliza o mês
     const formattedMonthLabel = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
@@ -476,10 +461,15 @@ const Home = () => {
                                 </span>
                             </div>
                         )}
+                    </section>
+                )}
 
-                        <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center' }}>
-                            <BudgetPieChart transactions={transactions} isDesktop={isDesktop} />
-                        </div>
+                {!isDesktop && totalStatsExpenses > 0 && (
+                    <section className="glass-panel" style={{ marginTop: '24px', padding: '24px' }}>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '20px' }}>
+                            {t('expenses_by_category', { defaultValue: 'Gastos por Categoria' })}
+                        </h3>
+                        <BudgetPieChart transactions={transactions} currentDate={currentDate} />
                     </section>
                 )}
 
@@ -584,7 +574,7 @@ const Home = () => {
                                                 justifyContent: 'space-between', 
                                                 alignItems: 'center', 
                                                 padding: '12px 16px', 
-                                                background: i % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.02)'
+                                                background: 'transparent'
                                             }}
                                         >
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -676,10 +666,6 @@ const Home = () => {
                                             </span>
                                         </div>
                                     )}
-
-                                    <div style={{ marginTop: '32px' }}>
-                                        <BudgetPieChart transactions={transactions} isDesktop={true} />
-                                    </div>
                                 </section>
 
                                 <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column' }}>
@@ -776,95 +762,7 @@ const Home = () => {
                                         {t('expenses_by_category', { defaultValue: 'Gastos por Categoria' })}
                                     </h3>
                                     {totalStatsExpenses > 0 ? (
-                                        <>
-                                            <div 
-                                                onClick={(e) => {
-                                                    const rect = e.currentTarget.getBoundingClientRect();
-                                                    const x = e.clientX - rect.left - rect.width / 2;
-                                                    const y = e.clientY - rect.top - rect.height / 2;
-                                                    let angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
-                                                    if (angle < 0) angle += 360;
-
-                                                    const sortedCats = Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a);
-                                                    let cumulativePct = 0;
-                                                    for (const [id, amount] of sortedCats) {
-                                                        const pct = (amount / totalStatsExpenses) * 100;
-                                                        const startAngle = (cumulativePct / 100) * 360;
-                                                        const endAngle = ((cumulativePct + pct) / 100) * 360;
-                                                        if (angle >= startAngle && angle < endAngle) {
-                                                            setSelectedPieCat(id);
-                                                            haptic.light();
-                                                            return;
-                                                        }
-                                                        cumulativePct += pct;
-                                                    }
-                                                    setSelectedPieCat(null);
-                                                }}
-                                                style={{ 
-                                                    position: 'relative', width: '220px', height: '220px', marginBottom: '32px', 
-                                                    borderRadius: '50%', background: pieChartBg, display: 'flex', 
-                                                    justifyContent: 'center', alignItems: 'center', 
-                                                    boxShadow: '0 12px 40px rgba(0,0,0,0.1)', cursor: 'pointer',
-                                                    transition: 'all 0.3s ease'
-                                                }}
-                                            >
-                                                <div style={{ width: '150px', height: '150px', background: 'var(--bg-color)', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', padding: '20px', textAlign: 'center' }}>
-                                                    {selectedPieCat ? (() => {
-                                                        const cat = getCategoryInfo(selectedPieCat, 'expense');
-                                                        const amount = expensesByCategory[selectedPieCat];
-                                                        const pct = Math.round((amount / totalStatsExpenses) * 100);
-                                                        return (
-                                                            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                                                                <span style={{ fontSize: '1.8rem' }}>{cat.icon}</span>
-                                                                <span style={{ fontSize: '0.9rem', fontWeight: '800', color: cat.color }}>{t(cat.label, { defaultValue: cat.label })}</span>
-                                                                <span style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-main)' }}>{formatCurrency(amount)}</span>
-                                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{pct}%</span>
-                                                            </div>
-                                                        );
-                                                    })() : (
-                                                        <div className="animate-fade-in">
-                                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('total')}</span>
-                                                            <span style={{ fontSize: '1.3rem', fontWeight: '800' }}>{formatCurrency(totalStatsExpenses)}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '12px', width: '100%', marginTop: 'auto' }}>
-                                        {Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a).slice(0, 4).map(([catId, amount]) => {
-                                            const cat = getCategoryInfo(catId, 'expense');
-                                            const pct = Math.round((amount / totalStatsExpenses) * 100);
-                                            const isSelected = selectedPieCat === catId;
-                                            return (
-                                                <div 
-                                                    key={catId} 
-                                                    onClick={() => { haptic.light(); setSelectedPieCat(isSelected ? null : catId); }}
-                                                    style={{ 
-                                                        display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', 
-                                                        background: isSelected ? cat.color + '10' : 'var(--surface-color)', 
-                                                        padding: '12px 16px', borderRadius: '16px', 
-                                                        border: `1px solid ${isSelected ? cat.color : 'var(--glass-border)'}`,
-                                                        justifyContent: 'space-between',
-                                                        transition: 'all 0.2s ease',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: cat.color + '15', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                                            <span style={{ fontSize: '1.1rem' }}>{cat.icon}</span>
-                                                        </div>
-                                                        <span style={{ fontWeight: '600', color: isSelected ? cat.color : 'var(--text-main)' }}>{t(cat.label, { defaultValue: cat.label })}</span>
-                                                    </div>
-                                                    <span style={{ fontWeight: '800', color: cat.color }}>{formatCurrency(amount)} ({pct}%)</span>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    {Object.keys(expensesByCategory).length > 4 && (
-                                        <button onClick={() => navigate('/statistics')} style={{ marginTop: '16px', background: 'transparent', border: 'none', color: 'var(--primary-color)', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer' }}>
-                                            {t('view_all')}
-                                        </button>
-                                    )}
-                                </>
+                                        <BudgetPieChart transactions={transactions} currentDate={currentDate} />
                             ) : (
                                 <p style={{ color: 'var(--text-muted)', margin: '60px 0' }}>Sem despesas no mês</p>
                             )}
