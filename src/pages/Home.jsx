@@ -126,7 +126,7 @@ const Home = () => {
         if (!category) return;
         setIsAiLoading(true);
         setAiSuggestion(null);
-        
+
         try {
             const { suggestCategoryLimit } = await import('../services/geminiService');
             const result = await suggestCategoryLimit(category, allTransactions, locale);
@@ -186,6 +186,8 @@ const Home = () => {
         }
     }, [allTransactions, currentDate]);
 
+    // Excluir lógica duplicada ou redundante aqui se necessário
+
     // Navegação de meses
     // Navegação de meses
     const nextMonth = () => {
@@ -213,7 +215,7 @@ const Home = () => {
         if (!touchStart) return;
         const currentX = e.targetTouches[0].clientX;
         const diff = currentX - touchStart;
-        
+
         // Ativamos o modo swipe apenas se houver um deslocamento mínimo (ex: 10px)
         if (Math.abs(diff) > 10) {
             setIsSwiping(true);
@@ -236,7 +238,7 @@ const Home = () => {
             setSwipeOffset(0);
             return;
         }
-        
+
         const distance = touchStart - touchEnd;
         const isLeftSwipe = distance > minSwipeDistance;
         const isRightSwipe = distance < -minSwipeDistance;
@@ -246,7 +248,7 @@ const Home = () => {
         } else if (isRightSwipe) {
             prevMonth();
         }
-        
+
         // Pequeno atraso para o reset não parecer brusco caso o mês não mude
         setTimeout(() => setSwipeOffset(0), 10);
         setTouchStart(null);
@@ -278,19 +280,19 @@ const Home = () => {
     // Exclusão Centralizada
     const handleConfirmDelete = (tx) => {
         const isRecurring = tx.repeatType !== 'none';
-        
+
         setConfirmConfig({
             title: isRecurring ? t('recurring_delete_title', { defaultValue: 'Movimentação Recorrente' }) : t('confirm_delete', { defaultValue: 'Excluir Movimentação' }),
             message: isRecurring ? t('recurring_delete_msg', { defaultValue: 'Deseja excluir apenas este mês ou toda a série?' }) : t('confirm_delete_msg', { defaultValue: 'Tem certeza que deseja excluir este registro?' }),
             options: isRecurring ? [
-                { 
-                    label: t('only_this_month', { defaultValue: 'Apenas este mês' }), 
+                {
+                    label: t('only_this_month', { defaultValue: 'Apenas este mês' }),
                     value: 'skip',
                     color: 'var(--surface-color)',
                     textColor: 'var(--text-main)'
                 },
-                { 
-                    label: t('all_series', { defaultValue: 'Toda a série' }), 
+                {
+                    label: t('all_series', { defaultValue: 'Toda a série' }),
                     value: 'all',
                     color: 'var(--danger-color)'
                 }
@@ -327,12 +329,25 @@ const Home = () => {
         }, {});
 
     const totalStatsExpenses = Object.values(expensesByCategory).reduce((acc, val) => acc + val, 0);
-    const dateLocales = { pt: ptBR, en: enUS, es: es, fr: fr };
+    const conicStops = [];
+    let cumPercent = 0;
+
+    if (totalStatsExpenses > 0) {
+        const sortedCats = Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a);
+        sortedCats.forEach(([catId, amount]) => {
+            const category = getCategoryInfo(catId, 'expense');
+            const pct = (amount / totalStatsExpenses) * 100;
+            conicStops.push(`${category.color} ${cumPercent}% ${cumPercent + pct}%`);
+            cumPercent += pct;
+        });
+    }
+    // const pieChartBg = totalStatsExpenses > 0 ? `conic-gradient(${conicStops.join(', ')})` : 'var(--glass-border)';
 
     const getCategoryTheme = (id, type) => {
         return getCategoryInfo(id, type);
     };
 
+    const dateLocales = { pt: ptBR, en: enUS, es: es, fr: fr };
     const monthLabel = format(currentDate, 'MMMM yyyy', { locale: dateLocales[locale] || enUS });
     // Capitaliza o mês
     const formattedMonthLabel = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
@@ -345,186 +360,194 @@ const Home = () => {
     return (
         <>
 
-                <div
-                    className={`page-container animate-fade-in`}
-                    style={{ paddingBottom: isDesktop ? '120px' : '180px', animation: 'slideUp 0.3s forwards' }}
-                >
-                {/* Header (Now always visible but behaves differently on desktop) */}
-                <header style={{ 
-                    display: 'flex', 
-                    flexDirection: isDesktop ? 'row' : 'column',
-                    justifyContent: 'space-between', 
-                    alignItems: isDesktop ? 'center' : 'flex-start', 
-                    paddingTop: '8px', 
-                    marginBottom: isDesktop ? '24px' : '10px',
-                    gap: isDesktop ? '0' : '10px'
-                }}>
-                    <div 
-                        onClick={() => setIsSidebarOpen(true)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
-                    >
-                        <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-color)' }}>
-                            <User size={22} />
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                             <h1 style={{ fontSize: '1.2rem', color: 'var(--text-main)', fontWeight: '700', margin: 0 }}>
-                                {(() => {
-                                    const hour = new Date().getHours();
-                                    const greetingKey = (hour >= 3 && hour < 12) ? 'good_morning' : 
-                                                       (hour >= 12 && hour < 18) ? 'good_afternoon' : 'good_night';
-                                    return t(greetingKey, { name: currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }) });
-                                })()}
-                             </h1>
-                        </div>
-                    </div>
-
-                    {/* Desktop/Mobile Month Navigation */}
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px', 
-                        background: 'transparent', 
-                        padding: '6px 12px', 
-                        borderRadius: '20px', 
-                        border: 'none',
-                        alignSelf: isDesktop ? 'auto' : 'stretch',
-                        justifyContent: isDesktop ? 'flex-start' : 'space-between'
-                    }}>
-                        <button onClick={() => { haptic.light(); setCurrentDate(subMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
-                            <ChevronLeft size={20} />
-                        </button>
-                        <span style={{ fontWeight: '700', color: 'var(--text-main)', fontSize: '0.95rem', textTransform: 'capitalize', minWidth: '110px', textAlign: 'center' }}>
-                            {format(currentDate, 'MMMM yyyy', { locale: { pt: ptBR, en: enUS, es: es, fr: fr }[locale] || ptBR })}
-                        </span>
-                        <button onClick={() => { haptic.light(); setCurrentDate(addMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
-                            <ChevronRight size={20} />
+            {isFlipped && !isDesktop ? (
+                <div className="page-container animate-fade-in" style={{ paddingBottom: '120px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)' }}>{formattedMonthLabel}</h2>
+                        <button
+                            onClick={() => { haptic.light(); setIsFlipped(false); }}
+                            style={{
+                                width: '40px', height: '40px', borderRadius: '50%', background: 'var(--surface-color)',
+                                border: '1px solid var(--glass-border)', color: 'var(--text-main)',
+                                display: 'flex', justifyContent: 'center', alignItems: 'center'
+                            }}
+                        >
+                            <X size={20} />
                         </button>
                     </div>
-                </header>
 
-                {!isDesktop && (
-                    <section
-                        key={monthPrefix}
-                        className="glass-panel"
-                        onTouchStart={onTouchStart}
-                        onTouchMove={onTouchMove}
-                        onTouchEnd={onTouchEnd}
-                        onClick={() => !isDesktop && setIsFlipped(!isFlipped)}
-                        style={{ 
-                            flexShrink: 0, padding: isFlipped ? '0' : '24px', background: cardGradient, color: 'var(--btn-text)', border: 'none', 
-                            position: 'relative', overflow: 'hidden', cursor: !isDesktop ? 'pointer' : 'default',
-                            touchAction: 'pan-y',
-                            transform: `translateX(${swipeOffset}px)`,
-                            transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1)',
-                            animation: !isSwiping ? (swipeDirection === 'left' ? 'slideLeftIn 0.3s ease-out' : swipeDirection === 'right' ? 'slideRightIn 0.3s ease-out' : 'none') : 'none',
-                            minHeight: isFlipped ? '500px' : 'auto'
-                        }}
-                    >
-                        {!isFlipped ? (
-                            <>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div>
-                                <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '8px' }}>{t('monthly_balance')}</p>
-                                <h2 style={{ fontSize: 'clamp(1.8rem, 8vw, 2.5rem)', marginBottom: '24px', fontWeight: '700', letterSpacing: '-1px', wordBreak: 'break-word' }}>{formatCurrency(balance)}</h2>
-                            </div>
-                            <div style={{ position: 'relative', display: !isDesktop ? 'flex' : 'none' }}>
-                                <Pointer className="pointer-icon" size={18} opacity={0.8} />
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '24px', opacity: 0.9 }}>
-                            <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                    <ArrowUp size={16} color="#4ade80" />
-                                    <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
-                                </div>
-                                <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(incomes)}</p>
-                            </div>
-                            <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                    <ArrowDown size={16} color="#f87171" />
-                                    <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
-                                </div>
-                                <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(expenses)}</p>
-                            </div>
-                        </div>
-
-                        {/* Barra de Porcentagem de Gastos */}
-                        {incomes > 0 && (
-                            <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <div style={{ flex: 1, height: '6px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '10px', overflow: 'hidden' }}>
-                                    <div style={{
-                                        width: `${Math.min((expenses / incomes) * 100, 100)}%`,
-                                        height: '100%',
-                                        background: 'white',
-                                        borderRadius: '10px',
-                                        transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
-                                    }}></div>
-                                </div>
-                                <span style={{ fontSize: '0.85rem', fontWeight: '800', opacity: 0.9, minWidth: '35px', textAlign: 'right' }}>
-                                    {Math.round((expenses / incomes) * 100)}%
-                                </span>
-                            </div>
-                        )}
-                        </>
-                    ) : (
-                        <div style={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', margin: 0 }}>{t('statistics')}</h3>
-                                <div style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 14px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '600' }}>
-                                    {t('back')}
-                                </div>
-                            </div>
-                            
-                            {/* Gráfico de Barras Mensal */}
-                            <div style={{ height: '160px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px', marginBottom: '32px', padding: '0 10px' }}>
-                                {yearlyStats.map((stat, i) => {
-                                    const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 5000);
-                                    const h = Math.max(2, (Math.abs(stat.balance) / maxVal) * 50); 
-                                    const isCurrent = stat.month === (currentDate.getMonth() + 1);
-                                    const isNeg = stat.balance < 0;
-
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                        {/* Bar Chart Section */}
+                        <section className="glass-panel" style={{ padding: '24px' }}>
+                            <h3 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <BarChart2 size={18} color="var(--primary-color)" />
+                                {t('monthly_balance_chart', { defaultValue: 'Balanço Mensal' })}
+                            </h3>
+                            <div style={{ height: '180px', display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+                                {yearlyStats.map((s, i) => {
+                                    const maxVal = Math.max(...yearlyStats.map(x => Math.max(x.incomes, x.expenses, 1)), 1);
+                                    const isCurrentMonth = s.month === currentDate.getMonth() + 1;
                                     return (
-                                        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', position: 'relative' }}>
-                                            <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                                                <div style={{ height: '50%', width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                                                    {!isNeg && stat.balance > 0 && (
-                                                        <div style={{ width: '80%', height: `${h * 2}%`, background: 'white', borderRadius: '4px 4px 0 0', opacity: isCurrent ? 1 : 0.5 }} />
-                                                    )}
-                                                </div>
-                                                <div style={{ height: '50%', width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                                                    {isNeg && (
-                                                        <div style={{ width: '80%', height: `${h * 2}%`, background: 'rgba(255,255,255,0.4)', borderRadius: '0 0 4px 4px', opacity: isCurrent ? 1 : 0.5 }} />
-                                                    )}
-                                                </div>
+                                        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '100%', height: '140px', display: 'flex', alignItems: 'flex-end', gap: '2px', position: 'relative' }}>
+                                                <div style={{ flex: 1, height: `${(s.incomes / maxVal) * 100}%`, background: 'var(--success-color)', borderRadius: '2px 2px 0 0', opacity: isCurrentMonth ? 1 : 0.4 }}></div>
+                                                <div style={{ flex: 1, height: `${(s.expenses / maxVal) * 100}%`, background: 'var(--danger-color)', borderRadius: '2px 2px 0 0', opacity: isCurrentMonth ? 1 : 0.4 }}></div>
                                             </div>
-                                            <span style={{ fontSize: '0.6rem', color: 'white', opacity: isCurrent ? 1 : 0.6, marginTop: '8px', fontWeight: isCurrent ? '800' : '400' }}>
-                                                {format(new Date(2024, stat.month - 1, 1), 'MMM', { locale: ptBR }).substring(0, 3).toUpperCase()}
-                                            </span>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: isCurrentMonth ? '800' : '500', color: isCurrentMonth ? 'var(--primary-color)' : 'var(--text-muted)' }}>{s.label}</span>
                                         </div>
                                     );
                                 })}
                             </div>
+                        </section>
 
-                            {/* Gráfico de Pizza */}
-                            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '20px', padding: '16px', marginTop: 'auto' }}>
-                                <BudgetPieChart transactions={transactions} currentDate={currentDate} />
+                        {/* Pie Chart Section */}
+                        <section className="glass-panel" style={{ padding: '24px' }}>
+                            <h3 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <PieChart size={18} color="var(--primary-color)" />
+                                {t('expenses_by_category', { defaultValue: 'Gastos por Categoria' })}
+                            </h3>
+                            <BudgetPieChart transactions={transactions} currentDate={currentDate} />
+                        </section>
+                    </div>
+                </div>
+            ) : (
+                <div
+                    className={`page-container animate-fade-in`}
+                    style={{ paddingBottom: isDesktop ? '120px' : '180px', animation: 'slideUp 0.3s forwards' }}
+                >
+                    {/* Header (Now always visible but behaves differently on desktop) */}
+                    <header style={{
+                        display: 'flex',
+                        flexDirection: isDesktop ? 'row' : 'column',
+                        justifyContent: 'space-between',
+                        alignItems: isDesktop ? 'center' : 'flex-start',
+                        paddingTop: '8px',
+                        marginBottom: isDesktop ? '24px' : '10px',
+                        gap: isDesktop ? '0' : '10px'
+                    }}>
+                        <div
+                            onClick={() => setIsSidebarOpen(true)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+                        >
+                            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-color)' }}>
+                                <User size={22} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <h1 style={{ fontSize: '1.2rem', color: 'var(--text-main)', fontWeight: '700', margin: 0 }}>
+                                    {(() => {
+                                        const hour = new Date().getHours();
+                                        const greetingKey = (hour >= 3 && hour < 12) ? 'good_morning' :
+                                            (hour >= 12 && hour < 18) ? 'good_afternoon' : 'good_night';
+                                        return t(greetingKey, { name: currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }) });
+                                    })()}
+                                </h1>
                             </div>
                         </div>
-                    )}
-                    </section>
-                )}
 
-
-                {!isDesktop && (
-                    <section style={{ marginTop: '24px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>{t('transactions')}</h3>
+                        {/* Desktop/Mobile Month Navigation */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: 'transparent',
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            border: 'none',
+                            alignSelf: isDesktop ? 'auto' : 'stretch',
+                            justifyContent: isDesktop ? 'flex-start' : 'space-between'
+                        }}>
+                            <button onClick={() => { haptic.light(); setCurrentDate(subMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
+                                <ChevronLeft size={20} />
+                            </button>
+                            <span style={{ fontWeight: '700', color: 'var(--text-main)', fontSize: '0.95rem', textTransform: 'capitalize', minWidth: '110px', textAlign: 'center' }}>
+                                {format(currentDate, 'MMMM yyyy', { locale: { pt: ptBR, en: enUS, es: es, fr: fr }[locale] || ptBR })}
+                            </span>
+                            <button onClick={() => { haptic.light(); setCurrentDate(addMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
+                                <ChevronRight size={20} />
+                            </button>
                         </div>
+                    </header>
 
-                        {/* Contêiner de Filtros com Fade */}
-                        <div style={{ position: 'relative', width: 'calc(100% + 40px)', margin: '0 -20px 20px -20px' }}>
-                            <style>{`
+                    {!isDesktop && (
+                        <section
+                            key={monthPrefix}
+                            className="glass-panel"
+                            onClick={() => { haptic.medium(); setIsFlipped(true); }}
+                            onTouchStart={onTouchStart}
+                            onTouchMove={onTouchMove}
+                            onTouchEnd={onTouchEnd}
+                            style={{
+                                flexShrink: 0, padding: '24px', background: cardGradient, color: 'var(--btn-text)', border: 'none',
+                                position: 'relative', overflow: 'hidden',
+                                touchAction: 'pan-y',
+                                cursor: 'pointer',
+                                transform: `translateX(${swipeOffset}px)`,
+                                transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1)',
+                                animation: !isSwiping ? (swipeDirection === 'left' ? 'slideLeftIn 0.3s ease-out' : swipeDirection === 'right' ? 'slideRightIn 0.3s ease-out' : 'none') : 'none'
+                            }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div>
+                                    <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '8px' }}>{t('monthly_balance')}</p>
+                                    <h2 style={{ fontSize: 'clamp(1.8rem, 8vw, 2.5rem)', marginBottom: '24px', fontWeight: '700', letterSpacing: '-1px', wordBreak: 'break-word' }}>{formatCurrency(balance)}</h2>
+                                </div>
+                                <div style={{ opacity: 0.6 }}>
+                                    <BarChart2 size={20} />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '24px', opacity: 0.9 }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                        <ArrowUp size={16} color="#4ade80" />
+                                        <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
+                                    </div>
+                                    <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(incomes)}</p>
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                        <ArrowDown size={16} color="#f87171" />
+                                        <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
+                                    </div>
+                                    <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(expenses)}</p>
+                                </div>
+                            </div>
+
+                            {/* Barra de Porcentagem de Gastos */}
+                            {incomes > 0 && (
+                                <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ flex: 1, height: '6px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '10px', overflow: 'hidden' }}>
+                                        <div style={{
+                                            width: `${Math.min((expenses / incomes) * 100, 100)}%`,
+                                            height: '100%',
+                                            background: 'white',
+                                            borderRadius: '10px',
+                                            transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                                        }}></div>
+                                    </div>
+                                    <span style={{ fontSize: '0.85rem', fontWeight: '800', opacity: 0.9, minWidth: '35px', textAlign: 'right' }}>
+                                        {Math.round((expenses / incomes) * 100)}%
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Hint to flip */}
+                            <div style={{ position: 'absolute', bottom: '8px', right: '12px', opacity: 0.4, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span style={{ fontSize: '0.65rem', fontWeight: '700' }}>{t('click_to_see_stats', { defaultValue: 'VER ESTATÍSTICAS' })}</span>
+                                <Pointer size={10} className="pointer-icon" />
+                            </div>
+                        </section>
+                    )}
+
+                    {!isDesktop && (
+                        <section style={{ marginTop: '24px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>{t('transactions')}</h3>
+                            </div>
+
+                            {/* Contêiner de Filtros com Fade */}
+                            <div style={{ position: 'relative', width: 'calc(100% + 40px)', margin: '0 -20px 20px -20px' }}>
+                                <style>{`
                                 .filters-fade-container::after {
                                     content: '';
                                     position: absolute;
@@ -550,470 +573,467 @@ const Home = () => {
                                     transition: opacity 0.3s;
                                 }
                             `}</style>
-                            <div 
-                                className="filters-fade-container"
-                                style={{
-                                    display: 'flex',
-                                    overflowX: 'auto',
-                                    gap: '10px',
-                                    padding: '4px 24px',
-                                    scrollbarWidth: 'none',
-                                    msOverflowStyle: 'none',
-                                    WebkitOverflowScrolling: 'touch'
-                                }}
-                                onScroll={(e) => {
-                                    const container = e.currentTarget;
-                                    const before = container.parentElement.querySelector('.filters-fade-container::before');
-                                    // Hack simples para borda esquerda aparecer ao rolar
-                                    if (container.scrollLeft > 10) {
-                                        container.classList.add('scrolled');
-                                    } else {
-                                        container.classList.remove('scrolled');
-                                    }
-                                }}
-                            >
-                                <style>{`
+                                <div
+                                    className="filters-fade-container"
+                                    style={{
+                                        display: 'flex',
+                                        overflowX: 'auto',
+                                        gap: '10px',
+                                        padding: '4px 24px',
+                                        scrollbarWidth: 'none',
+                                        msOverflowStyle: 'none',
+                                        WebkitOverflowScrolling: 'touch'
+                                    }}
+                                    onScroll={(e) => {
+                                        const container = e.currentTarget;
+                                        const before = container.parentElement.querySelector('.filters-fade-container::before');
+                                        // Hack simples para borda esquerda aparecer ao rolar
+                                        if (container.scrollLeft > 10) {
+                                            container.classList.add('scrolled');
+                                        } else {
+                                            container.classList.remove('scrolled');
+                                        }
+                                    }}
+                                >
+                                    <style>{`
                                     .filters-fade-container.scrolled::before { opacity: 1 !important; }
                                 `}</style>
-                                {[
-                                    { id: 'all', label: 'filter_all' },
-                                    { id: 'income', label: 'filter_incomes' },
-                                    { id: 'expense', label: 'filter_expenses' },
-                                    { id: 'installment', label: 'filter_installment' },
-                                    { id: 'recurring', label: 'filter_recurring' },
-                                ].map(f => (
-                                    <button
-                                        key={f.id}
-                                        onClick={() => { haptic.light(); setActiveFilter(f.id); }}
-                                        style={{
-                                            whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600',
-                                            background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--surface-color)',
-                                            color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
-                                            border: '1px solid var(--glass-border)', flexShrink: 0,
-                                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-                                        }}
-                                    >
-                                        {t(f.label)}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {loading ? (
-                            <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
-                                <LoadingDots />
-                            </div>
-                        ) : filteredTransactions.length === 0 ? (
-                            <div className="glass-panel" style={{ padding: '30px', textAlign: 'center', border: 'none' }}>
-                                <p style={{ color: 'var(--text-muted)' }}>{t('no_transactions')}</p>
-                            </div>
-                        ) : (
-                            <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', border: 'none' }}>
-                                {filteredTransactions.map((tx, i) => (
-                                    <SwipeableItem key={tx.id} onDelete={() => handleConfirmDelete(tx)} onEdit={() => handleEditTx(tx)}>
-                                        <div 
-                                            style={{ 
-                                                display: 'flex', 
-                                                justifyContent: 'space-between', 
-                                                alignItems: 'center', 
-                                                padding: '12px 16px', 
-                                                background: 'transparent'
+                                    {[
+                                        { id: 'all', label: 'filter_all' },
+                                        { id: 'income', label: 'filter_incomes' },
+                                        { id: 'expense', label: 'filter_expenses' },
+                                        { id: 'installment', label: 'filter_installment' },
+                                        { id: 'recurring', label: 'filter_recurring' },
+                                    ].map(f => (
+                                        <button
+                                            key={f.id}
+                                            onClick={() => { haptic.light(); setActiveFilter(f.id); }}
+                                            style={{
+                                                whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600',
+                                                background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--surface-color)',
+                                                color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
+                                                border: '1px solid var(--glass-border)', flexShrink: 0,
+                                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                                             }}
                                         >
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                                <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontWeight: 'bold', fontSize: '1.2rem' }}>
-                                                    {getEmojiForDescription(tx.description, getCategoryTheme(tx.category, tx.type).icon)}
-                                                </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <p style={{ fontWeight: '500', margin: 0 }}>{tx.dynamicDescription || tx.description}</p>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{tx.virtualDate.split('-').slice(1).reverse().join('/')}</p>
-                                                        {tx.repeatType && (
-                                                            <span style={{ 
-                                                                fontSize: '0.65rem', 
-                                                                padding: '1px 6px', 
-                                                                borderRadius: '6px', 
-                                                                background: 'rgba(75, 180, 90, 0.1)',
-                                                                color: '#4BB45A',
-                                                                fontWeight: '700',
-                                                                textTransform: 'uppercase'
-                                                            }}>
-                                                                {tx.repeatType === 'recurring' ? t('tag_recurring') : tx.repeatType === 'installment' ? t('tag_installment') : t('tag_variable')}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p style={{ fontWeight: '600', color: tx.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)', margin: 0 }}>
-                                                {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
-                                            </p>
-                                        </div>
-                                    </SwipeableItem>
-                                ))}
-                            </div>
-                        )}
-                    </section>
-                )}
-
-                {/* --- Bento Grid Desktop Sections --- */}
-                {isDesktop && (
-                    <div className="desktop-dashboard-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '16px', position: 'relative' }}>
-                        
-                        <div className="desktop-bento-top" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'start' }}>
-                            
-                            {/* Coluna Esquerda: Saldo + Movimentações */}
-                            <div className="column-left" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                                <section
-                                    key={`card-${monthPrefix}`}
-                                    className="glass-panel"
-                                    style={{ 
-                                        padding: '32px', background: cardGradient, color: 'var(--btn-text)', border: 'none', 
-                                        position: 'relative', overflow: 'hidden', borderRadius: '24px'
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                        <div>
-                                            <p style={{ fontSize: '1rem', opacity: 0.8, marginBottom: '8px' }}>{t('monthly_balance')}</p>
-                                            <h2 style={{ fontSize: '3rem', marginBottom: '24px', fontWeight: '800', letterSpacing: '-1.5px' }}>{formatCurrency(balance)}</h2>
-                                        </div>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '32px', opacity: 0.9 }}>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#4ade80' }}></div>
-                                                <p style={{ fontSize: '0.9rem', margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
-                                            </div>
-                                            <p style={{ fontWeight: '700', fontSize: '1.3rem', margin: 0 }}>{formatCurrency(incomes)}</p>
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f87171' }}></div>
-                                                <p style={{ fontSize: '0.9rem', margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
-                                            </div>
-                                            <p style={{ fontWeight: '700', fontSize: '1.3rem', margin: 0 }}>{formatCurrency(expenses)}</p>
-                                        </div>
-                                    </div>
-                                    {incomes > 0 && (
-                                        <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                            <div style={{ flex: 1, height: '8px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '10px', overflow: 'hidden' }}>
-                                                <div style={{
-                                                    width: `${Math.min((expenses / incomes) * 100, 100)}%`,
-                                                    height: '100%',
-                                                    background: 'white',
-                                                    borderRadius: '10px',
-                                                    transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
-                                                }}></div>
-                                            </div>
-                                            <span style={{ fontSize: '1rem', fontWeight: '800', opacity: 0.9, minWidth: '45px', textAlign: 'right' }}>
-                                                {Math.round((expenses / incomes) * 100)}%
-                                            </span>
-                                        </div>
-                                    )}
-                                </section>
-
-                                <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                        <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>{t('transactions')}</h3>
-                                    </div>
-
-                                    <div className="filters-row" style={{ display: 'flex', overflowX: 'auto', gap: '10px', marginBottom: '24px', padding: '4px 0', scrollbarWidth: 'none' }}>
-                                        {[
-                                            { id: 'all', label: 'filter_all' },
-                                            { id: 'income', label: 'filter_incomes' },
-                                            { id: 'variable', label: 'Despesas Móveis' },
-                                            { id: 'recurring', label: 'Despesas Recorrentes' },
-                                            { id: 'installment', label: 'Despesas Parceladas' }
-                                        ].map(f => (
-                                            <button
-                                                key={f.id}
-                                                onClick={() => setActiveFilter(f.id)}
-                                                style={{
-                                                    whiteSpace: 'nowrap', padding: '10px 18px', borderRadius: '24px', fontSize: '0.9rem', fontWeight: '600',
-                                                    background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--bg-color)',
-                                                    color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
-                                                    border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                {t(f.label, { defaultValue: f.label })}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    {loading ? (
-                                        <div style={{ padding: '40px 0' }}><LoadingDots /></div>
-                                    ) : (
-                                        <div style={{ maxHeight: '450px', overflowY: 'auto', scrollbarWidth: 'thin', margin: '0 -32px' }}>
-                                            {filteredTransactions.map((tx, i) => (
-                                                <div 
-                                                    key={tx.id} 
-                                                    onClick={() => handleEditTx(tx)} 
-                                                    style={{ 
-                                                        cursor: 'pointer', 
-                                                        display: 'flex', 
-                                                        justifyContent: 'space-between', 
-                                                        alignItems: 'center', 
-                                                        padding: '16px 32px', 
-                                                        background: i % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.02)',
-                                                        transition: 'background 0.2s', 
-                                                        marginBottom: i === filteredTransactions.length - 1 ? (isDesktop ? '24px' : '80px') : '0'
-                                                    }} 
-                                                    className="hover-brightness"
-                                                >
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                                        <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontSize: '1.3rem' }}>
-                                                            {getEmojiForDescription(tx.description, getCategoryTheme(tx.category, tx.type).icon)}
-                                                        </div>
-                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                            <p style={{ fontWeight: '600', margin: 0, color: 'var(--text-main)' }}>{tx.dynamicDescription || tx.description}</p>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{tx.virtualDate.split('-').slice(1).reverse().join('/')}</p>
-                                                                {tx.repeatType && (
-                                                                    <span style={{ 
-                                                                        fontSize: '0.65rem', 
-                                                                        padding: '1px 6px', 
-                                                                        borderRadius: '6px', 
-                                                                        background: 'rgba(75, 180, 90, 0.1)',
-                                                                        color: '#4BB45A',
-                                                                        fontWeight: '700',
-                                                                        textTransform: 'uppercase'
-                                                                    }}>
-                                                                        {tx.repeatType === 'recurring' ? t('tag_recurring') : tx.repeatType === 'installment' ? t('tag_installment') : t('tag_variable')}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <p style={{ fontWeight: '700', color: tx.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)', margin: 0, fontSize: '1.1rem' }}>
-                                                        {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
-                                                    </p>
-                                                </div>
-                                            ))}
-                                            {filteredTransactions.length === 0 && (
-                                                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                                                    Nenhuma transação encontrada
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </section>
-                            </div>
-
-                            <div className="column-right" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                                <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                    <h3 style={{ width: '100%', fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '24px' }}>
-                                        {t('expenses_by_category', { defaultValue: 'Gastos por Categoria' })}
-                                    </h3>
-                                    {totalStatsExpenses > 0 ? (
-                                        <BudgetPieChart transactions={transactions} currentDate={currentDate} />
-                            ) : (
-                                <p style={{ color: 'var(--text-muted)', margin: '60px 0' }}>Sem despesas no mês</p>
-                            )}
-                        </section>
-
-                        <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>Limites Ativos</h3>
-                                <button
-                                    onClick={() => {
-                                        setTempLimit({ categoryId: CATEGORIAS_DESPESA[0].id, amount: '' });
-                                        setIsLimitModalOpen(true);
-                                    }}
-                                    style={{ 
-                                        padding: '8px 14px', borderRadius: '12px', background: 'var(--primary-color)', color: 'var(--btn-text)',
-                                        fontSize: '0.85rem', fontWeight: '700', border: 'none', cursor: 'pointer'
-                                    }}
-                                >
-                                    Novo Limite
-                                </button>
-                            </div>
-                            
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', maxHeight: '350px', overflowY: 'auto' }}>
-                                {CATEGORIAS_DESPESA.filter(cat => limits[cat.id]).length === 0 ? (
-                                    <div style={{ textAlign: 'center', padding: '32px', border: '1px solid var(--glass-border)', borderRadius: '24px', background: 'var(--surface-color)' }}>
-                                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0' }}>Nenhum limite configurado</p>
-                                    </div>
-                                ) : (
-                                    CATEGORIAS_DESPESA.filter(cat => limits[cat.id]).slice(0, 3).map((cat) => {
-                                        const limitAmount = limits[cat.id];
-                                        const spent = expensesByCategory[cat.id] || 0;
-                                        const pct = Math.min((spent / limitAmount) * 100, 100);
-                                        const isOverLimit = spent > limitAmount;
-
-                                        return (
-                                            <div key={cat.id} style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                        <span style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-main)' }}>{cat.icon} {t(cat.label)}</span>
-                                                        <span style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-muted)' }}>{formatCurrency(limitAmount)}</span>
-                                                    </div>
-                                                    <span style={{ fontSize: '0.8rem', fontWeight: '800', color: isOverLimit ? 'var(--danger-color)' : 'var(--text-muted)' }}>
-                                                        {Math.round((spent / limitAmount) * 100)}%
-                                                    </span>
-                                                </div>
-                                                <div style={{ width: '100%', height: '6px', background: 'var(--bg-color)', borderRadius: '3px', overflow: 'hidden' }}>
-                                                    <div style={{ width: `${pct}%`, height: '100%', background: isOverLimit ? 'var(--danger-color)' : cat.color, transition: 'width 1s ease-out' }} />
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
-                            </div>
-                        </section>
-                    </div>
-                </div>
-
-                {/* Saldos Mensais Row (Full Width Bottom) */}
-                <section className="glass-panel" style={{ padding: '32px', width: '100%' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                        <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>Evolução de Saldos Mensais</h3>
-                        
-                        <div style={{ display: 'flex', background: 'var(--bg-color)', padding: '4px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-                            <button 
-                                onClick={() => { haptic.light(); setChartType('bar'); }}
-                                style={{ 
-                                    padding: '6px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', border: 'none',
-                                    background: chartType === 'bar' ? 'var(--primary-color)' : 'transparent',
-                                    color: chartType === 'bar' ? 'white' : 'var(--text-muted)',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                Barras
-                            </button>
-                            <button 
-                                onClick={() => { haptic.light(); setChartType('line'); }}
-                                style={{ 
-                                    padding: '6px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', border: 'none',
-                                    background: chartType === 'line' ? 'var(--primary-color)' : 'transparent',
-                                    color: chartType === 'line' ? 'white' : 'var(--text-muted)',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                Linha
-                            </button>
-                        </div>
-                    </div>
-
-                    <div style={{ position: 'relative', height: '240px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '12px', paddingBottom: '32px' }}>
-                        {chartType === 'bar' ? (
-                            yearlyStats.map((stat, i) => {
-                                const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 5000);
-                                const h = Math.max(2, (Math.abs(stat.balance) / maxVal) * 50); 
-                                const isCurrent = stat.month === (currentDate.getMonth() + 1);
-                                const isNeg = stat.balance < 0;
-
-                                return (
-                                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', position: 'relative' }}>
-                                        {/* Value Label Label */}
-                                        <span style={{ 
-                                            position: 'absolute', 
-                                            top: isNeg ? 'calc(50% + ' + (h * 2) + '% + 8px)' : 'auto',
-                                            bottom: !isNeg ? 'calc(50% + ' + (h * 2) + '% + 8px)' : 'auto',
-                                            fontSize: '0.7rem', fontWeight: '800', 
-                                            color: isNeg ? 'var(--danger-color)' : 'var(--primary-dark)',
-                                            whiteSpace: 'nowrap',
-                                            zIndex: 5
-                                        }}>
-                                            {formatCurrency(stat.balance).split(',')[0]}
-                                        </span>
-
-                                        <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                                            {/* Top Half (Positive) */}
-                                            <div style={{ height: '50%', width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                                                {!isNeg && stat.balance > 0 && (
-                                                    <div style={{
-                                                        width: '32px', height: `${h * 2}%`,
-                                                        background: 'var(--primary-color)',
-                                                        borderRadius: '6px 6px 0 0',
-                                                        opacity: isCurrent ? 1 : 0.4,
-                                                        boxShadow: isCurrent ? '0 0 20px rgba(var(--primary-rgb), 0.2)' : 'none',
-                                                        transition: 'height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                                                    }} />
-                                                )}
-                                            </div>
-                                            {/* Bottom Half (Negative) */}
-                                            <div style={{ height: '50%', width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                                                {isNeg && (
-                                                    <div style={{
-                                                        width: '32px', height: `${h * 2}%`,
-                                                        background: 'var(--danger-color)',
-                                                        borderRadius: '0 0 6px 6px',
-                                                        opacity: isCurrent ? 1 : 0.4,
-                                                        transition: 'height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                                                    }} />
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <span style={{ fontSize: '0.8rem', color: isCurrent ? 'var(--primary-dark)' : 'var(--text-muted)', fontWeight: isCurrent ? '700' : '500', marginTop: '16px' }}>
-                                            {format(new Date(2024, stat.month - 1, 1), 'MMM', { locale: { pt: ptBR, en: enUS, es: es, fr: fr }[locale] || ptBR }).substring(0, 3).toUpperCase()}
-                                        </span>
-                                    </div>
-                                );
-                            })
-                        ) : (
-                            <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-                                <svg width="100%" height="100%" viewBox="0 0 1000 100" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
-                                    <path 
-                                        d={`M ${yearlyStats.map((stat, i) => {
-                                            const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 5000);
-                                            const x = (i / (yearlyStats.length - 1)) * 1000;
-                                            const y = 80 - (stat.balance / maxVal) * 60;
-                                            return `${x},${y}`;
-                                        }).join(' L ')}`}
-                                        fill="none" stroke="var(--primary-color)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-                                        style={{ transition: 'all 0.5s ease', opacity: 0.8 }}
-                                    />
-                                    {yearlyStats.map((stat, i) => {
-                                        const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 5000);
-                                        const x = (i / (yearlyStats.length - 1)) * 1000;
-                                        const y = 80 - (stat.balance / maxVal) * 60;
-                                        const isCurrent = stat.month === (currentDate.getMonth() + 1);
-                                        return (
-                                            <g key={i}>
-                                                <text 
-                                                    x={x} y={y - 10} textAnchor="middle" 
-                                                    style={{ fontSize: '10px', fontWeight: '700', fill: stat.balance >= 0 ? 'var(--primary-dark)' : 'var(--danger-color)' }}
-                                                >
-                                                    {formatCurrency(stat.balance).split(',')[0]}
-                                                </text>
-                                                <circle 
-                                                    cx={x} cy={y} r={isCurrent ? 4 : 2.5} 
-                                                    fill={isCurrent ? 'var(--primary-color)' : 'var(--bg-color)'} 
-                                                    stroke="var(--primary-color)" strokeWidth="1.5"
-                                                    style={{ transition: 'all 0.3s' }}
-                                                />
-                                            </g>
-                                        );
-                                    })}
-                                </svg>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 0 0 0' }}>
-                                    {yearlyStats.map((stat, i) => (
-                                        <span key={i} style={{ fontSize: '0.75rem', color: stat.month === (currentDate.getMonth() + 1) ? 'var(--primary-dark)' : 'var(--text-muted)', fontWeight: '600', width: '35px', textAlign: 'center' }}>
-                                            {format(new Date(2024, stat.month - 1, 1), 'MMM', { locale: { pt: ptBR, en: enUS, es: es, fr: fr }[locale] || ptBR }).substring(0, 3).toUpperCase()}
-                                        </span>
+                                            {t(f.label)}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
-                        )}
-                    </div>
-                </section>
-                </div>
-            )}
 
-            {/* --- Fixed Elements (Outside of transformed container) --- */}
-            
-            {/* Fixed Elements removed as they are now in Layout.jsx */}
-            <TransactionModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingTx(null); }} defaultType={modalType} initialData={editingTx} onSuccess={refetch} />
+                            {loading ? (
+                                <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+                                    <LoadingDots />
+                                </div>
+                            ) : filteredTransactions.length === 0 ? (
+                                <div className="glass-panel" style={{ padding: '30px', textAlign: 'center', border: 'none' }}>
+                                    <p style={{ color: 'var(--text-muted)' }}>{t('no_transactions')}</p>
+                                </div>
+                            ) : (
+                                <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', border: 'none' }}>
+                                    {filteredTransactions.map((tx, i) => (
+                                        <SwipeableItem key={tx.id} onDelete={() => handleConfirmDelete(tx)} onEdit={() => handleEditTx(tx)}>
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    padding: '12px 16px',
+                                                    background: 'transparent'
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                                    <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontWeight: 'bold', fontSize: '1.2rem' }}>
+                                                        {getEmojiForDescription(tx.description, getCategoryTheme(tx.category, tx.type).icon)}
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <p style={{ fontWeight: '500', margin: 0 }}>{tx.dynamicDescription || tx.description}</p>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{tx.virtualDate.split('-').slice(1).reverse().join('/')}</p>
+                                                            {tx.repeatType && (
+                                                                <span style={{
+                                                                    fontSize: '0.65rem',
+                                                                    padding: '1px 6px',
+                                                                    borderRadius: '6px',
+                                                                    background: 'rgba(75, 180, 90, 0.1)',
+                                                                    color: '#4BB45A',
+                                                                    fontWeight: '700',
+                                                                    textTransform: 'uppercase'
+                                                                }}>
+                                                                    {tx.repeatType === 'recurring' ? t('tag_recurring') : tx.repeatType === 'installment' ? t('tag_installment') : t('tag_variable')}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <p style={{ fontWeight: '600', color: tx.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)', margin: 0 }}>
+                                                    {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
+                                                </p>
+                                            </div>
+                                        </SwipeableItem>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+                    )}
 
-            <ConfirmDialog 
-                isOpen={isConfirmOpen}
-                onClose={() => setIsConfirmOpen(false)}
-                {...confirmConfig}
-            />
+                    {/* --- Bento Grid Desktop Sections --- */}
+                    {isDesktop && (
+                        <div className="desktop-dashboard-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '16px', position: 'relative' }}>
+
+                            <div className="desktop-bento-top" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'start' }}>
+
+                                {/* Coluna Esquerda: Saldo + Movimentações */}
+                                <div className="column-left" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                                    <section
+                                        key={`card-${monthPrefix}`}
+                                        className="glass-panel"
+                                        style={{
+                                            padding: '32px', background: cardGradient, color: 'var(--btn-text)', border: 'none',
+                                            position: 'relative', overflow: 'hidden', borderRadius: '24px'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <div>
+                                                <p style={{ fontSize: '1rem', opacity: 0.8, marginBottom: '8px' }}>{t('monthly_balance')}</p>
+                                                <h2 style={{ fontSize: '3rem', marginBottom: '24px', fontWeight: '800', letterSpacing: '-1.5px' }}>{formatCurrency(balance)}</h2>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '32px', opacity: 0.9 }}>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#4ade80' }}></div>
+                                                    <p style={{ fontSize: '0.9rem', margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
+                                                </div>
+                                                <p style={{ fontWeight: '700', fontSize: '1.3rem', margin: 0 }}>{formatCurrency(incomes)}</p>
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f87171' }}></div>
+                                                    <p style={{ fontSize: '0.9rem', margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
+                                                </div>
+                                                <p style={{ fontWeight: '700', fontSize: '1.3rem', margin: 0 }}>{formatCurrency(expenses)}</p>
+                                            </div>
+                                        </div>
+
+                                        {incomes > 0 && (
+                                            <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                                <div style={{ flex: 1, height: '8px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '10px', overflow: 'hidden' }}>
+                                                    <div style={{
+                                                        width: `${Math.min((expenses / incomes) * 100, 100)}%`,
+                                                        height: '100%',
+                                                        background: 'white',
+                                                        borderRadius: '10px',
+                                                        transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                                                    }}></div>
+                                                </div>
+                                                <span style={{ fontSize: '1rem', fontWeight: '800', opacity: 0.9, minWidth: '45px', textAlign: 'right' }}>
+                                                    {Math.round((expenses / incomes) * 100)}%
+                                                </span>
+                                            </div>
+                                        )}
+                                    </section>
+
+                                    <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                            <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>{t('transactions')}</h3>
+                                        </div>
+
+                                        <div className="filters-row" style={{ display: 'flex', overflowX: 'auto', gap: '10px', marginBottom: '24px', padding: '4px 0', scrollbarWidth: 'none' }}>
+                                            {[
+                                                { id: 'all', label: 'filter_all' },
+                                                { id: 'income', label: 'filter_incomes' },
+                                                { id: 'variable', label: 'Despesas Móveis' },
+                                                { id: 'recurring', label: 'Despesas Recorrentes' },
+                                                { id: 'installment', label: 'Despesas Parceladas' }
+                                            ].map(f => (
+                                                <button
+                                                    key={f.id}
+                                                    onClick={() => setActiveFilter(f.id)}
+                                                    style={{
+                                                        whiteSpace: 'nowrap', padding: '10px 18px', borderRadius: '24px', fontSize: '0.9rem', fontWeight: '600',
+                                                        background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--bg-color)',
+                                                        color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
+                                                        border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    {t(f.label, { defaultValue: f.label })}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {loading ? (
+                                            <div style={{ padding: '40px 0' }}><LoadingDots /></div>
+                                        ) : (
+                                            <div style={{ maxHeight: '450px', overflowY: 'auto', scrollbarWidth: 'thin', margin: '0 -32px' }}>
+                                                {filteredTransactions.map((tx, i) => (
+                                                    <div
+                                                        key={tx.id}
+                                                        onClick={() => handleEditTx(tx)}
+                                                        style={{
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center',
+                                                            padding: '16px 32px',
+                                                            background: i % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.02)',
+                                                            transition: 'background 0.2s',
+                                                            marginBottom: i === filteredTransactions.length - 1 ? (isDesktop ? '24px' : '80px') : '0'
+                                                        }}
+                                                        className="hover-brightness"
+                                                    >
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                                            <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontSize: '1.3rem' }}>
+                                                                {getEmojiForDescription(tx.description, getCategoryTheme(tx.category, tx.type).icon)}
+                                                            </div>
+                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                <p style={{ fontWeight: '600', margin: 0, color: 'var(--text-main)' }}>{tx.dynamicDescription || tx.description}</p>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{tx.virtualDate.split('-').slice(1).reverse().join('/')}</p>
+                                                                    {tx.repeatType && (
+                                                                        <span style={{
+                                                                            fontSize: '0.65rem',
+                                                                            padding: '1px 6px',
+                                                                            borderRadius: '6px',
+                                                                            background: 'rgba(75, 180, 90, 0.1)',
+                                                                            color: '#4BB45A',
+                                                                            fontWeight: '700',
+                                                                            textTransform: 'uppercase'
+                                                                        }}>
+                                                                            {tx.repeatType === 'recurring' ? t('tag_recurring') : tx.repeatType === 'installment' ? t('tag_installment') : t('tag_variable')}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <p style={{ fontWeight: '700', color: tx.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)', margin: 0, fontSize: '1.1rem' }}>
+                                                            {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                                {filteredTransactions.length === 0 && (
+                                                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                                                        Nenhuma transação encontrada
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </section>
+                                </div>
+
+                                <div className="column-right" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                                    <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column' }}>
+                                        <h3 style={{ width: '100%', fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '24px' }}>
+                                            {t('expenses_by_category', { defaultValue: 'Gastos por Categoria' })}
+                                        </h3>
+                                        <BudgetPieChart transactions={transactions} currentDate={currentDate} />
+                                    </section>
+
+                                    <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>Limites Ativos</h3>
+                                            <button
+                                                onClick={() => {
+                                                    setTempLimit({ categoryId: CATEGORIAS_DESPESA[0].id, amount: '' });
+                                                    setIsLimitModalOpen(true);
+                                                }}
+                                                style={{
+                                                    padding: '8px 14px', borderRadius: '12px', background: 'var(--primary-color)', color: 'var(--btn-text)',
+                                                    fontSize: '0.85rem', fontWeight: '700', border: 'none', cursor: 'pointer'
+                                                }}
+                                            >
+                                                Novo Limite
+                                            </button>
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', maxHeight: '350px', overflowY: 'auto' }}>
+                                            {CATEGORIAS_DESPESA.filter(cat => limits[cat.id]).length === 0 ? (
+                                                <div style={{ textAlign: 'center', padding: '32px', border: '1px solid var(--glass-border)', borderRadius: '24px', background: 'var(--surface-color)' }}>
+                                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0' }}>Nenhum limite configurado</p>
+                                                </div>
+                                            ) : (
+                                                CATEGORIAS_DESPESA.filter(cat => limits[cat.id]).slice(0, 3).map((cat) => {
+                                                    const limitAmount = limits[cat.id];
+                                                    const spent = expensesByCategory[cat.id] || 0;
+                                                    const pct = Math.min((spent / limitAmount) * 100, 100);
+                                                    const isOverLimit = spent > limitAmount;
+
+                                                    return (
+                                                        <div key={cat.id} style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                    <span style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-main)' }}>{cat.icon} {t(cat.label)}</span>
+                                                                    <span style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-muted)' }}>{formatCurrency(limitAmount)}</span>
+                                                                </div>
+                                                                <span style={{ fontSize: '0.8rem', fontWeight: '800', color: isOverLimit ? 'var(--danger-color)' : 'var(--text-muted)' }}>
+                                                                    {Math.round((spent / limitAmount) * 100)}%
+                                                                </span>
+                                                            </div>
+                                                            <div style={{ width: '100%', height: '6px', background: 'var(--bg-color)', borderRadius: '3px', overflow: 'hidden' }}>
+                                                                <div style={{ width: `${pct}%`, height: '100%', background: isOverLimit ? 'var(--danger-color)' : cat.color, transition: 'width 1s ease-out' }} />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
+
+                            {/* Saldos Mensais Row (Full Width Bottom) */}
+                            <section className="glass-panel" style={{ padding: '32px', width: '100%' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                                    <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>Evolução de Saldos Mensais</h3>
+
+                                    <div style={{ display: 'flex', background: 'var(--bg-color)', padding: '4px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                                        <button
+                                            onClick={() => { haptic.light(); setChartType('bar'); }}
+                                            style={{
+                                                padding: '6px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', border: 'none',
+                                                background: chartType === 'bar' ? 'var(--primary-color)' : 'transparent',
+                                                color: chartType === 'bar' ? 'white' : 'var(--text-muted)',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            Barras
+                                        </button>
+                                        <button
+                                            onClick={() => { haptic.light(); setChartType('line'); }}
+                                            style={{
+                                                padding: '6px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', border: 'none',
+                                                background: chartType === 'line' ? 'var(--primary-color)' : 'transparent',
+                                                color: chartType === 'line' ? 'white' : 'var(--text-muted)',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            Linha
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div style={{ position: 'relative', height: '240px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '12px', paddingBottom: '32px' }}>
+                                    {chartType === 'bar' ? (
+                                        yearlyStats.map((stat, i) => {
+                                            const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 5000);
+                                            const h = Math.max(2, (Math.abs(stat.balance) / maxVal) * 50);
+                                            const isCurrent = stat.month === (currentDate.getMonth() + 1);
+                                            const isNeg = stat.balance < 0;
+
+                                            return (
+                                                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', position: 'relative' }}>
+                                                    {/* Value Label Label */}
+                                                    <span style={{
+                                                        position: 'absolute',
+                                                        top: isNeg ? 'calc(50% + ' + (h * 2) + '% + 8px)' : 'auto',
+                                                        bottom: !isNeg ? 'calc(50% + ' + (h * 2) + '% + 8px)' : 'auto',
+                                                        fontSize: '0.7rem', fontWeight: '800',
+                                                        color: isNeg ? 'var(--danger-color)' : 'var(--primary-dark)',
+                                                        whiteSpace: 'nowrap',
+                                                        zIndex: 5
+                                                    }}>
+                                                        {formatCurrency(stat.balance).split(',')[0]}
+                                                    </span>
+
+                                                    <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                                                        {/* Top Half (Positive) */}
+                                                        <div style={{ height: '50%', width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                                            {!isNeg && stat.balance > 0 && (
+                                                                <div style={{
+                                                                    width: '32px', height: `${h * 2}%`,
+                                                                    background: 'var(--primary-color)',
+                                                                    borderRadius: '6px 6px 0 0',
+                                                                    opacity: isCurrent ? 1 : 0.4,
+                                                                    boxShadow: isCurrent ? '0 0 20px rgba(var(--primary-rgb), 0.2)' : 'none',
+                                                                    transition: 'height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                                                                }} />
+                                                            )}
+                                                        </div>
+                                                        {/* Bottom Half (Negative) */}
+                                                        <div style={{ height: '50%', width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                                                            {isNeg && (
+                                                                <div style={{
+                                                                    width: '32px', height: `${h * 2}%`,
+                                                                    background: 'var(--danger-color)',
+                                                                    borderRadius: '0 0 6px 6px',
+                                                                    opacity: isCurrent ? 1 : 0.4,
+                                                                    transition: 'height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                                                                }} />
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <span style={{ fontSize: '0.8rem', color: isCurrent ? 'var(--primary-dark)' : 'var(--text-muted)', fontWeight: isCurrent ? '700' : '500', marginTop: '16px' }}>
+                                                        {format(new Date(2024, stat.month - 1, 1), 'MMM', { locale: { pt: ptBR, en: enUS, es: es, fr: fr }[locale] || ptBR }).substring(0, 3).toUpperCase()}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                                            <svg width="100%" height="100%" viewBox="0 0 1000 100" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
+                                                <path
+                                                    d={`M ${yearlyStats.map((stat, i) => {
+                                                        const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 5000);
+                                                        const x = (i / (yearlyStats.length - 1)) * 1000;
+                                                        const y = 80 - (stat.balance / maxVal) * 60;
+                                                        return `${x},${y}`;
+                                                    }).join(' L ')}`}
+                                                    fill="none" stroke="var(--primary-color)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                                                    style={{ transition: 'all 0.5s ease', opacity: 0.8 }}
+                                                />
+                                                {yearlyStats.map((stat, i) => {
+                                                    const maxVal = Math.max(...yearlyStats.map(s => Math.abs(s.balance)), 5000);
+                                                    const x = (i / (yearlyStats.length - 1)) * 1000;
+                                                    const y = 80 - (stat.balance / maxVal) * 60;
+                                                    const isCurrent = stat.month === (currentDate.getMonth() + 1);
+                                                    return (
+                                                        <g key={i}>
+                                                            <text
+                                                                x={x} y={y - 10} textAnchor="middle"
+                                                                style={{ fontSize: '10px', fontWeight: '700', fill: stat.balance >= 0 ? 'var(--primary-dark)' : 'var(--danger-color)' }}
+                                                            >
+                                                                {formatCurrency(stat.balance).split(',')[0]}
+                                                            </text>
+                                                            <circle
+                                                                cx={x} cy={y} r={isCurrent ? 4 : 2.5}
+                                                                fill={isCurrent ? 'var(--primary-color)' : 'var(--bg-color)'}
+                                                                stroke="var(--primary-color)" strokeWidth="1.5"
+                                                                style={{ transition: 'all 0.3s' }}
+                                                            />
+                                                        </g>
+                                                    );
+                                                })}
+                                            </svg>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 0 0 0' }}>
+                                                {yearlyStats.map((stat, i) => (
+                                                    <span key={i} style={{ fontSize: '0.75rem', color: stat.month === (currentDate.getMonth() + 1) ? 'var(--primary-dark)' : 'var(--text-muted)', fontWeight: '600', width: '35px', textAlign: 'center' }}>
+                                                        {format(new Date(2024, stat.month - 1, 1), 'MMM', { locale: { pt: ptBR, en: enUS, es: es, fr: fr }[locale] || ptBR }).substring(0, 3).toUpperCase()}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
+                        </div>
+                    )}
+
+                    {/* --- Fixed Elements (Outside of transformed container) --- */}
+
+                    {/* Fixed Elements removed as they are now in Layout.jsx */}
+                    <TransactionModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingTx(null); }} defaultType={modalType} initialData={editingTx} onSuccess={refetch} />
+
+                    <ConfirmDialog
+                        isOpen={isConfirmOpen}
+                        onClose={() => setIsConfirmOpen(false)}
+                        {...confirmConfig}
+                    />
 
 
-            <style>{`
+                    <style>{`
                 @keyframes slideInUp {
                     from { transform: translateY(100%); }
                     to { transform: translateY(0); }
@@ -1056,254 +1076,254 @@ const Home = () => {
                     100% { transform: scale(1); opacity: 0.8; }
                 }
             `}</style>
-                {/* Unified Sidebar / Bottom Sheet */}
-                {isSidebarOpen && (
-                    <>
-                        {/* Backdrop */}
-                        <div 
-                            onClick={closeSidebar}
-                            style={{ 
-                                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-                                background: 'rgba(27, 69, 32, 0.4)', backdropFilter: 'blur(8px)',
-                                zIndex: 11000, 
-                                transition: 'all 0.3s ease',
-                                animation: isSidebarClosing ? 'fadeOut 0.3s forwards' : 'fadeIn 0.3s forwards' 
-                            }}
-                        />
-                        
-                        {/* Sheet/Drawer Content */}
-                        <div style={{
-                            position: 'fixed', 
-                            top: isDesktop ? 0 : 'auto', 
-                            bottom: 0, 
-                            left: 0,
-                            right: isDesktop ? 'auto' : 0,
-                            width: isDesktop ? '360px' : '100%', 
-                            height: isDesktop ? '100%' : (sidebarView === 'notion' ? '100%' : 'auto'), 
-                            maxHeight: (isDesktop || sidebarView === 'notion') ? 'none' : '90dvh',
-                            background: 'var(--bg-color)',
-                            boxShadow: '0 -10px 50px rgba(0,0,0,0.15)', 
-                            zIndex: 11001,
-                            borderRadius: (isDesktop || sidebarView === 'notion') ? '0' : '32px 32px 0 0',
-                            animation: isDesktop 
-                                ? (isSidebarClosing ? 'slideOutLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards')
-                                : (isSidebarClosing ? 'slideOutDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'),
-                            padding: isDesktop ? '32px' : (sidebarView === 'notion' ? '24px 24px 40px' : '32px 24px 120px 24px'), 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            overflowY: 'auto',
-                            overscrollBehavior: 'contain',
-                            borderTop: isDesktop ? 'none' : '1px solid var(--glass-border)'
-                        }}>
-                             {/* Bottom Sheet Handle for Mobile */}
-                             {!isDesktop && (
-                                 <div style={{
-                                     width: '40px', height: '4px', background: 'var(--glass-border)',
-                                     borderRadius: '2px', margin: '-16px auto 24px auto', opacity: 0.6
-                                 }} />
-                             )}
+                    {/* Unified Sidebar / Bottom Sheet */}
+                    {isSidebarOpen && (
+                        <>
+                            {/* Backdrop */}
+                            <div
+                                onClick={closeSidebar}
+                                style={{
+                                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                                    background: 'rgba(27, 69, 32, 0.4)', backdropFilter: 'blur(8px)',
+                                    zIndex: 11000,
+                                    transition: 'all 0.3s ease',
+                                    animation: isSidebarClosing ? 'fadeOut 0.3s forwards' : 'fadeIn 0.3s forwards'
+                                }}
+                            />
 
-                             {sidebarView === 'settings' ? (
-                                 <ProfileContent 
-                                     onOpenNotion={() => setSidebarView('notion')} 
-                                     onClose={closeSidebar} 
-                                 />
-                             ) : (
-                                 <NotionImportContent 
-                                     onBack={() => setSidebarView('settings')}
-                                     onFinish={() => {
-                                         setSidebarView('settings');
-                                         closeSidebar();
-                                     }}
-                                     // Pass the captured code from state instead of reading directly from URL
-                                     initialOAuthCode={pendingNotionCode}
-                                 />
-                             )}
-                        </div>
-                    </>
-                )}
+                            {/* Sheet/Drawer Content */}
+                            <div style={{
+                                position: 'fixed',
+                                top: isDesktop ? 0 : 'auto',
+                                bottom: 0,
+                                left: 0,
+                                right: isDesktop ? 'auto' : 0,
+                                width: isDesktop ? '360px' : '100%',
+                                height: isDesktop ? '100%' : (sidebarView === 'notion' ? '100%' : 'auto'),
+                                maxHeight: (isDesktop || sidebarView === 'notion') ? 'none' : '90dvh',
+                                background: 'var(--bg-color)',
+                                boxShadow: '0 -10px 50px rgba(0,0,0,0.15)',
+                                zIndex: 11001,
+                                borderRadius: (isDesktop || sidebarView === 'notion') ? '0' : '32px 32px 0 0',
+                                animation: isDesktop
+                                    ? (isSidebarClosing ? 'slideOutLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards')
+                                    : (isSidebarClosing ? 'slideOutDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'),
+                                padding: isDesktop ? '32px' : (sidebarView === 'notion' ? '24px 24px 40px' : '32px 24px 120px 24px'),
+                                display: 'flex',
+                                flexDirection: 'column',
+                                overflowY: 'auto',
+                                overscrollBehavior: 'contain',
+                                borderTop: isDesktop ? 'none' : '1px solid var(--glass-border)'
+                            }}>
+                                {/* Bottom Sheet Handle for Mobile */}
+                                {!isDesktop && (
+                                    <div style={{
+                                        width: '40px', height: '4px', background: 'var(--glass-border)',
+                                        borderRadius: '2px', margin: '-16px auto 24px auto', opacity: 0.6
+                                    }} />
+                                )}
 
-                {/* Delete Account Confirmation Overlay */}
-                <ConfirmDialog
-                    isOpen={showDeleteConfirm}
-                    onClose={() => setShowDeleteConfirm(false)}
-                    title="Tem certeza?"
-                    requireConfirm="DELETE"
-                    message="Esta ação excluirá todos os seus dados permanentemente e não pode ser desfeita. Para confirmar, digite DELETE no campo abaixo."
-                    confirmLabel={isDeleting ? "Excluindo..." : "Sim, excluir minha conta"}
-                    type="danger"
-                    onConfirm={async () => {
-                        setIsDeleting(true);
-                        try {
-                            await deleteAccount();
-                        } catch (e) {
-                            alert(e.message);
-                        } finally {
-                            setIsDeleting(false);
-                            setShowDeleteConfirm(false);
-                        }
-                    }}
-                />
-
-                {/* Modal Dinâmico de Limite */}
-                {isLimitModalOpen && (
-                    <>
-                        <div 
-                            onClick={() => setIsLimitModalOpen(false)}
-                            style={{ 
-                                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-                                background: 'rgba(27, 69, 32, 0.4)', backdropFilter: 'blur(8px)',
-                                zIndex: 12000, transition: 'all 0.3s ease' 
-                            }}
-                        />
-                        <div style={{
-                            position: 'fixed', 
-                            bottom: isDesktop ? 'auto' : 0, 
-                            top: isDesktop ? '50%' : 'auto',
-                            left: isDesktop ? '50%' : 0,
-                            right: isDesktop ? 'auto' : 0,
-                            transform: isDesktop ? 'translate(-50%, -50%)' : 'translateY(0)',
-                            width: isDesktop ? 'min(90%, 550px)' : '100%', 
-                            backgroundColor: 'var(--bg-color)', 
-                            borderRadius: isDesktop ? '32px' : '32px 32px 0 0',
-                            padding: isDesktop ? '32px' : '32px 24px 48px', 
-                            zIndex: 12001, 
-                            boxShadow: isDesktop ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : '0 -10px 40px rgba(0,0,0,0.2)',
-                            border: '1px solid var(--glass-border)', 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            gap: '24px',
-                            animation: isDesktop ? 'modalOpen 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' : 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards'
-                        }}>
-                            {!isDesktop && (
-                                <div style={{ 
-                                    position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)',
-                                    width: '40px', height: '4px', background: 'var(--glass-border)', borderRadius: '2px'
-                                }} />
-                            )}
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <div>
-                                    <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>Novo Limite Mensal</h2>
-                                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Defina quanto você pretende gastar em uma categoria específica.</p>
-                                </div>
-                                <button 
-                                    onClick={() => setIsLimitModalOpen(false)}
-                                    style={{ 
-                                        width: '44px', height: '44px', borderRadius: '50%', 
-                                        background: 'var(--surface-color)', border: '1px solid var(--glass-border)',
-                                        color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
-                                    }}
-                                >
-                                    <X size={24} />
-                                </button>
+                                {sidebarView === 'settings' ? (
+                                    <ProfileContent
+                                        onOpenNotion={() => setSidebarView('notion')}
+                                        onClose={closeSidebar}
+                                    />
+                                ) : (
+                                    <NotionImportContent
+                                        onBack={() => setSidebarView('settings')}
+                                        onFinish={() => {
+                                            setSidebarView('settings');
+                                            closeSidebar();
+                                        }}
+                                        // Pass the captured code from state instead of reading directly from URL
+                                        initialOAuthCode={pendingNotionCode}
+                                    />
+                                )}
                             </div>
+                        </>
+                    )}
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', marginLeft: '4px' }}>CATEGORIA</label>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '10px' }}>
-                                        {CATEGORIAS_DESPESA.map(cat => (
-                                            <button
-                                                key={cat.id}
-                                                onClick={() => setTempLimit({ ...tempLimit, categoryId: cat.id })}
-                                                title={t(cat.label)}
-                                                style={{
-                                                    padding: '12px 4px', borderRadius: '16px', border: '1px solid',
-                                                    borderColor: tempLimit.categoryId === cat.id ? cat.color : 'transparent',
-                                                    background: tempLimit.categoryId === cat.id ? cat.color + '20' : 'var(--surface-color)',
-                                                    cursor: 'pointer', transition: 'all 0.2s',
-                                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                                    position: 'relative', overflow: 'hidden', gap: '4px'
-                                                }}
-                                            >
-                                                <span style={{ fontSize: '1.4rem' }}>{cat.icon}</span>
-                                                <span style={{ fontSize: '0.55rem', fontWeight: '700', textTransform: 'uppercase', opacity: 0.9, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                    {t(cat.label, { defaultValue: cat.label }).split(' ')[0]}
-                                                </span>
-                                                {isAiLoading && tempLimit.categoryId === cat.id && (
-                                                    <div className="sparkle-overlay" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.1)', animation: 'sparklePulse 1s infinite' }} />
-                                                )}
-                                            </button>
-                                        ))}
+                    {/* Delete Account Confirmation Overlay */}
+                    <ConfirmDialog
+                        isOpen={showDeleteConfirm}
+                        onClose={() => setShowDeleteConfirm(false)}
+                        title="Tem certeza?"
+                        requireConfirm="DELETE"
+                        message="Esta ação excluirá todos os seus dados permanentemente e não pode ser desfeita. Para confirmar, digite DELETE no campo abaixo."
+                        confirmLabel={isDeleting ? "Excluindo..." : "Sim, excluir minha conta"}
+                        type="danger"
+                        onConfirm={async () => {
+                            setIsDeleting(true);
+                            try {
+                                await deleteAccount();
+                            } catch (e) {
+                                alert(e.message);
+                            } finally {
+                                setIsDeleting(false);
+                                setShowDeleteConfirm(false);
+                            }
+                        }}
+                    />
+
+                    {/* Modal Dinâmico de Limite */}
+                    {isLimitModalOpen && (
+                        <>
+                            <div
+                                onClick={() => setIsLimitModalOpen(false)}
+                                style={{
+                                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                                    background: 'rgba(27, 69, 32, 0.4)', backdropFilter: 'blur(8px)',
+                                    zIndex: 12000, transition: 'all 0.3s ease'
+                                }}
+                            />
+                            <div style={{
+                                position: 'fixed',
+                                bottom: isDesktop ? 'auto' : 0,
+                                top: isDesktop ? '50%' : 'auto',
+                                left: isDesktop ? '50%' : 0,
+                                right: isDesktop ? 'auto' : 0,
+                                transform: isDesktop ? 'translate(-50%, -50%)' : 'translateY(0)',
+                                width: isDesktop ? 'min(90%, 550px)' : '100%',
+                                backgroundColor: 'var(--bg-color)',
+                                borderRadius: isDesktop ? '32px' : '32px 32px 0 0',
+                                padding: isDesktop ? '32px' : '32px 24px 48px',
+                                zIndex: 12001,
+                                boxShadow: isDesktop ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : '0 -10px 40px rgba(0,0,0,0.2)',
+                                border: '1px solid var(--glass-border)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '24px',
+                                animation: isDesktop ? 'modalOpen 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' : 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+                            }}>
+                                {!isDesktop && (
+                                    <div style={{
+                                        position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)',
+                                        width: '40px', height: '4px', background: 'var(--glass-border)', borderRadius: '2px'
+                                    }} />
+                                )}
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <div>
+                                        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>Novo Limite Mensal</h2>
+                                        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Defina quanto você pretende gastar em uma categoria específica.</p>
                                     </div>
-                                    <p style={{ marginTop: '10px', textAlign: 'center', fontWeight: '700', color: 'var(--text-main)', fontSize: '0.9rem' }}>
-                                        {t(CATEGORIAS_DESPESA.find(c => c.id === tempLimit.categoryId)?.label || '') || '---'}
-                                    </p>
+                                    <button
+                                        onClick={() => setIsLimitModalOpen(false)}
+                                        style={{
+                                            width: '44px', height: '44px', borderRadius: '50%',
+                                            background: 'var(--surface-color)', border: '1px solid var(--glass-border)',
+                                            color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
+                                        }}
+                                    >
+                                        <X size={24} />
+                                    </button>
                                 </div>
 
-                                <div style={{ position: 'relative' }}>
-                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', marginLeft: '4px' }}>VALOR LIMITE</label>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', marginLeft: '4px' }}>CATEGORIA</label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '10px' }}>
+                                            {CATEGORIAS_DESPESA.map(cat => (
+                                                <button
+                                                    key={cat.id}
+                                                    onClick={() => setTempLimit({ ...tempLimit, categoryId: cat.id })}
+                                                    title={t(cat.label)}
+                                                    style={{
+                                                        padding: '12px 4px', borderRadius: '16px', border: '1px solid',
+                                                        borderColor: tempLimit.categoryId === cat.id ? cat.color : 'transparent',
+                                                        background: tempLimit.categoryId === cat.id ? cat.color + '20' : 'var(--surface-color)',
+                                                        cursor: 'pointer', transition: 'all 0.2s',
+                                                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                                        position: 'relative', overflow: 'hidden', gap: '4px'
+                                                    }}
+                                                >
+                                                    <span style={{ fontSize: '1.4rem' }}>{cat.icon}</span>
+                                                    <span style={{ fontSize: '0.55rem', fontWeight: '700', textTransform: 'uppercase', opacity: 0.9, textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {t(cat.label, { defaultValue: cat.label }).split(' ')[0]}
+                                                    </span>
+                                                    {isAiLoading && tempLimit.categoryId === cat.id && (
+                                                        <div className="sparkle-overlay" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.1)', animation: 'sparklePulse 1s infinite' }} />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p style={{ marginTop: '10px', textAlign: 'center', fontWeight: '700', color: 'var(--text-main)', fontSize: '0.9rem' }}>
+                                            {t(CATEGORIAS_DESPESA.find(c => c.id === tempLimit.categoryId)?.label || '') || '---'}
+                                        </p>
+                                    </div>
+
                                     <div style={{ position: 'relative' }}>
-                                        <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: '700', color: 'var(--text-muted)' }}>R$</div>
-                                        <input 
-                                            type="number"
-                                            value={tempLimit.amount}
-                                            onChange={(e) => setTempLimit({ ...tempLimit, amount: e.target.value })}
-                                            placeholder="0,00"
-                                            className="form-input"
-                                            style={{
-                                                width: '100%', padding: '16px 16px 16px 45px', borderRadius: '16px',
-                                                background: 'var(--surface-color)',
-                                                color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: '700', outline: 'none'
-                                            }}
-                                            autoFocus
-                                        />
-
-                                        {/* AI Suggestion Bubble */}
-                                        {aiSuggestion && !isAiLoading && (
-                                            <div 
-                                                onClick={() => setTempLimit({ ...tempLimit, amount: aiSuggestion.amount.toString() })}
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', marginLeft: '4px' }}>VALOR LIMITE</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: '700', color: 'var(--text-muted)' }}>R$</div>
+                                            <input
+                                                type="number"
+                                                value={tempLimit.amount}
+                                                onChange={(e) => setTempLimit({ ...tempLimit, amount: e.target.value })}
+                                                placeholder="0,00"
+                                                className="form-input"
                                                 style={{
-                                                    position: 'absolute', bottom: '110%', left: '0', right: '0',
-                                                    background: 'var(--primary-color)', color: 'var(--btn-text)', padding: '12px 16px',
-                                                    borderRadius: '16px 16px 16px 4px', fontSize: '0.85rem', fontWeight: '600',
-                                                    boxShadow: '0 10px 25px rgba(var(--primary-rgb), 0.3)', cursor: 'pointer',
-                                                    animation: 'bubbleBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-                                                    zIndex: 10
+                                                    width: '100%', padding: '16px 16px 16px 45px', borderRadius: '16px',
+                                                    background: 'var(--surface-color)',
+                                                    color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: '700', outline: 'none'
                                                 }}
-                                            >
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                                    <Mic size={14} />
-                                                    <span>Sugestão IA: <strong>R$ {aiSuggestion.amount}</strong></span>
+                                                autoFocus
+                                            />
+
+                                            {/* AI Suggestion Bubble */}
+                                            {aiSuggestion && !isAiLoading && (
+                                                <div
+                                                    onClick={() => setTempLimit({ ...tempLimit, amount: aiSuggestion.amount.toString() })}
+                                                    style={{
+                                                        position: 'absolute', bottom: '110%', left: '0', right: '0',
+                                                        background: 'var(--primary-color)', color: 'var(--btn-text)', padding: '12px 16px',
+                                                        borderRadius: '16px 16px 16px 4px', fontSize: '0.85rem', fontWeight: '600',
+                                                        boxShadow: '0 10px 25px rgba(var(--primary-rgb), 0.3)', cursor: 'pointer',
+                                                        animation: 'bubbleBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                                                        zIndex: 10
+                                                    }}
+                                                >
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                                        <Mic size={14} />
+                                                        <span>Sugestão IA: <strong>R$ {aiSuggestion.amount}</strong></span>
+                                                    </div>
+                                                    <p style={{ margin: 0, opacity: 0.9, fontSize: '0.75rem', fontWeight: '500' }}>{aiSuggestion.reason}</p>
+                                                    <div style={{ position: 'absolute', bottom: '-8px', left: '12px', width: 0, height: 0, borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderTop: '8px solid var(--primary-color)' }} />
                                                 </div>
-                                                <p style={{ margin: 0, opacity: 0.9, fontSize: '0.75rem', fontWeight: '500' }}>{aiSuggestion.reason}</p>
-                                                <div style={{ position: 'absolute', bottom: '-8px', left: '12px', width: 0, height: 0, borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderTop: '8px solid var(--primary-color)' }} />
-                                            </div>
-                                        )}
-                                        {isAiLoading && (
-                                            <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary-color)', animation: 'spin 1s linear infinite' }}>
-                                                <div style={{ width: '20px', height: '20px', border: '1px solid transparent', borderTopColor: 'currentColor', borderRadius: '50%' }} />
-                                            </div>
-                                        )}
+                                            )}
+                                            {isAiLoading && (
+                                                <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary-color)', animation: 'spin 1s linear infinite' }}>
+                                                    <div style={{ width: '20px', height: '20px', border: '1px solid transparent', borderTopColor: 'currentColor', borderRadius: '50%' }} />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                                    <button
+                                        onClick={() => setIsLimitModalOpen(false)}
+                                        style={{ flex: 1, padding: '16px', borderRadius: '16px', background: 'var(--surface-color)', border: 'none', color: 'var(--text-main)', fontWeight: '700', cursor: 'pointer' }}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (tempLimit.categoryId && tempLimit.amount) {
+                                                setLimits({ ...limits, [tempLimit.categoryId]: parseFloat(tempLimit.amount) });
+                                                setIsLimitModalOpen(false);
+                                                haptic.medium();
+                                            }
+                                        }}
+                                        style={{ flex: 2, padding: '16px', borderRadius: '16px', background: 'var(--primary-color)', border: 'none', color: 'var(--btn-text)', fontWeight: '700', cursor: 'pointer', boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.3)' }}
+                                    >
+                                        Salvar Limite
+                                    </button>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                                <button 
-                                    onClick={() => setIsLimitModalOpen(false)}
-                                    style={{ flex: 1, padding: '16px', borderRadius: '16px', background: 'var(--surface-color)', border: 'none', color: 'var(--text-main)', fontWeight: '700', cursor: 'pointer' }}
-                                >
-                                    Cancelar
-                                </button>
-                                <button 
-                                    onClick={() => {
-                                        if (tempLimit.categoryId && tempLimit.amount) {
-                                            setLimits({ ...limits, [tempLimit.categoryId]: parseFloat(tempLimit.amount) });
-                                            setIsLimitModalOpen(false);
-                                            haptic.medium();
-                                        }
-                                    }}
-                                    style={{ flex: 2, padding: '16px', borderRadius: '16px', background: 'var(--primary-color)', border: 'none', color: 'var(--btn-text)', fontWeight: '700', cursor: 'pointer', boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.3)' }}
-                                >
-                                    Salvar Limite
-                                </button>
-                            </div>
-                        </div>
-
-                        <style>{`
+                            <style>{`
                             @keyframes modalOpen {
                                 0% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
                                 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -1322,9 +1342,10 @@ const Home = () => {
                                 100% { transform: scale(0.8); opacity: 0.3; }
                             }
                         `}</style>
-                    </>
-                )}
-            </div>
+                        </>
+                    )}
+                </div>
+            )}
         </>
     );
 };

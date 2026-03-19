@@ -53,17 +53,17 @@ const BudgetPieChart = ({ transactions = [], currentDate = new Date() }) => {
         const radius = 80;
         const cx = 100;
         const cy = 100;
-        
+
         const startRad = (startPct / 100) * Math.PI * 2 - Math.PI / 2;
         const endRad = (endPct / 100) * Math.PI * 2 - Math.PI / 2;
-        
+
         const x1 = cx + radius * Math.cos(startRad);
         const y1 = cy + radius * Math.sin(startRad);
         const x2 = cx + radius * Math.cos(endRad);
         const y2 = cy + radius * Math.sin(endRad);
-        
+
         const largeArcFlag = endPct - startPct <= 50 ? "0" : "1";
-        
+
         return [
             "M", x1, y1,
             "A", radius, radius, 0, largeArcFlag, 1, x2, y2,
@@ -101,7 +101,7 @@ const BudgetPieChart = ({ transactions = [], currentDate = new Date() }) => {
                         const isSelected = selectedSlice === seg.catId;
                         const toRad = deg => (deg * Math.PI) / 180;
                         const midAngle = toRad((seg.start + seg.pct / 2) / 100 * 360 - 90);
-                        const popOutDist = 20; 
+                        const popOutDist = 20;
                         const tx = isSelected ? Math.cos(midAngle) * popOutDist : 0;
                         const ty = isSelected ? Math.sin(midAngle) * popOutDist : 0;
                         const scale = isSelected ? 1.15 : 1;
@@ -116,7 +116,7 @@ const BudgetPieChart = ({ transactions = [], currentDate = new Date() }) => {
                                     haptic.light();
                                     setSelectedSlice(isSelected ? null : seg.catId);
                                 }}
-                                style={{ 
+                                style={{
                                     transformOrigin: '100px 100px',
                                     transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                                     transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
@@ -145,10 +145,10 @@ const BudgetPieChart = ({ transactions = [], currentDate = new Date() }) => {
             </div>
 
             {/* Legend Chips */}
-            <div className="pie-chart-legend" style={{ 
-                display: 'flex', 
-                flexWrap: 'wrap', 
-                gap: '8px', 
+            <div className="pie-chart-legend" style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
                 justifyContent: isDesktop ? 'flex-start' : 'center',
                 maxWidth: isDesktop ? '500px' : '100%',
                 flex: 1
