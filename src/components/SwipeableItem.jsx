@@ -1,42 +1,26 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Trash2, Edit2 } from 'lucide-react';
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 
 const SwipeableItem = ({ children, onDelete, onEdit }) => {
-    const [startX, setStartX] = useState(0);
-    const [currentX, setCurrentX] = useState(0);
-    const [isDragging, setIsDragging] = useState(false);
     const [isDeleted, setIsDeleted] = useState(false);
-    const itemRef = useRef(null);
+    const x = useMotionValue(0);
 
-    const deleteThreshold = -80;
-    const editThreshold = 80;
+    // Transformações para efeitos visuais durante o arraste
+    const opacity = useTransform(x, [-100, -80, 0, 80, 100], [0.5, 1, 1, 1, 0.5]);
+    const scale = useTransform(x, [-100, -80, 0, 80, 100], [0.95, 1, 1, 1, 0.95]);
 
-    const handleTouchStart = (e) => {
-        setStartX(e.touches[0].clientX);
-        setIsDragging(true);
-    };
-
-    const handleTouchMove = (e) => {
-        if (!isDragging) return;
-        const x = e.touches[0].clientX;
-        const diff = x - startX;
-
-        // Allow both left (negative) and right (positive)
-        if (diff < 0) {
-            setCurrentX(Math.max(diff, -100)); // cap left
-        } else if (diff > 0 && onEdit) {
-            setCurrentX(Math.min(diff, 100)); // cap right only if edit action exists
-        }
-    };
-
-    const handleTouchEnd = () => {
-        setIsDragging(false);
-        if (currentX < deleteThreshold) {
-            setCurrentX(-80);
-        } else if (currentX > editThreshold && onEdit) {
-            setCurrentX(80);
+    const handleDragEnd = (event, info) => {
+        const { offset, velocity } = info;
+        
+        // Thresholds para "magnetismo"
+        // Se a velocidade for alta ou o arraste passar de 40px, ele "estala" para a posição
+        if (offset.x < -40 || velocity.x < -500) {
+            animate(x, -80, { type: 'spring', bounce: 0.2, duration: 0.4 });
+        } else if (onEdit && (offset.x > 40 || velocity.x > 500)) {
+            animate(x, 80, { type: 'spring', bounce: 0.2, duration: 0.4 });
         } else {
-            setCurrentX(0); // Snap back
+            animate(x, 0, { type: 'spring', bounce: 0.2, duration: 0.4 });
         }
     };
 
@@ -48,20 +32,25 @@ const SwipeableItem = ({ children, onDelete, onEdit }) => {
     };
 
     const handleEditClick = () => {
-        setCurrentX(0); // Snap back on edit click
+        animate(x, 0, { type: 'spring', bounce: 0.2, duration: 0.4 });
         if (onEdit) onEdit();
     };
 
     if (isDeleted) {
         return (
-            <div style={{ height: 0, opacity: 0, transition: 'all 0.3s', overflow: 'hidden' }}>
+            <motion.div 
+                initial={{ height: 'auto', opacity: 1 }}
+                animate={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                style={{ overflow: 'hidden' }}
+            >
                 {children}
-            </div>
+            </motion.div>
         );
     }
 
     return (
-        <div style={{ position: 'relative', overflow: 'hidden', width: '100%' }}>
+        <div style={{ position: 'relative', overflow: 'hidden', width: '100%', borderRadius: '16px' }}>
             {/* Background Actions Container */}
             <div style={{
                 position: 'absolute',
@@ -78,7 +67,8 @@ const SwipeableItem = ({ children, onDelete, onEdit }) => {
                     justifyContent: 'flex-start',
                     alignItems: 'center',
                     borderRadius: '16px 0 0 16px',
-                    paddingLeft: '20px'
+                    paddingLeft: '20px',
+                    opacity: onEdit ? 1 : 0
                 }}>
                     {onEdit && (
                         <button
@@ -112,25 +102,29 @@ const SwipeableItem = ({ children, onDelete, onEdit }) => {
             </div>
 
             {/* Foreground Item */}
-            <div
-                ref={itemRef}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
+            <motion.div
+                drag="x"
+                dragConstraints={{ left: -80, right: onEdit ? 80 : 0 }}
+                dragElastic={0.1}
+                onDragEnd={handleDragEnd}
                 style={{
-                    transform: `translateX(${currentX}px)`,
-                    transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-                    background: 'var(--surface-color)', // Needs solid bg to hide background buttons
+                    x,
+                    opacity,
+                    scale,
+                    background: 'var(--surface-color)',
                     width: '100%',
                     position: 'relative',
                     zIndex: 1,
-                    display: 'flex'
+                    display: 'flex',
+                    cursor: 'grab',
+                    touchAction: 'none' // Importante para drag no mobile
                 }}
+                whileTap={{ cursor: 'grabbing' }}
             >
                 <div style={{ width: '100%' }}>
                     {children}
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 };
