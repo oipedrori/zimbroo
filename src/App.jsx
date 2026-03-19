@@ -28,7 +28,6 @@ const lazyWithRetry = (componentImport) => React.lazy(async () => {
 
 // Lazy load pages for performance
 const Home = lazyWithRetry(() => import('./pages/Home'));
-const Statistics = lazyWithRetry(() => import('./pages/Statistics'));
 const Limits = lazyWithRetry(() => import('./pages/Limits'));
 const Wallet = lazyWithRetry(() => import('./pages/Wallet'));
 const Onboarding = lazyWithRetry(() => import('./pages/Onboarding'));
@@ -60,7 +59,6 @@ const AppRoutes = () => {
         <Route path="/onboarding" element={currentUser ? <Navigate to="/" /> : <Onboarding />} />
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<Home />} />
-          <Route path="statistics" element={<Statistics />} />
           <Route path="limits" element={<Limits />} />
           <Route path="wallet" element={<Wallet />} />
           <Route path="notion-callback" element={<Home />} />

@@ -79,7 +79,6 @@ const Layout = () => {
 
     const NavLinks = [
         { path: '/', icon: <HomeIcon size={20} />, label: t('home', { defaultValue: 'Início' }) },
-        { path: '/statistics', icon: <BarChart2 size={20} />, label: t('statistics', { defaultValue: 'Estatísticas' }) },
         { path: '/limits', icon: <Shield size={20} />, label: t('limits', { defaultValue: 'Limites' }) },
         { path: '/wallet', icon: <WalletIcon size={20} />, label: t('wallet', { defaultValue: 'Carteira' }) },
     ];

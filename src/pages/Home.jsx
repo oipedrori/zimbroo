@@ -16,6 +16,7 @@ import { getEmojiForDescription } from '../utils/emojiUtils';
 import { prepareMonthlyTransactions } from '../services/transactionService';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { haptic } from '../utils/haptic';
+import BudgetPieChart from '../components/BudgetPieChart';
 
 const Home = () => {
     const { currentUser, logout, deleteAccount } = useAuth();
@@ -45,8 +46,6 @@ const Home = () => {
     const [modalType, setModalType] = useState('expense');
     const [editingTx, setEditingTx] = useState(null);
     const [activeFilter, setActiveFilter] = useState('all');
-    const [isFlipped, setIsFlipped] = useState(false);
-    const [isClosingFlipped, setIsClosingFlipped] = useState(false);
     const [yearlyStats, setYearlyStats] = useState([]);
     const [loadingYearly, setLoadingYearly] = useState(true);
     const [swipeDirection, setSwipeDirection] = useState(''); // 'left' or 'right'
@@ -113,23 +112,6 @@ const Home = () => {
     useEffect(() => {
         localStorage.setItem('zimbroo_limits', JSON.stringify(limits));
     }, [limits]);
-
-    useEffect(() => {
-        if (isFlipped) {
-            document.body.classList.add('hide-ai-btn');
-        } else {
-            document.body.classList.remove('hide-ai-btn');
-        }
-        return () => document.body.classList.remove('hide-ai-btn');
-    }, [isFlipped]);
-
-    const closeFlipped = () => {
-        setIsClosingFlipped(true);
-        setTimeout(() => {
-            setIsFlipped(false);
-            setIsClosingFlipped(false);
-        }, 300);
-    };
 
     const closeSidebar = () => {
         setIsSidebarClosing(true);
@@ -204,12 +186,7 @@ const Home = () => {
         }
     }, [allTransactions, currentDate]);
 
-    // Hide AI button when stats are open
-    React.useEffect(() => {
-        if (isFlipped) {
-            setIsAiActive(false);
-        }
-    }, [isFlipped, setIsAiActive]);
+    // Excluir lógica duplicada ou redundante aqui se necessário
 
     // Navegação de meses
     // Navegação de meses
@@ -364,7 +341,7 @@ const Home = () => {
             cumPercent += pct;
         });
     }
-    const pieChartBg = totalStatsExpenses > 0 ? `conic-gradient(${conicStops.join(', ')})` : 'var(--glass-border)';
+    // const pieChartBg = totalStatsExpenses > 0 ? `conic-gradient(${conicStops.join(', ')})` : 'var(--glass-border)';
 
     const getCategoryTheme = (id, type) => {
         return getCategoryInfo(id, type);
@@ -382,306 +359,6 @@ const Home = () => {
 
     return (
         <>
-            {/* Modal de Estatísticas em Tela Cheia */}
-            {isFlipped && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'var(--bg-color)', zIndex: 10000,
-                    padding: '24px', display: 'flex', flexDirection: 'column',
-                    animation: isClosingFlipped ? 'slideDownModal 0.3s forwards cubic-bezier(0.4, 0, 0.2, 1)' : 'slideUpModal 0.4s cubic-bezier(0.1, 0.7, 0.1, 1)',
-                }}>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <h2 style={{ fontSize: '1.2rem', fontWeight: '700' }}>{t('statistics')}</h2>
-                        <button 
-                            onClick={closeFlipped} 
-                            style={{ 
-                                width: '44px', 
-                                height: '44px', 
-                                borderRadius: '50%', 
-                                background: 'var(--surface-color)', 
-                                border: '1px solid var(--glass-border)',
-                                color: 'var(--text-main)', 
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                flexShrink: 0
-                            }}
-                        >
-                            <X size={24} />
-                        </button>
-                    </div>
-
-                    <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '40px' }}>
-                        <section className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <h3 style={{ width: '100%', fontSize: '1.2rem', fontWeight: '700', marginBottom: '24px', textAlign: 'left' }}>{t('expenses_by_category', { defaultValue: 'Despesas por Categoria' })}</h3>
-                            {(() => {
-                                const expensesByCategory = transactions
-                                    .filter(t => t.type === 'expense')
-                                    .reduce((acc, t) => {
-                                        const catId = getCategoryInfo(t.category, 'expense').id;
-                                        acc[catId] = (acc[catId] || 0) + t.amount;
-                                        return acc;
-                                    }, {});
-
-                                const totalExpenses = Object.values(expensesByCategory).reduce((acc, val) => acc + val, 0);
-                                const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
-                                    const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
-                                    return {
-                                        x: centerX + (radius * Math.cos(angleInRadians)),
-                                        y: centerY + (radius * Math.sin(angleInRadians))
-                                    };
-                                };
-
-                                const createPieSlice = (cx, cy, radius, startAngle, endAngle) => {
-                                    if (endAngle - startAngle >= 360) {
-                                        return `M ${cx}, ${cy} m -${radius}, 0 a ${radius},${radius} 0 1,0 ${radius*2},0 a ${radius},${radius} 0 1,0 -${radius*2},0`;
-                                    }
-                                    const start = polarToCartesian(cx, cy, radius, endAngle);
-                                    const end = polarToCartesian(cx, cy, radius, startAngle);
-                                    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-                                    return [
-                                        "M", cx, cy,
-                                        "L", start.x, start.y,
-                                        "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y,
-                                        "Z"
-                                    ].join(" ");
-                                };
-
-                                return (
-                                    <>
-                                        <div 
-                                            style={{ 
-                                                width: '280px', height: '280px', 
-                                                display: 'flex', justifyContent: 'center', alignItems: 'center', 
-                                                position: 'relative', transform: 'translateZ(0)', 
-                                            }}
-                                        >
-                                            {/* SVG Pie Slices */}
-                                            {totalExpenses > 0 ? (
-                                                <svg width="280" height="280" viewBox="0 0 280 280" style={{ position: 'absolute', top: 0, left: 0 }}>
-                                                    {(() => {
-                                                        const sortedCats = Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a);
-                                                        let currentAngle = 0;
-                                                        return sortedCats.map(([catId, amount]) => {
-                                                            const pct = amount / totalExpenses;
-                                                            const angle = pct * 360;
-                                                            const startAngle = currentAngle;
-                                                            const endAngle = currentAngle + angle;
-                                                            currentAngle += angle;
-                                                            
-                                                            const cat = getCategoryInfo(catId, 'expense');
-                                                            const isSelected = selectedPieCat === catId;
-                                                            const d = createPieSlice(140, 140, 130, startAngle, endAngle);
-                                                            
-                                                            return (
-                                                                <path 
-                                                                    key={catId} 
-                                                                    d={d} 
-                                                                    fill={cat.color} 
-                                                                    onClick={(e) => { 
-                                                                        e.stopPropagation(); 
-                                                                        setSelectedPieCat(isSelected ? null : catId); 
-                                                                        haptic.light(); 
-                                                                    }}
-                                                                    style={{
-                                                                        transform: isSelected ? 'scale(1.06)' : 'scale(1)',
-                                                                        transformOrigin: '140px 140px',
-                                                                        transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                                                        cursor: 'pointer',
-                                                                        filter: isSelected ? 'drop-shadow(0px 8px 16px rgba(0,0,0,0.3))' : 'none'
-                                                                    }}
-                                                                />
-                                                            );
-                                                        });
-                                                    })()}
-                                                </svg>
-                                            ) : (
-                                                <div style={{ position: 'absolute', width: '260px', height: '260px', borderRadius: '50%', border: '4px dashed var(--glass-border)' }} />
-                                            )}
-
-                                            {/* Donut Hole */}
-                                            <div style={{ 
-                                                width: '180px', height: '180px', 
-                                                background: 'var(--bg-color)', 
-                                                borderRadius: '50%', 
-                                                display: 'flex', flexDirection: 'column', 
-                                                justifyContent: 'center', alignItems: 'center', 
-                                                padding: '10px', textAlign: 'center',
-                                                position: 'absolute', zIndex: 10,
-                                                boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.2)'
-                                            }}>
-                                                {selectedPieCat ? (() => {
-                                                    const cat = getCategoryInfo(selectedPieCat, 'expense');
-                                                    const amount = expensesByCategory[selectedPieCat];
-                                                    const pct = Math.round((amount / totalExpenses) * 100);
-                                                    return (
-                                                        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                                            <span style={{ fontSize: '1.4rem' }}>{cat.icon}</span>
-                                                            <span style={{ fontSize: '0.8rem', fontWeight: '800', color: cat.color }}>{t(cat.label, { defaultValue: cat.label })}</span>
-                                                            <span style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-main)' }}>{formatCurrency(amount)}</span>
-                                                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{pct}%</span>
-                                                        </div>
-                                                    );
-                                                })() : (
-                                                    <div className="animate-fade-in" onClick={() => setSelectedPieCat(null)} style={{ display: 'flex', flexDirection: 'column', gap: '2px', cursor: 'pointer' }}>
-                                                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600' }}>{t('total')}</span>
-                                                        <span style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--text-main)' }}>{formatCurrency(totalExpenses)}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '24px' }}>
-                                            {Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a).map(([catId, amount]) => {
-                                                const cat = getCategoryInfo(catId, 'expense');
-                                                const isSelected = selectedPieCat === catId;
-                                                return (
-                                                    <div 
-                                                        key={catId} 
-                                                        onClick={() => { haptic.light(); setSelectedPieCat(isSelected ? null : catId); }}
-                                                        style={{ 
-                                                            display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', 
-                                                            background: isSelected ? cat.color + '20' : 'var(--surface-color)', 
-                                                            padding: '6px 14px', borderRadius: '16px', 
-                                                            border: `1px solid ${isSelected ? cat.color : 'var(--glass-border)'}`,
-                                                            color: isSelected ? cat.color : 'var(--text-main)',
-                                                            fontWeight: isSelected ? '700' : '500',
-                                                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                                            cursor: 'pointer'
-                                                        }}
-                                                    >
-                                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: cat.color }}></div>
-                                                        <span>{t(cat.label, { defaultValue: cat.label })}</span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </>
-                                );
-                            })()}
-                        </section>
-
-                        <section className="glass-panel" style={{ padding: '24px' }}>
-                            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '24px' }}>{t('monthly_balances_current_year', { defaultValue: 'Saldos Mensais' })}</h3>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '260px', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px', position: 'relative' }}>
-                                
-                                
-                                {(() => {
-                                    // 1. Calculate max positive and min negative
-                                    const maxPos = Math.max(...yearlyStats.map(s => s.balance > 0 ? s.balance : 0), 0);
-                                    const maxNeg = Math.max(...yearlyStats.map(s => s.balance < 0 ? Math.abs(s.balance) : 0), 0);
-                                    
-                                    // Avoid division by zero if all are 0
-                                    const totalRange = maxPos + maxNeg || 1;
-                                    
-                                    // 2. Set the 0-line percentage (from top)
-                                    // Clamp between 20% and 80% to always leave room for labels above/below
-                                    let zeroLinePct = (maxPos / totalRange) * 100;
-                                    if (maxNeg === 0) zeroLinePct = 80; 
-                                    if (maxPos === 0) zeroLinePct = 20;
-                                    zeroLinePct = Math.max(20, Math.min(80, zeroLinePct));
-
-                                    return yearlyStats.map((stat, i) => {
-                                        const isNegative = stat.balance < 0;
-                                        const rawVal = Math.abs(stat.balance);
-                                        const isCurrent = stat.month === (currentDate.getMonth() + 1);
-                                        
-                                        // Bar height in percentage relative to its available container
-                                        let barHeightPct = 0;
-                                        if (!isNegative && maxPos > 0) {
-                                            barHeightPct = (rawVal / maxPos) * 90; // max 90% of its area
-                                        } else if (isNegative && maxNeg > 0) {
-                                            barHeightPct = (rawVal / maxNeg) * 90;
-                                        }
-                                        if (rawVal > 0) barHeightPct = Math.max(4, barHeightPct);
-
-                                        // Format value string with currency symbol
-                                        const currSym = currency === 'BRL' ? 'R$' : currency === 'EUR' ? '€' : '$';
-                                        let valStr = rawVal >= 1000 ? `${currSym}${(rawVal/1000).toFixed(1)}k` : `${currSym}${rawVal.toFixed(0)}`;
-                                        if (rawVal === 0) valStr = '';
-
-                                        // Whether the label sits inside or outside (rotated text needs more space)
-                                        const isBigEnough = barHeightPct > 25;
-
-                                        return (
-                                            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', position: 'relative' }}>
-                                                
-                                                <div style={{ flex: 1, width: '100%', position: 'relative' }}>
-                                                    {/* Zero Line visual guide */}
-                                                    <div style={{ position: 'absolute', top: `${zeroLinePct}%`, left: 0, right: 0, height: '1px', background: 'var(--text-muted)', opacity: 0.1 }} />
-
-                                                    {/* Positive Bar Container */}
-                                                    <div style={{ position: 'absolute', top: 0, bottom: `${100 - zeroLinePct}%`, left: 0, right: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                                                        {!isNegative && rawVal > 0 && (
-                                                            <div style={{
-                                                                width: '16px', height: `${barHeightPct}%`,
-                                                                background: 'var(--primary-dark)',
-                                                                borderRadius: '4px 4px 0 0',
-                                                                opacity: isCurrent ? 1 : 0.45,
-                                                                transition: 'height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                                                position: 'relative'
-                                                            }}>
-                                                                {/* Label Inside ou Outside */}
-                                                                <span style={{ 
-                                                                    position: 'absolute', 
-                                                                    top: isBigEnough ? '10px' : '-28px', // pra fora ou pra dentro com mais respiro
-                                                                    left: '50%', transform: 'translateX(-50%) rotate(-90deg)',
-                                                                    transformOrigin: 'center center',
-                                                                    fontSize: '0.6rem', fontWeight: '800', 
-                                                                    color: isBigEnough ? '#fff' : 'var(--primary-dark)',
-                                                                    opacity: isCurrent ? 1 : 0.8,
-                                                                    whiteSpace: 'nowrap'
-                                                                }}>
-                                                                    {valStr}
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Negative Bar Container */}
-                                                    <div style={{ position: 'absolute', top: `${zeroLinePct}%`, bottom: 0, left: 0, right: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                                                        {isNegative && rawVal > 0 && (
-                                                            <div style={{
-                                                                width: '16px', height: `${barHeightPct}%`,
-                                                                background: 'var(--danger-color)',
-                                                                borderRadius: '0 0 4px 4px',
-                                                                opacity: isCurrent ? 1 : 0.45,
-                                                                transition: 'height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                                                position: 'relative'
-                                                            }}>
-                                                                <span style={{ 
-                                                                    position: 'absolute', 
-                                                                    bottom: isBigEnough ? '10px' : '-28px', // mais respiro
-                                                                    left: '50%', transform: 'translateX(-50%) rotate(-90deg)',
-                                                                    transformOrigin: 'center center',
-                                                                    fontSize: '0.6rem', fontWeight: '800', 
-                                                                    color: isBigEnough ? '#fff' : 'var(--danger-color)',
-                                                                    opacity: isCurrent ? 1 : 0.8,
-                                                                    whiteSpace: 'nowrap'
-                                                                }}>
-                                                                    {valStr}
-                                                                </span>
-                                                            </div>
-                                                        )}
-
-                                                    </div>
-                                                </div>
-
-                                                {/* Rótulo do Mês na Base */}
-                                                <span style={{ fontSize: '0.7rem', marginTop: '6px', color: isCurrent ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: isCurrent ? '800' : '600', opacity: isCurrent ? 1 : 0.6 }}>
-                                                    {stat.label.charAt(0)}
-                                                </span>
-                                            </div>
-                                        );
-                                    });
-                                })()}
-                            </div>
-                        </section>
-                    </div>
-                </div>
-            )}
 
             {!isFlipped && (
                 <div
@@ -745,13 +422,12 @@ const Home = () => {
                     <section
                         key={monthPrefix}
                         className="glass-panel"
-                        onClick={() => !isDesktop && setIsFlipped(true)}
                         onTouchStart={onTouchStart}
                         onTouchMove={onTouchMove}
                         onTouchEnd={onTouchEnd}
                         style={{ 
                             flexShrink: 0, padding: '24px', background: cardGradient, color: 'var(--btn-text)', border: 'none', 
-                            position: 'relative', overflow: 'hidden', cursor: isDesktop ? 'default' : 'pointer',
+                            position: 'relative', overflow: 'hidden',
                             touchAction: 'pan-y',
                             transform: `translateX(${swipeOffset}px)`,
                             transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1)',
@@ -762,9 +438,6 @@ const Home = () => {
                             <div>
                                 <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '8px' }}>{t('monthly_balance')}</p>
                                 <h2 style={{ fontSize: 'clamp(1.8rem, 8vw, 2.5rem)', marginBottom: '24px', fontWeight: '700', letterSpacing: '-1px', wordBreak: 'break-word' }}>{formatCurrency(balance)}</h2>
-                            </div>
-                            <div style={{ position: 'relative', display: !isDesktop ? 'flex' : 'none' }}>
-                                <Pointer className="pointer-icon" size={18} opacity={0.8} />
                             </div>
                         </div>
 
@@ -802,6 +475,15 @@ const Home = () => {
                                 </span>
                             </div>
                         )}
+                    </section>
+                )}
+
+                {!isDesktop && (
+                    <section className="glass-panel" style={{ padding: '24px', marginTop: '16px' }}>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '20px' }}>
+                            {t('expenses_by_category', { defaultValue: 'Gastos por Categoria' })}
+                        </h3>
+                        <BudgetPieChart transactions={transactions} currentDate={currentDate} />
                     </section>
                 )}
 
@@ -1090,104 +772,12 @@ const Home = () => {
                             </div>
 
                             <div className="column-right" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                                <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column' }}>
                                     <h3 style={{ width: '100%', fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '24px' }}>
                                         {t('expenses_by_category', { defaultValue: 'Gastos por Categoria' })}
                                     </h3>
-                                    {totalStatsExpenses > 0 ? (
-                                        <>
-                                            <div 
-                                                onClick={(e) => {
-                                                    const rect = e.currentTarget.getBoundingClientRect();
-                                                    const x = e.clientX - rect.left - rect.width / 2;
-                                                    const y = e.clientY - rect.top - rect.height / 2;
-                                                    let angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
-                                                    if (angle < 0) angle += 360;
-
-                                                    const sortedCats = Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a);
-                                                    let cumulativePct = 0;
-                                                    for (const [id, amount] of sortedCats) {
-                                                        const pct = (amount / totalStatsExpenses) * 100;
-                                                        const startAngle = (cumulativePct / 100) * 360;
-                                                        const endAngle = ((cumulativePct + pct) / 100) * 360;
-                                                        if (angle >= startAngle && angle < endAngle) {
-                                                            setSelectedPieCat(id);
-                                                            haptic.light();
-                                                            return;
-                                                        }
-                                                        cumulativePct += pct;
-                                                    }
-                                                    setSelectedPieCat(null);
-                                                }}
-                                                style={{ 
-                                                    position: 'relative', width: '220px', height: '220px', marginBottom: '32px', 
-                                                    borderRadius: '50%', background: pieChartBg, display: 'flex', 
-                                                    justifyContent: 'center', alignItems: 'center', 
-                                                    boxShadow: '0 12px 40px rgba(0,0,0,0.1)', cursor: 'pointer',
-                                                    transition: 'all 0.3s ease'
-                                                }}
-                                            >
-                                                <div style={{ width: '150px', height: '150px', background: 'var(--bg-color)', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', padding: '20px', textAlign: 'center' }}>
-                                                    {selectedPieCat ? (() => {
-                                                        const cat = getCategoryInfo(selectedPieCat, 'expense');
-                                                        const amount = expensesByCategory[selectedPieCat];
-                                                        const pct = Math.round((amount / totalStatsExpenses) * 100);
-                                                        return (
-                                                            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                                                                <span style={{ fontSize: '1.8rem' }}>{cat.icon}</span>
-                                                                <span style={{ fontSize: '0.9rem', fontWeight: '800', color: cat.color }}>{t(cat.label, { defaultValue: cat.label })}</span>
-                                                                <span style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-main)' }}>{formatCurrency(amount)}</span>
-                                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{pct}%</span>
-                                                            </div>
-                                                        );
-                                                    })() : (
-                                                        <div className="animate-fade-in">
-                                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('total')}</span>
-                                                            <span style={{ fontSize: '1.3rem', fontWeight: '800' }}>{formatCurrency(totalStatsExpenses)}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '12px', width: '100%', marginTop: 'auto' }}>
-                                        {Object.entries(expensesByCategory).sort(([, a], [, b]) => b - a).slice(0, 4).map(([catId, amount]) => {
-                                            const cat = getCategoryInfo(catId, 'expense');
-                                            const pct = Math.round((amount / totalStatsExpenses) * 100);
-                                            const isSelected = selectedPieCat === catId;
-                                            return (
-                                                <div 
-                                                    key={catId} 
-                                                    onClick={() => { haptic.light(); setSelectedPieCat(isSelected ? null : catId); }}
-                                                    style={{ 
-                                                        display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', 
-                                                        background: isSelected ? cat.color + '10' : 'var(--surface-color)', 
-                                                        padding: '12px 16px', borderRadius: '16px', 
-                                                        border: `1px solid ${isSelected ? cat.color : 'var(--glass-border)'}`,
-                                                        justifyContent: 'space-between',
-                                                        transition: 'all 0.2s ease',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: cat.color + '15', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                                            <span style={{ fontSize: '1.1rem' }}>{cat.icon}</span>
-                                                        </div>
-                                                        <span style={{ fontWeight: '600', color: isSelected ? cat.color : 'var(--text-main)' }}>{t(cat.label, { defaultValue: cat.label })}</span>
-                                                    </div>
-                                                    <span style={{ fontWeight: '800', color: cat.color }}>{formatCurrency(amount)} ({pct}%)</span>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    {Object.keys(expensesByCategory).length > 4 && (
-                                        <button onClick={() => navigate('/statistics')} style={{ marginTop: '16px', background: 'transparent', border: 'none', color: 'var(--primary-color)', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer' }}>
-                                            {t('view_all')}
-                                        </button>
-                                    )}
-                                </>
-                            ) : (
-                                <p style={{ color: 'var(--text-muted)', margin: '60px 0' }}>Sem despesas no mês</p>
-                            )}
-                        </section>
+                                    <BudgetPieChart transactions={transactions} currentDate={currentDate} />
+                                </section>
 
                         <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
