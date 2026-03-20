@@ -22,7 +22,7 @@ const LimitsSection = ({
     const limitEntries = Object.entries(limits);
 
     return (
-        <section className="limits-section" style={{ marginTop: '16px' }}>            <h3 style={{ 
+        <section className="limits-section">            <h3 style={{ 
                 fontSize: '1.2rem', 
                 fontWeight: '600', 
                 marginBottom: '16px',

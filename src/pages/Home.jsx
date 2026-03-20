@@ -392,7 +392,7 @@ const Home = () => {
                         justifyContent: 'space-between',
                         alignItems: isDesktop ? 'center' : 'flex-start',
                         paddingTop: '8px',
-                        marginBottom: isDesktop ? '24px' : '10px',
+                        marginBottom: isDesktop ? '24px' : '0',
                         gap: isDesktop ? '0' : '10px'
                     }}>
                         <div
@@ -535,7 +535,7 @@ const Home = () => {
                     )}
 
                     {!isDesktop && (
-                        <section style={{ marginTop: '16px' }}>
+                        <section>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                                 <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>{t('transactions')}</h3>
                             </div>

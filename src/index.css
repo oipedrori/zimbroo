@@ -213,7 +213,7 @@ p {
   /* Bottom padding for nav bar */
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .page-container>* {
