@@ -62,14 +62,19 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
     };
 
     const handleDeleteAccount = async () => {
-        if (deleteConfirmText !== 'DELETE') return;
         setIsDeleting(true);
         try {
+            // Primeiro deleta TODOS os dados de transações do usuário
+            await deleteAllUserTransactions(currentUser.uid);
+            
+            // Depois deleta a conta na Firebase Auth
             await deleteAccount();
+            
             haptic.success();
             onClose();
         } catch (error) {
-            alert('Erro ao excluir conta.');
+            console.error(error);
+            alert('Erro ao excluir conta. Pode ser necessário fazer login novamente para esta ação sensível.');
         } finally {
             setIsDeleting(false);
         }
