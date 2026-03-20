@@ -54,6 +54,16 @@ const BudgetPieChart = ({ transactions = [], currentDate = new Date() }) => {
         const cx = 100;
         const cy = 100;
 
+        // Caso especial: círculo completo (100%)
+        // SVG arcos não renderizam se o ponto inicial e final forem idênticos.
+        if (endPct - startPct >= 99.99) {
+            return [
+                "M", cx, cy - radius,
+                "A", radius, radius, 0, 1, 1, cx - 0.01, cy - radius,
+                "Z"
+            ].join(" ");
+        }
+
         const startRad = (startPct / 100) * Math.PI * 2 - Math.PI / 2;
         const endRad = (endPct / 100) * Math.PI * 2 - Math.PI / 2;
 
