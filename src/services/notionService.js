@@ -289,18 +289,24 @@ const mapNotionToZimbroo = (results) => {
                     mapped.installments = instProp?.[1]?.number || 1;
                 } else if (val.includes('recorrente')) {
                     mapped.repeatType = 'recurring';
-                    // User said recurring divides by 12, so we treat it as 12 installments or infinite recurring
-                    // Consistent with current Zimbroo architecture, we use 'recurring'
                 }
+            }
+
+            // Special handling for payment method - append to description if found
+            const payProp = Object.entries(props).find(([name]) => name.toLowerCase().includes('método de pagamento') || name.toLowerCase().includes('pagamento'));
+            if (payProp) {
+                const payName = payProp[1].select?.name || payProp[1].multi_select?.[0]?.name || payProp[1].rich_text?.[0]?.plain_text || '';
+                if (payName) mapped.description = `${mapped.description} (${payName})`;
             }
 
             // 3. Amount Logic (Total vs Balancete)
             const balanceteProp = Object.entries(props).find(([name]) => 
-                name.toLowerCase().includes('balancete') || name.toLowerCase().includes('valor para balan')
+                name.toLowerCase().includes('balancete') || name.toLowerCase().includes('valor para balancete')
             );
             const totalProp = Object.entries(props).find(([name, p]) => {
                 const lowName = name.toLowerCase();
-                return (p.type === 'number' || p.type === 'formula') && (lowName === 'valor' || lowName === 'amount' || lowName === 'valor (inteiro)');
+                return (p.type === 'number' || p.type === 'formula') && 
+                       (lowName === 'valor' || lowName === 'amount' || lowName === 'valor (inteiro)' || lowName === 'valor total');
             });
 
             let baseAmount = 0;
@@ -311,13 +317,16 @@ const mapNotionToZimbroo = (results) => {
             const bp = balanceteProp?.[1];
             let balanceteAmount = 0;
             if (bp?.type === 'number') balanceteAmount = bp.number || 0;
-            else if (bp?.type === 'formula') balanceteAmount = bp.formula?.number || 0;
+            else if (bp?.type === 'formula') {
+                balanceteAmount = bp.formula?.number || 0;
+            }
 
-            // Decision: Use balancete if available, otherwise do the math
+            // Decision: Favor Balancete if it exists and is > 0, otherwise use total
             if (balanceteAmount > 0) {
                 mapped.amount = balanceteAmount;
-            } else if (mapped.repeatType === 'installment') {
-                mapped.amount = baseAmount / (mapped.installments || 1);
+                // If we use balancete, we usually don't need to divide anymore as it's the monthly portion
+            } else if (mapped.repeatType === 'installment' && mapped.installments > 1) {
+                mapped.amount = baseAmount / mapped.installments;
             } else if (mapped.repeatType === 'recurring') {
                 mapped.amount = baseAmount / 12;
             } else {

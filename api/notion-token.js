@@ -12,12 +12,11 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Code is required' });
     }
 
-    const clientId = process.env.VITE_NOTION_CLIENT_ID;
+    const clientId = '31ed872b-594c-81a0-8494-0037918ae6cc';
     const clientSecret = process.env.NOTION_CLIENT_SECRET;
     
-    // Use the redirect_uri sent by client, or fallback to dynamic origin
-    const origin = req.headers.origin || 'https://zimbroo.vercel.app';
-    const redirectUri = req.body.redirect_uri || `${origin}/notion-callback`;
+    // Hardcode the redirect_uri to match exactly what Notion Dashboard has
+    const redirectUri = 'https://zimbroo.vercel.app/notion-callback';
 
     try {
         const response = await fetch('https://api.notion.com/v1/oauth/token', {

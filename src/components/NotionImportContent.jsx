@@ -25,8 +25,8 @@ const NotionImportContent = ({ onFinish, onBack, initialOAuthCode }) => {
     const [statusMessage, setStatusMessage] = useState('');
     const [hasInitialSearchDone, setHasInitialSearchDone] = useState(false);
 
-    const NOTION_CLIENT_ID = import.meta.env.VITE_NOTION_CLIENT_ID;
-    const NOTION_REDIRECT_URI = window.location.origin + '/notion-callback';
+    const NOTION_CLIENT_ID = '31ed872b-594c-81a0-8494-0037918ae6cc';
+    const NOTION_REDIRECT_URI = 'https://zimbroo.vercel.app/notion-callback';
 
     const handleExchangeCode = async (code) => {
         setLoading(true);
