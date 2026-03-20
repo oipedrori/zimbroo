@@ -135,6 +135,11 @@ body.no-scroll {
   width: 100%;
 }
 
+body.no-scroll .main-content,
+body.no-scroll .page-container {
+  overflow: hidden !important;
+}
+
 #root {
   min-height: 100vh;
   min-height: 100dvh;
