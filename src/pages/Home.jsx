@@ -83,26 +83,11 @@ const Home = () => {
     // Lock body scroll when any modal or sidebar is open
     useEffect(() => {
         if (isSidebarOpen || isModalOpen || isLimitModalOpen || isConfirmOpen || isLimitActionOpen) {
-            document.documentElement.style.overflow = 'hidden';
-            document.documentElement.style.height = '100dvh';
-            document.body.style.overflow = 'hidden';
-            document.body.style.height = '100dvh';
-            document.body.style.touchAction = 'none';
-            document.body.classList.add('modal-open');
+            document.body.classList.add('no-scroll');
         } else {
-            document.documentElement.style.overflow = '';
-            document.documentElement.style.height = '';
-            document.body.style.overflow = '';
-            document.body.style.height = '';
-            document.body.style.touchAction = '';
-            document.body.classList.remove('modal-open');
+            document.body.classList.remove('no-scroll');
         }
         return () => {
-            document.documentElement.style.overflow = '';
-            document.documentElement.style.height = '';
-            document.body.style.overflow = '';
-            document.body.style.height = '';
-            document.body.style.touchAction = '';
             document.body.classList.remove('modal-open');
         };
     }, [isSidebarOpen, isModalOpen, isLimitModalOpen, isConfirmOpen, isLimitActionOpen]);
