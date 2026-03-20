@@ -420,14 +420,14 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                         position: 'absolute', 
                         top: '16px', 
                         right: '16px',
-                        width: '48px', height: '48px', borderRadius: '50%',
+                        width: '40px', height: '40px', borderRadius: '12px',
                         background: 'rgba(255, 255, 255, 0.1)', color: 'white',
                         display: 'flex', justifyContent: 'center', alignItems: 'center',
-                        border: 'none', cursor: 'pointer', zIndex: 3005,
+                        border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', zIndex: 3005,
                         backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)'
                     }}
                 >
-                    <X size={24} />
+                    <X size={20} />
                 </button>
             )}
 
@@ -452,9 +452,9 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                             <button
                                 className="ai-voice-close-btn"
                                 onClick={onClose}
-                                style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444' }}
+                                style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444', borderRadius: '12px' }}
                             >
-                                <X size={32} color="#ef4444" />
+                                <X size={24} color="#ef4444" />
                             </button>
                             <p style={{ color: '#ef4444', fontSize: '0.9rem', fontWeight: '700', textAlign: 'center', background: 'rgba(0,0,0,0.4)', padding: '12px 20px', borderRadius: '16px', maxWidth: '80%' }}>
                                 {t('mic_blocked', { defaultValue: 'Microfone bloqueado. Ative nas configurações do navegador para usar voz.' })}
@@ -468,7 +468,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                                 animation: 'slideUp 0.3s ease'
                             }}
                         >
-                            <X size={32} />
+                            <X size={24} />
                         </button>
                     )}
                     
@@ -645,9 +645,9 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
 
         /* Voice Mode Close Button - Replaces Mic style */
         .ai-voice-close-btn {
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
+          width: 60px;
+          height: 60px;
+          border-radius: 12px;
           background: rgba(255, 255, 255, 0.1);
           border: 1px solid rgba(255, 255, 255, 0.2);
           display: flex;

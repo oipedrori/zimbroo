@@ -311,10 +311,10 @@ const Onboarding = () => {
                         <button
                             onClick={() => setShowDocs(null)}
                             style={{
-                                width: '36px', height: '36px', borderRadius: '50%',
+                                width: '40px', height: '40px', borderRadius: '12px',
                                 background: 'var(--surface-color)', display: 'flex',
                                 justifyContent: 'center', alignItems: 'center', color: 'var(--text-main)', border: '1px solid var(--glass-border)',
-                                cursor: 'pointer'
+                                cursor: 'pointer', transition: 'all 0.2s'
                             }}
                         >
                             <X size={20} />

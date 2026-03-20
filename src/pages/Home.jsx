@@ -368,13 +368,13 @@ const Home = () => {
         <>
 
             {isFlipped && !isDesktop ? (
-                <div className="page-container animate-fade-in" style={{ paddingBottom: '120px' }}>
+                <div className="page-container" style={{ paddingBottom: '120px', animation: 'slideUpModal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)' }}>{t('statistics', { defaultValue: 'Estatísticas' })}</h2>
                         <button
                             onClick={() => { haptic.light(); setIsFlipped(false); }}
                             style={{
-                                width: '40px', height: '40px', borderRadius: '50%', background: 'var(--surface-color)',
+                                width: '40px', height: '40px', borderRadius: '12px', background: 'var(--surface-color)',
                                 border: '1px solid var(--glass-border)', color: 'var(--text-main)',
                                 display: 'flex', justifyContent: 'center', alignItems: 'center'
                             }}
@@ -500,15 +500,15 @@ const Home = () => {
                                 </div>
                                 <div style={{ 
                                     background: 'rgba(255, 255, 255, 0.15)', 
-                                    padding: '10px', 
-                                    borderRadius: '12px', 
+                                    padding: '8px', 
+                                    borderRadius: '10px', 
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     justifyContent: 'center',
                                     border: '1px solid rgba(255, 255, 255, 0.2)',
                                     boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                                 }}>
-                                    <BarChart2 size={24} />
+                                    <BarChart2 size={20} />
                                 </div>
                             </div>
 
@@ -621,7 +621,7 @@ const Home = () => {
                                             key={f.id}
                                             onClick={() => { haptic.light(); setActiveFilter(f.id); }}
                                             style={{
-                                                whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600',
+                                                whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '600',
                                                 background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--surface-color)',
                                                 color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
                                                 border: '1px solid var(--glass-border)', flexShrink: 0,
@@ -643,7 +643,7 @@ const Home = () => {
                                     <p style={{ color: 'var(--text-muted)' }}>{t('no_transactions')}</p>
                                 </div>
                             ) : (
-                                <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', border: 'none' }}>
+                                <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', background: 'transparent' }}>
                                     {filteredTransactions.map((tx, i) => (
                                         <SwipeableItem key={tx.id} onDelete={() => handleConfirmDelete(tx)} onEdit={() => handleEditTx(tx)}>
                                             <div
@@ -652,11 +652,16 @@ const Home = () => {
                                                     justifyContent: 'space-between',
                                                     alignItems: 'center',
                                                     padding: '12px 16px',
-                                                    background: 'transparent'
+                                                    background: 'transparent',
+                                                    borderBottom: i === filteredTransactions.length - 1 ? 'none' : '1px solid var(--glass-border)',
+                                                    borderTopLeftRadius: i === 0 ? '16px' : '0',
+                                                    borderTopRightRadius: i === 0 ? '16px' : '0',
+                                                    borderBottomLeftRadius: i === filteredTransactions.length - 1 ? '16px' : '0',
+                                                    borderBottomRightRadius: i === filteredTransactions.length - 1 ? '16px' : '0',
                                                 }}
                                             >
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                                    <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontWeight: 'bold', fontSize: '1.2rem' }}>
+                                                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontWeight: 'bold', fontSize: '1.2rem' }}>
                                                         {getEmojiForDescription(tx.description, getCategoryTheme(tx.category, tx.type).icon)}
                                                     </div>
                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -679,7 +684,7 @@ const Home = () => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <p style={{ fontWeight: '600', color: tx.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)', margin: 0 }}>
+                                                <p style={{ fontWeight: '600', color: tx.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)', margin: 0, whiteSpace: 'nowrap' }}>
                                                     {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
                                                 </p>
                                             </div>
@@ -764,7 +769,7 @@ const Home = () => {
                                                     key={f.id}
                                                     onClick={() => setActiveFilter(f.id)}
                                                     style={{
-                                                        whiteSpace: 'nowrap', padding: '10px 18px', borderRadius: '24px', fontSize: '0.9rem', fontWeight: '600',
+                                                        whiteSpace: 'nowrap', padding: '10px 18px', borderRadius: '12px', fontSize: '0.9rem', fontWeight: '600',
                                                         background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--bg-color)',
                                                         color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
                                                         border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)',
@@ -797,7 +802,7 @@ const Home = () => {
                                                         className="hover-brightness"
                                                     >
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                                            <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontSize: '1.3rem' }}>
+                                                            <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: getCategoryTheme(tx.category, tx.type).color + '20', display: 'flex', justifyContent: 'center', alignItems: 'center', color: getCategoryTheme(tx.category, tx.type).color, fontSize: '1.3rem' }}>
                                                                 {getEmojiForDescription(tx.description, getCategoryTheme(tx.category, tx.type).icon)}
                                                             </div>
                                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1220,15 +1225,15 @@ const Home = () => {
                                         <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Defina quanto você pretende gastar em uma categoria específica.</p>
                                     </div>
                                     <button
-                                        onClick={() => setIsLimitModalOpen(false)}
+                                        onClick={() => { haptic.light(); setIsLimitModalOpen(false); }}
                                         style={{
-                                            width: '44px', height: '44px', borderRadius: '50%',
+                                            width: '40px', height: '40px', borderRadius: '12px',
                                             background: 'var(--surface-color)', border: '1px solid var(--glass-border)',
                                             color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                             cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
                                         }}
                                     >
-                                        <X size={24} />
+                                        <X size={20} />
                                     </button>
                                 </div>
 

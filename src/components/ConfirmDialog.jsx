@@ -49,9 +49,9 @@ const ConfirmDialog = ({
                     <button 
                         onClick={onClose} 
                         style={{ 
-                            width: '44px', 
-                            height: '44px', 
-                            borderRadius: '50%', 
+                            width: '40px', 
+                            height: '40px', 
+                            borderRadius: '12px', 
                             background: 'var(--surface-color)', 
                             border: '1px solid var(--glass-border)',
                             color: 'var(--text-main)', 
@@ -62,7 +62,7 @@ const ConfirmDialog = ({
                             transition: 'all 0.2s'
                         }}
                     >
-                        <X size={24} />
+                        <X size={20} />
                     </button>
                 </div>
 

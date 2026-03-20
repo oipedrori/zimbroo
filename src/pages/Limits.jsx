@@ -117,9 +117,9 @@ const Limits = () => {
                             type="button" 
                             onClick={() => setIsAdding(false)} 
                             style={{ 
-                                width: '44px', 
-                                height: '44px', 
-                                borderRadius: '50%', 
+                                width: '40px', 
+                                height: '40px', 
+                                borderRadius: '12px', 
                                 background: 'var(--surface-color)', 
                                 border: '1px solid var(--glass-border)',
                                 color: 'var(--text-main)', 
@@ -130,7 +130,7 @@ const Limits = () => {
                                 transition: 'all 0.2s'
                             }}
                         >
-                            <X size={24} />
+                            <X size={20} />
                         </button>
                     </div>
                     <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px' }}>{t('config_limit')}</h3>

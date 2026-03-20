@@ -101,13 +101,13 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                 <button 
                     onClick={onClose}
                     style={{ 
-                        width: '44px', height: '44px', borderRadius: '50%', 
+                        width: '40px', height: '40px', borderRadius: '12px', 
                         background: 'var(--surface-color)', border: '1px solid var(--glass-border)',
                         color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                         cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
                     }}
                 >
-                    <X size={24} />
+                    <X size={20} />
                 </button>
             </div>
 
