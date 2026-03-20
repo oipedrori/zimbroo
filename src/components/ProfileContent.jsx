@@ -374,24 +374,9 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                 confirmLabel={t('delete_account_confirm_btn')}
                 cancelLabel={t('cancel')}
                 type="danger"
+                isLoading={isDeleting}
             />
 
-            {/* Tela de Carregamento Full-screen ao deletar */}
-            {isDeleting && (
-                <div style={{
-                    position: 'fixed', inset: 0, background: 'var(--bg-color)', zIndex: 30000,
-                    display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
-                    textAlign: 'center', padding: '32px'
-                }}>
-                    <LoadingDots />
-                    <h3 style={{ marginTop: '24px', fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                        {t('deleting_account_progress', { defaultValue: 'Excluindo sua conta e dados...' })}
-                    </h3>
-                    <p style={{ marginTop: '12px', color: 'var(--text-muted)', maxWidth: '280px' }}>
-                        {t('please_wait_delete', { defaultValue: 'Isso pode levar alguns segundos. Não feche o app.' })}
-                    </p>
-                </div>
-            )}
         </div>
     );
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertCircle, AlertTriangle, Trash2, X } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
+import LoadingDots from './LoadingDots';
 
 const ConfirmDialog = ({ 
     isOpen, 
@@ -13,7 +14,8 @@ const ConfirmDialog = ({
     confirmLabel,
     cancelLabel,
     options = [], // [{ label, value, color }]
-    requireConfirm = null // string to match
+    requireConfirm = null, // string to match
+    isLoading = false
 }) => {
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [isAnimating, setIsAnimating] = useState(false);
@@ -82,6 +84,7 @@ const ConfirmDialog = ({
                 <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 10 }}>
                     <button 
                         onClick={onClose} 
+                        disabled={isLoading}
                         style={{ 
                             width: '40px', 
                             height: '40px', 
@@ -92,8 +95,9 @@ const ConfirmDialog = ({
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
+                            cursor: isLoading ? 'not-allowed' : 'pointer',
+                            transition: 'all 0.2s',
+                            opacity: isLoading ? 0.5 : 1
                         }}
                     >
                         <X size={20} />
@@ -129,47 +133,58 @@ const ConfirmDialog = ({
                 )}
 
                 <div className="confirm-actions">
-                    {options.length > 0 ? (
-                        options.map((opt, i) => (
-                            <button
-                                key={i}
-                                className="confirm-btn"
-                                disabled={requireConfirm && confirmText !== requireConfirm}
-                                style={{ 
-                                    background: opt.color || 'var(--primary-gradient)', 
-                                    color: 'white',
-                                    opacity: (requireConfirm && confirmText !== requireConfirm) ? 0.5 : 1
-                                }}
-                                onClick={() => {
-                                    onConfirm(opt.value);
-                                    onClose();
-                                }}
-                            >
-                                <span style={{ color: opt.textColor || 'white' }}>{opt.label}</span>
-                            </button>
-                        ))
+                    {isLoading ? (
+                        <div style={{ padding: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                            <LoadingDots />
+                            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                                {t('processing', { defaultValue: 'Processando...' })}
+                            </span>
+                        </div>
                     ) : (
-                        <button
-                            className="confirm-btn confirm-btn-primary"
-                            disabled={requireConfirm && confirmText !== requireConfirm}
-                            style={{ 
-                                opacity: (requireConfirm && confirmText !== requireConfirm) ? 0.5 : 1
-                            }}
-                            onClick={() => {
-                                onConfirm();
-                                onClose();
-                            }}
-                        >
-                            {confirmLabel || "Confirmar"}
-                        </button>
+                        <>
+                            {options.length > 0 ? (
+                                options.map((opt, i) => (
+                                    <button
+                                        key={i}
+                                        className="confirm-btn"
+                                        disabled={requireConfirm && confirmText !== requireConfirm}
+                                        style={{ 
+                                            background: opt.color || 'var(--primary-gradient)', 
+                                            color: 'white',
+                                            opacity: (requireConfirm && confirmText !== requireConfirm) ? 0.5 : 1
+                                        }}
+                                        onClick={() => {
+                                            onConfirm(opt.value);
+                                            onClose();
+                                        }}
+                                    >
+                                        <span style={{ color: opt.textColor || 'white' }}>{opt.label}</span>
+                                    </button>
+                                ))
+                            ) : (
+                                <button
+                                    className="confirm-btn confirm-btn-primary"
+                                    disabled={requireConfirm && confirmText !== requireConfirm}
+                                    style={{ 
+                                        opacity: (requireConfirm && confirmText !== requireConfirm) ? 0.5 : 1
+                                    }}
+                                    onClick={() => {
+                                        onConfirm();
+                                        // Parent usually handles closing if it's an async action or wants to show loading
+                                    }}
+                                >
+                                    {confirmLabel || "Confirmar"}
+                                </button>
+                            )}
+                            
+                            <button 
+                                className="confirm-btn confirm-btn-outline"
+                                onClick={onClose}
+                            >
+                                {cancelLabel || "Cancelar"}
+                            </button>
+                        </>
                     )}
-                    
-                    <button 
-                        className="confirm-btn confirm-btn-outline"
-                        onClick={onClose}
-                    >
-                        {cancelLabel || "Cancelar"}
-                    </button>
                 </div>
             </div>
 
