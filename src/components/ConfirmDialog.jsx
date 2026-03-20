@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertCircle, AlertTriangle, Trash2, X } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
@@ -18,15 +18,20 @@ const ConfirmDialog = ({
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [isAnimating, setIsAnimating] = useState(false);
     const [confirmText, setConfirmText] = useState('');
-    const [isInputFocused, setIsInputFocused] = useState(false);
     const [keyboardHeight, setKeyboardHeight] = useState(0);
+    const inputRef = useRef(null);
     const { t } = useI18n();
 
     useEffect(() => {
         if (isOpen) {
             setShouldRender(true);
             setConfirmText(''); // Reset when open
-            setTimeout(() => setIsAnimating(true), 10);
+            setTimeout(() => {
+                setIsAnimating(true);
+                if (requireConfirm) {
+                    inputRef.current?.focus();
+                }
+            }, 100);
         } else {
             setIsAnimating(false);
             const timeout = setTimeout(() => {
@@ -64,14 +69,14 @@ const ConfirmDialog = ({
     return createPortal(
         <div 
             className={`confirm-overlay ${isAnimating ? 'visible' : ''}`}
-            style={{ 
-                paddingBottom: keyboardHeight > 0 ? `${keyboardHeight}px` : '0px',
-                transition: 'padding-bottom 0.1s ease-out'
-            }}
             onClick={onClose}
         >
             <div 
-                className={`confirm-content ${isAnimating ? 'slide-up' : 'slide-down'} ${isInputFocused ? 'keyboard-focused' : ''}`}
+                className={`confirm-content ${isAnimating ? 'slide-up' : 'slide-down'}`}
+                style={{ 
+                    paddingBottom: keyboardHeight > 0 ? `${keyboardHeight + 20}px` : '48px',
+                    transition: 'padding-bottom 0.1s ease-out'
+                }}
                 onClick={e => e.stopPropagation()}
             >
                 <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 10 }}>
@@ -105,6 +110,7 @@ const ConfirmDialog = ({
                 {requireConfirm && (
                     <div style={{ marginBottom: '24px' }}>
                         <input 
+                            ref={inputRef}
                             type="text" 
                             placeholder={t('type_to_confirm', { defaultValue: `Digite ${requireConfirm}` })}
                             value={confirmText}
@@ -192,7 +198,7 @@ const ConfirmDialog = ({
                     max-width: none;
                     background: var(--bg-color);
                     border-radius: 32px 32px 0 0;
-                    padding: 32px 24px 48px;
+                    padding: 32px 24px;
                     text-align: center;
                     box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
                     transform: translateY(100%);
