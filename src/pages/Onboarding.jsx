@@ -3,7 +3,7 @@ import LoadingDots from '../components/LoadingDots';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
-import { Mic, TrendingUp, ShieldCheck, Sparkles, Globe, X, MessageSquare, Zap } from 'lucide-react';
+import { Mic, TrendingUp, ShieldCheck, Sparkles, Globe, X, MessageSquare, Zap, Trash2 } from 'lucide-react';
 
 const STORY_DURATION = 5000; // 5 segundos por story
 
@@ -463,7 +463,7 @@ const Onboarding = () => {
                         background: 'rgba(239, 68, 68, 0.1)', display: 'flex', 
                         justifyContent: 'center', alignItems: 'center', marginBottom: '40px' 
                     }}>
-                        <Sparkles size={48} color="#ef4444" />
+                        <Trash2 size={48} color="#ef4444" />
                     </div>
                     
                     <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '24px', color: 'var(--text-main)' }}>
@@ -473,19 +473,6 @@ const Onboarding = () => {
                     <p style={{ fontSize: '1.2rem', lineHeight: 1.6, color: 'var(--text-muted)', maxWidth: '300px', marginBottom: '48px' }}>
                         {t('farewell_message', { defaultValue: 'Sentiremos sua falta! Todos os seus dados foram removidos permanentemente. Esperamos te ver de volta em breve.' })}
                     </p>
-                    
-                    <div style={{
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px'
-                    }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '4px solid var(--primary-color)', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }}></div>
-                        <p style={{ fontSize: '0.9rem', color: 'var(--primary-color)', fontWeight: '700', marginTop: '16px' }}>
-                            {t('returning_in', { defaultValue: 'Retornando em' })} {farewellCountdown}s
-                        </p>
-                    </div>
-
-                    <style>{`
-                        @keyframes spin { to { transform: rotate(360deg); } }
-                    `}</style>
                 </div>
             )}
         </div>
