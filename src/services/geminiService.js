@@ -113,6 +113,14 @@ MODELO 4: ANÁLISE GENÉRICA
   "message": "Resumo aqui..."
 }
 
+MODELO 5: GERENCIAR LIMITE
+{
+  "action": "limit",
+  "category": "ID_CATEGORIA",
+  "amount": 500.00,
+  "message": "Tudo certo! Defini o limite de Alimentação para R$ 500,00."
+}
+
 Mensagem do usuário: "${text}"
 `;
 

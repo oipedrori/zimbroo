@@ -18,6 +18,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { haptic } from '../utils/haptic';
 import BudgetPieChart from '../components/BudgetPieChart';
 import LimitsSection from '../components/LimitsSection';
+import { useLimits } from '../hooks/useLimits';
 
 const Home = () => {
     const { currentUser, logout, deleteAccount } = useAuth();
@@ -57,18 +58,15 @@ const Home = () => {
     const [isSwiping, setIsSwiping] = useState(false);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [confirmConfig, setConfirmConfig] = useState({});
-    const [isAiLoading, setIsAiLoading] = useState(false);
-    const [aiSuggestion, setAiSuggestion] = useState(null);
     const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
     const [theme, setTheme] = useState(localStorage.getItem('zimbroo_theme') || 'system');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+    const [isLimitActionOpen, setIsLimitActionOpen] = useState(false);
+    const [selectedLimitCat, setSelectedLimitCat] = useState(null);
     const [tempLimit, setTempLimit] = useState({ categoryId: '', amount: '' });
-    const [limits, setLimits] = useState(() => {
-        const saved = localStorage.getItem('zimbroo_limits');
-        return saved ? JSON.parse(saved) : {};
-    });
+    const { limits, setLimits } = useLimits();
     const [chartType, setChartType] = useState('bar'); // 'bar' or 'line'
     const [isFlipped, setIsFlipped] = useState(false);
 
@@ -84,7 +82,7 @@ const Home = () => {
 
     // Lock body scroll when any modal or sidebar is open
     useEffect(() => {
-        if (isSidebarOpen || isModalOpen || isLimitModalOpen || isConfirmOpen) {
+        if (isSidebarOpen || isModalOpen || isLimitModalOpen || isConfirmOpen || isLimitActionOpen) {
             document.documentElement.style.overflow = 'hidden';
             document.documentElement.style.height = '100dvh';
             document.body.style.overflow = 'hidden';
@@ -107,7 +105,14 @@ const Home = () => {
             document.body.style.touchAction = '';
             document.body.classList.remove('modal-open');
         };
-    }, [isSidebarOpen, isModalOpen, isLimitModalOpen, isConfirmOpen]);
+    }, [isSidebarOpen, isModalOpen, isLimitModalOpen, isConfirmOpen, isLimitActionOpen]);
+
+    // Hide Bottom Nav globally via layout context when any modal is open
+    useEffect(() => {
+        if (setIsBottomNavHidden) {
+            setIsBottomNavHidden(isModalOpen || isLimitModalOpen || isLimitActionOpen || isConfirmOpen);
+        }
+    }, [isModalOpen, isLimitModalOpen, isLimitActionOpen, isConfirmOpen, setIsBottomNavHidden]);
 
     // --- Effects & Handlers ---
 
@@ -117,10 +122,6 @@ const Home = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    useEffect(() => {
-        localStorage.setItem('zimbroo_limits', JSON.stringify(limits));
-    }, [limits]);
-
     const closeSidebar = () => {
         setIsSidebarClosing(true);
         setTimeout(() => {
@@ -129,31 +130,7 @@ const Home = () => {
         }, 300);
     };
 
-    // AI Limit Suggestion Fetcher
-    const fetchLimitSuggestion = async (category) => {
-        if (!category) return;
-        setIsAiLoading(true);
-        setAiSuggestion(null);
-
-        try {
-            const { suggestCategoryLimit } = await import('../services/geminiService');
-            const result = await suggestCategoryLimit(category, allTransactions, locale);
-            if (result && result.amount) {
-                setAiSuggestion(result);
-            }
-        } catch (err) {
-            console.error("Notion Exchange Error:", err);
-            setError(err.message || "Erro ao conectar com o Notion. Tente novamente.");
-        } finally {
-            setIsAiLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (isLimitModalOpen && tempLimit.categoryId) {
-            fetchLimitSuggestion(tempLimit.categoryId);
-        }
-    }, [tempLimit.categoryId, isLimitModalOpen]);
+    // AI Limit Suggestion removed as per user request
 
     // Theme Sync Effect (copied from Profile.jsx logic)
     useEffect(() => {
@@ -558,7 +535,15 @@ const Home = () => {
                             transactions={transactions}
                             formatCurrency={formatCurrency}
                             t={t}
-                            setIsLimitModalOpen={setIsLimitModalOpen}
+                            setIsLimitModalOpen={(val, catId, amount) => {
+                                if (val && catId) {
+                                  setSelectedLimitCat(catId);
+                                  setIsLimitActionOpen(true);
+                                } else {
+                                  setTempLimit({ categoryId: '', amount: '' });
+                                  setIsLimitModalOpen(val);
+                                }
+                            }}
                             setTempLimit={setTempLimit}
                             isDesktop={isDesktop}
                         />
@@ -705,12 +690,12 @@ const Home = () => {
 
                     {/* --- Bento Grid Desktop Sections --- */}
                     {isDesktop && (
-                        <div className="desktop-dashboard-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '16px', position: 'relative' }}>
+                        <div className="desktop-dashboard-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px', position: 'relative' }}>
 
                             <div className="desktop-bento-top" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'start' }}>
 
                                 {/* Coluna Esquerda: Saldo + Movimentações */}
-                                <div className="column-left" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                                <div className="column-left" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                     <section
                                         key={`card-${monthPrefix}`}
                                         className="glass-panel"
@@ -765,12 +750,20 @@ const Home = () => {
                                         transactions={transactions}
                                         formatCurrency={formatCurrency}
                                         t={t}
-                                        setIsLimitModalOpen={setIsLimitModalOpen}
+                                        setIsLimitModalOpen={(val, catId, amount) => {
+                                            if (val && catId) {
+                                                setSelectedLimitCat(catId);
+                                                setIsLimitActionOpen(true);
+                                            } else {
+                                                setTempLimit({ categoryId: '', amount: '' });
+                                                setIsLimitModalOpen(val);
+                                            }
+                                        }}
                                         setTempLimit={setTempLimit}
                                         isDesktop={isDesktop}
                                     />
 
-                                    <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', marginTop: '16px' }}>
+                                    <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                                             <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>{t('transactions')}</h3>
                                         </div>
@@ -1200,6 +1193,32 @@ const Home = () => {
                         }}
                     />
 
+                    {/* Menu de Ações do Limite */}
+                    <ConfirmDialog
+                        isOpen={isLimitActionOpen}
+                        onClose={() => setIsLimitActionOpen(false)}
+                        title={getCategoryInfo(selectedLimitCat, 'expense')?.label || 'Gerenciar Limite'}
+                        message="O que você deseja fazer com este limite?"
+                        type="info"
+                        options={[
+                            { label: 'Editar', value: 'edit', color: 'var(--primary-gradient)' },
+                            { label: 'Excluir', value: 'delete', color: 'var(--danger-color)' },
+                            { label: 'Cancelar', value: 'cancel', color: 'var(--surface-color)', textColor: 'var(--text-main)' }
+                        ]}
+                        onConfirm={(val) => {
+                            if (val === 'edit') {
+                                setTempLimit({ categoryId: selectedLimitCat, amount: limits[selectedLimitCat].toString() });
+                                setIsLimitModalOpen(true);
+                            } else if (val === 'delete') {
+                                const newLimits = { ...limits };
+                                delete newLimits[selectedLimitCat];
+                                setLimits(newLimits);
+                                haptic.medium();
+                            }
+                            setIsLimitActionOpen(false);
+                        }}
+                    />
+
                     {/* Modal Dinâmico de Limite */}
                     {isLimitModalOpen && (
                         <>
@@ -1240,7 +1259,9 @@ const Home = () => {
 
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                     <div>
-                                        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>Novo Limite Mensal</h2>
+                                        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>
+                                            {tempLimit.categoryId && limits[tempLimit.categoryId] ? 'Editar Limite Mensal' : 'Novo Limite Mensal'}
+                                        </h2>
                                         <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Defina quanto você pretende gastar em uma categoria específica.</p>
                                     </div>
                                     <button
@@ -1307,35 +1328,7 @@ const Home = () => {
                                                     background: 'var(--surface-color)',
                                                     color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: '700', outline: 'none'
                                                 }}
-                                                autoFocus
                                             />
-
-                                            {/* AI Suggestion Bubble */}
-                                            {aiSuggestion && !isAiLoading && (
-                                                <div
-                                                    onClick={() => setTempLimit({ ...tempLimit, amount: aiSuggestion.amount.toString() })}
-                                                    style={{
-                                                        position: 'absolute', bottom: '110%', left: '0', right: '0',
-                                                        background: 'var(--primary-color)', color: 'var(--btn-text)', padding: '12px 16px',
-                                                        borderRadius: '16px 16px 16px 4px', fontSize: '0.85rem', fontWeight: '600',
-                                                        boxShadow: '0 10px 25px rgba(var(--primary-rgb), 0.3)', cursor: 'pointer',
-                                                        animation: 'bubbleBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-                                                        zIndex: 10
-                                                    }}
-                                                >
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                                        <Mic size={14} />
-                                                        <span>Sugestão IA: <strong>R$ {aiSuggestion.amount}</strong></span>
-                                                    </div>
-                                                    <p style={{ margin: 0, opacity: 0.9, fontSize: '0.75rem', fontWeight: '500' }}>{aiSuggestion.reason}</p>
-                                                    <div style={{ position: 'absolute', bottom: '-8px', left: '12px', width: 0, height: 0, borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderTop: '8px solid var(--primary-color)' }} />
-                                                </div>
-                                            )}
-                                            {isAiLoading && (
-                                                <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center' }}>
-                                                    <LoadingDots />
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 </div>

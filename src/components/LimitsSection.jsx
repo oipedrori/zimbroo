@@ -22,13 +22,12 @@ const LimitsSection = ({
     const limitEntries = Object.entries(limits);
 
     return (
-        <section className="limits-section" style={{ marginTop: '16px' }}>
-            <h3 style={{ 
+        <section className="limits-section" style={{ marginTop: '16px' }}>            <h3 style={{ 
                 fontSize: '1.2rem', 
                 fontWeight: '600', 
                 marginBottom: '16px',
                 color: 'var(--text-main)',
-                padding: isDesktop ? '0' : '0 20px'
+                padding: '0'
             }}>
                 {t('limits', { defaultValue: 'Limites' })}
             </h3>
@@ -37,8 +36,8 @@ const LimitsSection = ({
                 display: 'flex',
                 overflowX: 'auto',
                 gap: '12px',
-                padding: isDesktop ? '4px 0 20px 0' : '4px 20px 20px 20px',
-                margin: isDesktop ? '0' : '0 -20px',
+                padding: '4px 20px 20px 20px',
+                margin: '0 -20px',
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
                 WebkitOverflowScrolling: 'touch'
@@ -55,9 +54,9 @@ const LimitsSection = ({
                     const isOverLimit = spent >= limitAmount;
                     const isNearLimit = rawPercent >= 90;
 
-                    let barColor = category.color;
-                    if (isOverLimit) barColor = 'var(--danger-color)';
-                    else if (isNearLimit) barColor = '#FBBF24'; // Amber 400 for 90%+
+                    let barColor = '#4BB45A'; // Green default
+                    if (isOverLimit) barColor = 'var(--danger-color)'; // Red 100%+
+                    else if (isNearLimit) barColor = '#FBBF24'; // Yellow 90%+
 
                     return (
                         <div 
@@ -66,6 +65,7 @@ const LimitsSection = ({
                             style={{
                                 flexShrink: 0,
                                 width: isDesktop ? '220px' : '180px',
+                                minHeight: '180px',
                                 padding: '16px',
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -77,8 +77,7 @@ const LimitsSection = ({
                             }}
                             onClick={() => {
                                 haptic.light();
-                                setTempLimit({ categoryId: catId, amount: limitAmount.toString() });
-                                setIsLimitModalOpen(true);
+                                setIsLimitModalOpen(true, catId, limitAmount);
                             }}
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -95,7 +94,7 @@ const LimitsSection = ({
                                 </span>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
                                 <p style={{ 
                                     margin: 0, 
                                     fontSize: '1rem', 
@@ -114,31 +113,31 @@ const LimitsSection = ({
                                 </p>
                             </div>
 
-                            <div style={{ 
-                                width: '100%', 
-                                height: '6px', 
-                                background: 'rgba(255,255,255,0.05)', 
-                                borderRadius: '10px', 
-                                overflow: 'hidden',
-                                marginTop: '4px'
-                            }}>
-                                <div style={{
-                                    width: `${percent}%`,
-                                    height: '100%',
-                                    background: barColor,
-                                    borderRadius: '10px',
-                                    transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)'
-                                }} />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: 'auto' }}>
+                                <div style={{ 
+                                    flex: 1, 
+                                    height: '6px', 
+                                    background: 'rgba(255,255,255,0.05)', 
+                                    borderRadius: '10px', 
+                                    overflow: 'hidden'
+                                }}>
+                                    <div style={{
+                                        width: `${percent}%`,
+                                        height: '100%',
+                                        background: barColor,
+                                        borderRadius: '10px',
+                                        transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)'
+                                    }} />
+                                </div>
+                                <span style={{ 
+                                    fontSize: '0.75rem', 
+                                    fontWeight: '800', 
+                                    color: isOverLimit ? 'var(--danger-color)' : isNearLimit ? '#FBBF24' : 'var(--text-muted)',
+                                    whiteSpace: 'nowrap'
+                                }}>
+                                    {Math.round(rawPercent)}%
+                                </span>
                             </div>
-                            
-                            <span style={{ 
-                                fontSize: '0.7rem', 
-                                fontWeight: '800', 
-                                color: isOverLimit ? 'var(--danger-color)' : isNearLimit ? '#FBBF24' : 'var(--text-muted)',
-                                alignSelf: 'flex-end'
-                            }}>
-                                {Math.round(rawPercent)}%
-                            </span>
                         </div>
                     );
                 })}
@@ -149,6 +148,7 @@ const LimitsSection = ({
                     style={{
                         flexShrink: 0,
                         width: isDesktop ? '220px' : '180px',
+                        minHeight: '180px',
                         padding: '16px',
                         display: 'flex',
                         flexDirection: 'column',

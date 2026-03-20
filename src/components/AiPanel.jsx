@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, Plus, Edit2, Send, X } from 'lucide-react';
+import { Mic, Plus, Edit2, Send, X, Check } from 'lucide-react';
 import { analyzeTextWithGemini } from '../services/geminiService';
 import { useTransactions } from '../hooks/useTransactions';
+import { useLimits } from '../hooks/useLimits';
 import { format } from 'date-fns';
 import { useI18n } from '../contexts/I18nContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -92,6 +93,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
     const transcriptRef = useRef(''); // To keep latest state for timeout
 
     const { transactions, addTx, deleteTx } = useTransactions(format(new Date(), 'yyyy-MM'));
+    const { limits, setLimits } = useLimits();
     const { t, locale } = useI18n();
 
     const [micPermission, setMicPermission] = useState('prompt'); // 'prompt', 'granted', 'denied'
@@ -370,6 +372,14 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                     haptic.success();
 
                     // Fecha sozinho depois de ler
+                    setTimeout(() => onClose(), 2500);
+                } else if (result.action === 'limit') {
+                    haptic.success();
+                    setLimits({ ...limits, [result.category]: parseFloat(result.amount) });
+                    setAiMessage(result.message || 'Limite definido com sucesso!');
+                    setTranscript('');
+                    transcriptRef.current = '';
+                    setConversationContext(null);
                     setTimeout(() => onClose(), 2500);
                 }
             } catch (err) {

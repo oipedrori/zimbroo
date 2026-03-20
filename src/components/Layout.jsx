@@ -116,15 +116,6 @@ const Layout = () => {
             <div className={`bottom-blur-layer ${isHidden ? 'hidden-state' : ''}`} />
 
             <nav className={`bottom-nav ${isHidden ? 'hidden-state' : ''}`}>
-                {showAiInsight && location.pathname === '/' && (
-                    <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, zIndex: 3000 }}>
-                        <AiInsightBubble 
-                            preFetchedMessage={insightMessage} 
-                            onClose={() => setShowAiInsight(false)} 
-                        />
-                    </div>
-                )}
-                
                 <div className="nav-items-wrapper">
                     <button 
                         className="nav-side-btn" 
