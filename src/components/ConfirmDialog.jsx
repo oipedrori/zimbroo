@@ -22,6 +22,7 @@ const ConfirmDialog = ({
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [isAnimating, setIsAnimating] = useState(false);
     const [confirmText, setConfirmText] = useState('');
+    const [isInputFocused, setIsInputFocused] = useState(false);
     const [keyboardHeight, setKeyboardHeight] = useState(0);
     const inputRef = useRef(null);
     const { t } = useI18n();
