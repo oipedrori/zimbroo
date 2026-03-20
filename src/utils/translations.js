@@ -213,7 +213,16 @@ export const translations = {
         fetching_incomes: "Buscando ganhos: {count} carregados",
         fetching_expenses_start: "Buscando despesas...",
         fetching_incomes_start: "Buscando ganhos...",
-        cleaning_data: "Limpando todos os dados..."
+        cleaning_data: "Limpando todos os dados...",
+        notion_internal_integration: "Integração Interna",
+        notion_integration_secret: "Segredo da Integração",
+        notion_connect_manual: "Conectar Agora",
+        notion_or_use_oauth: "OU USE O FLUXO ANTIGO",
+        notion_continue_oauth: "Continuar com OAuth",
+        validating_secret: "Validando segredo...",
+        notion_secret_error: "O segredo deve começar com 'secret_'. Verifique sua integração no Notion.",
+        notion_validation_error: "Falha ao validar segredo. Verifique e tente novamente.",
+        notion_connect_desc_manual: "Conecte seu Notion para importar gastos e ganhos automaticamente. Use uma {type} para maior segurança."
     },
     en: {
         profile: "Profile",
@@ -415,7 +424,16 @@ export const translations = {
         fetching_incomes: "Fetching incomes: {count} loaded",
         fetching_expenses_start: "Fetching expenses...",
         fetching_incomes_start: "Fetching incomes...",
-        cleaning_data: "Clearing all data..."
+        cleaning_data: "Clearing all data...",
+        notion_internal_integration: "Internal Integration",
+        notion_integration_secret: "Integration Secret",
+        notion_connect_manual: "Connect Now",
+        notion_or_use_oauth: "OR USE THE OLD FLOW",
+        notion_continue_oauth: "Continue with OAuth",
+        validating_secret: "Validating secret...",
+        notion_secret_error: "The secret must start with 'secret_'. Check your integration in Notion.",
+        notion_validation_error: "Failed to validate secret. Please check and try again.",
+        notion_connect_desc_manual: "Connect your Notion to import expenses and earnings automatically. Use an {type} for better security."
     },
     es: {
         profile: "Perfil",
@@ -617,7 +635,16 @@ export const translations = {
         fetching_incomes: "Buscando ingresos: {count} cargados",
         fetching_expenses_start: "Buscando gastos...",
         fetching_incomes_start: "Buscando ingresos...",
-        cleaning_data: "Limpiando todos los datos..."
+        cleaning_data: "Limpiando todos los datos...",
+        notion_internal_integration: "Integración Interna",
+        notion_integration_secret: "Secreto de Integración",
+        notion_connect_manual: "Conectar Ahora",
+        notion_or_use_oauth: "O USE EL FLUJO ANTIGUO",
+        notion_continue_oauth: "Continuar con OAuth",
+        validating_secret: "Validando secreto...",
+        notion_secret_error: "El secreto debe comenzar con 'secret_'. Verifique su integración en Notion.",
+        notion_validation_error: "Error al validar el secreto. Verifique e intente de nuevo.",
+        notion_connect_desc_manual: "Conecte su Notion para importar gastos e ingresos automáticamente. Use una {type} para mayor seguridad."
     }
 };
 

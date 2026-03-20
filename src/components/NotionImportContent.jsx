@@ -24,6 +24,7 @@ const NotionImportContent = ({ onFinish, onBack, initialOAuthCode }) => {
     const [scanningPage, setScanningPage] = useState('');
     const [statusMessage, setStatusMessage] = useState('');
     const [hasInitialSearchDone, setHasInitialSearchDone] = useState(false);
+    const [manualSecret, setManualSecret] = useState('');
 
     const NOTION_CLIENT_ID = import.meta.env.VITE_NOTION_CLIENT_ID;
     const NOTION_REDIRECT_URI = window.location.origin + '/notion-callback';
@@ -53,6 +54,35 @@ const NotionImportContent = ({ onFinish, onBack, initialOAuthCode }) => {
             }
         } catch (err) {
             setError("Erro ao conectar com o Notion. Tente novamente.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleManualConnect = async () => {
+        if (!manualSecret.trim()) return;
+        const cleanSecret = manualSecret.trim();
+        if (!cleanSecret.startsWith('secret_')) {
+            setError(t('notion_secret_error'));
+            return;
+        }
+
+        setLoading(true);
+        setStatusMessage(t('validating_secret'));
+        setError(null);
+        try {
+            // Test connection by fetching workspace info
+            const ws = await getNotionWorkspaceInfo(cleanSecret);
+            if (ws) {
+                setNotionToken(cleanSecret);
+                localStorage.setItem('zimbroo_notion_token', cleanSecret);
+                setStep(2);
+                haptic.success();
+            } else {
+                throw new Error(t('notion_validation_error'));
+            }
+        } catch (err) {
+            setError(t('notion_validation_error'));
         } finally {
             setLoading(false);
         }
@@ -151,16 +181,18 @@ const NotionImportContent = ({ onFinish, onBack, initialOAuthCode }) => {
     };
 
     const handleDisconnect = () => {
-        if (window.confirm("Deseja realmente excluir a integração?")) {
+        if (window.confirm(t('confirm_disconnect'))) {
             localStorage.removeItem('zimbroo_notion_token');
             localStorage.removeItem('zimbroo_notion_expense_db_id');
             localStorage.removeItem('zimbroo_notion_income_db_id');
             setNotionToken('');
             setExpenseDbId('');
             setIncomeDbId('');
+            setHasInitialSearchDone(false);
             setStep(1);
             setFoundDbs([]);
             setError(null);
+            haptic.light();
         }
     };
 
@@ -271,18 +303,58 @@ const NotionImportContent = ({ onFinish, onBack, initialOAuthCode }) => {
             {error && <div style={{ color: '#ef4444', marginBottom: '24px', fontSize: '0.85rem', fontWeight: '600', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', padding: '12px', borderRadius: '12px' }}>⚠️ {error}</div>}
 
             {step === 1 && (
-                <div style={{ textAlign: 'center' }}>
+                <div className="animate-fade-in" style={{ textAlign: 'center' }}>
                     <div style={{
-                        width: '70px', height: '70px', borderRadius: '20px', background: 'var(--primary-color)',
+                        width: '70px', height: '70px', borderRadius: '22px', background: 'var(--primary-color)',
                         display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto 24px',
-                        boxShadow: '0 8px 20px rgba(0,0,0,0.1)'
+                        boxShadow: '0 8px 30px rgba(var(--primary-rgb), 0.3)'
                     }}>
                         <Database size={32} color="white" />
                     </div>
-                    <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '12px' }}>{t('notion_connect_title')}</h3>
-                    <p style={{ color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '28px', fontSize: '0.95rem' }}>
-                        {t('notion_connect_desc')}
+                    <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '8px' }}>{t('notion_connect_title')}</h3>
+                    <p style={{ color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '28px', fontSize: '0.9rem' }}>
+                        {t('notion_connect_desc_manual', { type: <strong>{t('notion_internal_integration')}</strong> })}
                     </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left' }}>
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '8px', marginLeft: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                {t('notion_integration_secret')}
+                            </label>
+                            <input 
+                                type="password"
+                                value={manualSecret}
+                                onChange={(e) => setManualSecret(e.target.value)}
+                                placeholder="secret_..."
+                                style={{
+                                    width: '100%', padding: '16px', borderRadius: '16px', background: 'var(--surface-color)',
+                                    color: 'var(--text-main)', border: '1px solid var(--glass-border)', fontSize: '1rem',
+                                    outline: 'none', transition: 'border-color 0.2s'
+                                }}
+                            />
+                        </div>
+
+                        <button
+                            onClick={handleManualConnect}
+                            disabled={loading || !manualSecret.trim()}
+                            style={{
+                                width: '100%', padding: '18px', backgroundColor: 'white', color: 'black',
+                                borderRadius: '20px', border: 'none', display: 'flex', alignItems: 'center',
+                                justifyContent: 'center', gap: '12px', cursor: 'pointer', fontWeight: '900', fontSize: '1.1rem',
+                                opacity: loading || !manualSecret.trim() ? 0.6 : 1,
+                                boxShadow: '0 8px 25px rgba(255,255,255,0.1)'
+                            }}
+                        >
+                            {loading ? <LoadingDots /> : t('notion_connect_manual')}
+                        </button>
+                    </div>
+
+                    <div style={{ margin: '32px 0', display: 'flex', alignItems: 'center', gap: '12px', opacity: 0.3 }}>
+                        <div style={{ flex: 1, height: '1px', background: 'var(--text-main)' }} />
+                        <span style={{ fontSize: '0.7rem', fontWeight: '800' }}>{t('notion_or_use_oauth')}</span>
+                        <div style={{ flex: 1, height: '1px', background: 'var(--text-main)' }} />
+                    </div>
+
                     <button
                         onClick={() => {
                             const authUrl = `https://api.notion.com/v1/oauth/authorize?owner=user&client_id=${NOTION_CLIENT_ID}&redirect_uri=${encodeURIComponent(NOTION_REDIRECT_URI)}&response_type=code`;
@@ -290,18 +362,13 @@ const NotionImportContent = ({ onFinish, onBack, initialOAuthCode }) => {
                         }}
                         disabled={loading}
                         style={{
-                            width: '100%', padding: '18px', backgroundColor: 'var(--notion-btn-bg)', color: 'var(--notion-btn-text)',
-                            borderRadius: '20px', border: 'none', display: 'flex', alignItems: 'center',
-                            justifyContent: 'center', gap: '12px', cursor: 'pointer', fontWeight: '800', fontSize: '1rem'
+                            width: '100%', padding: '14px', backgroundColor: 'transparent', color: 'var(--text-muted)',
+                            borderRadius: '16px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center',
+                            justifyContent: 'center', gap: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '0.85rem'
                         }}
                     >
-                        <img src="/notion_logo.png" style={{ width: '22px', height: '22px' }} alt="" />
-                        {loading ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <div style={{ width: '16px', height: '16px', border: '2px solid rgba(128,128,128,0.3)', borderTopColor: 'var(--notion-btn-text)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                                <span>{t('connecting')}</span>
-                            </div>
-                        ) : t('notion_connect_btn')}
+                        <img src="/notion_logo.png" style={{ width: '16px', height: '16px', opacity: 0.6 }} alt="" />
+                        {t('notion_continue_oauth')}
                     </button>
                     
                     <style>{`
