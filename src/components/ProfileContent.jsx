@@ -362,6 +362,7 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                 confirmLabel={t('reset_data_confirm_btn')}
                 cancelLabel={t('cancel')}
                 type="warning"
+                isLoading={isResettingData}
             />
 
             <ConfirmDialog
@@ -375,6 +376,8 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                 cancelLabel={t('cancel')}
                 type="danger"
                 isLoading={isDeleting}
+                loadingMessage={t('deleting_account_progress', { defaultValue: 'Excluindo sua conta e dados...' })}
+                loadingSubMessage={t('please_wait_delete', { defaultValue: 'Isso pode levar alguns segundos. Não feche o app.' })}
             />
 
         </div>
