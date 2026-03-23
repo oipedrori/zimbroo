@@ -6,21 +6,18 @@ import { useI18n } from '../contexts/I18nContext';
 
 const SwipeableItem = ({ children, onDelete, onEdit }) => {
     const [isDeleted, setIsDeleted] = useState(false);
-    const [showConfirm, setShowConfirm] = useState(false);
     const { t } = useI18n();
     const x = useMotionValue(0);
 
-    // Transformações para efeitos visuais durante o arraste
-    const opacity = useTransform(x, [-100, -80, 0, 80, 100], [0.5, 1, 1, 1, 0.5]);
-    const scale = useTransform(x, [-100, -80, 0, 80, 100], [0.95, 1, 1, 1, 0.95]);
+    // Transformações para efeitos visuais durante o arraste - Removido opacidade/scale agressivo
+    const opacity = useTransform(x, [-100, 0, 100], [1, 1, 1]);
+    const scale = useTransform(x, [-100, 0, 100], [1, 1, 1]);
 
     const handleDragEnd = (event, info) => {
         const { offset, velocity } = info;
         
-        // Thresholds ajustados para maior estabilidade no centro (mais "magnetismo" no zero)
-        // Aumentamos o deslocamento necessário e a velocidade para evitar saltos acidentais
-        const actionThreshold = 60; // Antes era 40
-        const velocityThreshold = 800; // Antes era 500
+        const actionThreshold = 60;
+        const velocityThreshold = 800;
 
         if (offset.x < -actionThreshold || velocity.x < -velocityThreshold) {
             animate(x, -80, { type: 'spring', bounce: 0.2, duration: 0.4 });
@@ -32,11 +29,7 @@ const SwipeableItem = ({ children, onDelete, onEdit }) => {
     };
 
     const handleDeleteClick = () => {
-        setShowConfirm(true);
-    };
-
-    const confirmDeletion = () => {
-        setShowConfirm(false);
+        // Removemos o setShowConfirm(true) interno para evitar duplicidade com o parent
         setIsDeleted(true);
         setTimeout(() => {
             onDelete();
@@ -117,7 +110,7 @@ const SwipeableItem = ({ children, onDelete, onEdit }) => {
             <motion.div
                 drag="x"
                 dragConstraints={{ left: -80, right: onEdit ? 80 : 0 }}
-                dragElastic={0.1}
+                dragElastic={0}
                 onDragEnd={handleDragEnd}
                 style={{
                     x,
@@ -129,7 +122,7 @@ const SwipeableItem = ({ children, onDelete, onEdit }) => {
                     zIndex: 1,
                     display: 'flex',
                     cursor: 'grab',
-                    touchAction: 'none' // Importante para drag no mobile
+                    touchAction: 'none'
                 }}
                 whileTap={{ cursor: 'grabbing' }}
             >
@@ -137,17 +130,6 @@ const SwipeableItem = ({ children, onDelete, onEdit }) => {
                     {children}
                 </div>
             </motion.div>
-
-            <ConfirmDialog 
-                isOpen={showConfirm}
-                onClose={() => setShowConfirm(false)}
-                title={t('confirm_deletion', { defaultValue: 'Excluir Movimentação' })}
-                message={t('delete_confirmation_message', { defaultValue: 'Tem certeza que deseja excluir esta movimentação? Esta ação não pode ser desfeita.' })}
-                confirmLabel={t('exclude', { defaultValue: 'Excluir' })}
-                cancelLabel={t('cancel', { defaultValue: 'Cancelar' })}
-                onConfirm={confirmDeletion}
-                type="danger"
-            />
         </div>
     );
 };
