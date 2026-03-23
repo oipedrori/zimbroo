@@ -1331,6 +1331,7 @@ const Home = () => {
                         message="O que você deseja fazer com este limite?"
                         showIcon={false}
                         showCancel={false}
+                        childrenPosition="top"
                         options={[
                             { label: t('edit', { defaultValue: 'Editar' }), value: 'edit', color: 'var(--primary-gradient)' },
                             { label: t('delete', { defaultValue: 'Excluir' }), value: 'delete', color: 'var(--danger-color)' }
@@ -1349,12 +1350,9 @@ const Home = () => {
                         }}
                     >
                         <div style={{ 
-                            maxHeight: '280px', 
+                            maxHeight: '350px', 
                             overflowY: 'auto', 
-                            background: 'var(--surface-color)', 
-                            borderRadius: '16px', 
-                            padding: '8px',
-                            border: '1px solid var(--glass-border)'
+                            paddingRight: '4px'
                         }}>
                             {(() => {
                                 const catTxs = transactions.filter(t => {
@@ -1363,28 +1361,42 @@ const Home = () => {
                                 });
                                 
                                 if (catTxs.length > 0) {
-                                    return catTxs.map((tx, idx) => (
-                                        <div key={idx} style={{ 
-                                            display: 'flex', 
-                                            justifyContent: 'space-between', 
-                                            padding: '12px',
-                                            borderBottom: idx === catTxs.length - 1 ? 'none' : '1px solid var(--glass-border)'
-                                        }}>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: '600' }}>
-                                                    {tx.dynamicDescription || tx.description}
-                                                </span>
-                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                                                    {format(new Date(tx.virtualDate || tx.date), 'dd MMM', { locale: ptBR })}
+                                    return catTxs.map((tx, idx) => {
+                                        const theme = getCategoryTheme(tx.category, tx.type);
+                                        return (
+                                            <div key={idx} style={{ 
+                                                display: 'flex', 
+                                                justifyContent: 'space-between', 
+                                                alignItems: 'center',
+                                                padding: '12px 0',
+                                                borderBottom: idx === catTxs.length - 1 ? 'none' : '1px solid var(--glass-border)'
+                                            }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                                    <div style={{ 
+                                                        width: '40px', height: '40px', borderRadius: '12px', 
+                                                        background: theme.color + '20', 
+                                                        display: 'flex', justifyContent: 'center', alignItems: 'center', 
+                                                        color: theme.color, fontSize: '1.2rem', flexShrink: 0 
+                                                    }}>
+                                                        {getEmojiForDescription(tx.description, theme.icon)}
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                                                        <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: '600', margin: 0 }}>
+                                                            {tx.dynamicDescription || tx.description}
+                                                        </span>
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                            {format(new Date(tx.virtualDate || tx.date), 'dd MMM', { locale: ptBR })}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <span style={{ fontSize: '1rem', color: 'var(--danger-color)', fontWeight: '800', whiteSpace: 'nowrap' }}>
+                                                    - {formatCurrency(tx.amount)}
                                                 </span>
                                             </div>
-                                            <span style={{ fontSize: '0.9rem', color: tx.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)', fontWeight: '800' }}>
-                                                {formatCurrency(tx.amount)}
-                                            </span>
-                                        </div>
-                                    ));
+                                        );
+                                    });
                                 }
-                                return <p style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('no_transactions')}</p>
+                                return <p style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{t('no_transactions')}</p>
                             })()}
                         </div>
                     </ConfirmDialog>

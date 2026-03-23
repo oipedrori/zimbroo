@@ -20,7 +20,8 @@ const ConfirmDialog = ({
     loadingSubMessage = null,
     showIcon = true,
     showCancel = true,
-    children = null
+    children = null,
+    childrenPosition = 'bottom' // 'top' or 'bottom'
 }) => {
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [isAnimating, setIsAnimating] = useState(false);
@@ -115,9 +116,17 @@ const ConfirmDialog = ({
                 )}
 
                 <h2 className="confirm-title">{title}</h2>
-                <p className="confirm-message" style={{ marginBottom: children ? '16px' : '32px' }}>{message}</p>
+                
+                {childrenPosition === 'top' && children && <div style={{ marginBottom: '24px', textAlign: 'left' }}>{children}</div>}
 
-                {children && <div style={{ marginBottom: '32px', textAlign: 'left' }}>{children}</div>}
+                <p className="confirm-message" style={{ 
+                    marginBottom: (children && childrenPosition === 'bottom') ? '16px' : '32px',
+                    fontSize: childrenPosition === 'top' ? '0.9rem' : '0.95rem',
+                    fontWeight: childrenPosition === 'top' ? '600' : '400',
+                    color: childrenPosition === 'top' ? 'var(--text-main)' : 'var(--text-muted)'
+                }}>{message}</p>
+
+                {childrenPosition === 'bottom' && children && <div style={{ marginBottom: '32px', textAlign: 'left' }}>{children}</div>}
 
                 {requireConfirm && (
                     <div style={{ marginBottom: '24px' }}>
