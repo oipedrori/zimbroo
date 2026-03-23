@@ -119,6 +119,9 @@ const Onboarding = ({ onComplete }) => {
       {/* SVG Mask for Spotlight */}
       <svg style={{ position: 'absolute', width: '100%', height: '100%', pointerEvents: 'none' }}>
         <defs>
+          <filter id="blurFilter">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="6" />
+          </filter>
           <mask id="spotlight-mask">
             <rect width="100%" height="100%" fill="white" />
             <motion.rect
@@ -131,20 +134,20 @@ const Onboarding = ({ onComplete }) => {
               }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               fill="black"
+              filter="url(#blurFilter)"
             />
           </mask>
         </defs>
-        <rect width="100%" height="100%" fill="black" opacity="0.75" mask="url(#spotlight-mask)" />
+        <rect width="100%" height="100%" fill="black" opacity="0.8" mask="url(#spotlight-mask)" />
       </svg>
 
       {/* Tooltip Card */}
       <AnimatePresence mode="wait">
         <motion.div
            key={currentStep}
-           initial={{ opacity: 0, y: 10, scale: 0.95 }}
+           initial={{ opacity: 0, scale: 0.95 }}
            animate={{ 
              opacity: 1, 
-             y: 0, 
              scale: 1,
              top: targetRect.y + targetRect.height + 20 > window.innerHeight - 150 
                   ? targetRect.y - 140 
@@ -152,7 +155,7 @@ const Onboarding = ({ onComplete }) => {
              left: Math.max(20, Math.min(window.innerWidth - 300, targetRect.x))
            }}
            exit={{ opacity: 0, scale: 0.95 }}
-           transition={{ duration: 0.3 }}
+           transition={{ duration: 0.4, ease: "easeOut" }}
            style={{
              position: 'absolute',
              width: '280px',
