@@ -165,9 +165,8 @@ export const prepareMonthlyTransactions = (allTxs, targetMonth) => {
         }
 
         if (tx.repeatType === 'recurring') {
-            // Recorrente aparece do mes inicial para a frente
-            // Para fins do App, poderíamos colocar um end recurrence, mas manteremos infinito para agora
-            return targetDateValue >= txDateValue;
+            // Recorrente aparece do mês inicial para a frente, MAS apenas para o mesmo ano (regra do usuário)
+            return targetDateValue >= txDateValue && targetY === y;
         }
 
         if (tx.repeatType === 'installment') {

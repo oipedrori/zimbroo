@@ -66,7 +66,8 @@ const Home = () => {
     const [isLimitActionOpen, setIsLimitActionOpen] = useState(false);
     const [selectedLimitCat, setSelectedLimitCat] = useState(null);
     const [tempLimit, setTempLimit] = useState({ categoryId: '', amount: '' });
-    const { limits, setLimits } = useLimits();
+    const currentYear = currentDate.getFullYear();
+    const { limits, setLimits } = useLimits(currentYear);
     const [chartType, setChartType] = useState('bar'); // 'bar' or 'line'
     const [isFlipped, setIsFlipped] = useState(false);
 
@@ -95,9 +96,9 @@ const Home = () => {
     // Hide Bottom Nav globally via layout context when any modal is open
     useEffect(() => {
         if (setIsBottomNavHidden) {
-            setIsBottomNavHidden(isModalOpen || isLimitModalOpen || isLimitActionOpen || isConfirmOpen);
+            setIsBottomNavHidden(isModalOpen || isLimitModalOpen || isLimitActionOpen || isConfirmOpen || isSidebarOpen);
         }
-    }, [isModalOpen, isLimitModalOpen, isLimitActionOpen, isConfirmOpen, setIsBottomNavHidden]);
+    }, [isModalOpen, isLimitModalOpen, isLimitActionOpen, isConfirmOpen, isSidebarOpen, setIsBottomNavHidden]);
 
     // --- Effects & Handlers ---
 

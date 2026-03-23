@@ -93,7 +93,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
     const transcriptRef = useRef(''); // To keep latest state for timeout
 
     const { transactions, addTx, deleteTx } = useTransactions(format(new Date(), 'yyyy-MM'));
-    const { limits, setLimits } = useLimits();
+    const { limits, setLimits } = useLimits(new Date().getFullYear());
     const { t, locale } = useI18n();
 
     const [micPermission, setMicPermission] = useState('prompt'); // 'prompt', 'granted', 'denied'
