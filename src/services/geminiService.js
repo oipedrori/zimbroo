@@ -35,13 +35,23 @@ export const analyzeTextWithGemini = async (text, transactions = [], conversatio
       };
     }
 
-    // ROTA 2: Edição/Remoção (Intercepção Local)
-    const guidanceKeywords = /remov[ae]r|deletar|excluir|edit[ae]r|mud[ae]r|alter[ae]r/i;
-    if (guidanceKeywords.test(text)) {
-      return {
-        action: 'analysis',
-        message: 'Para editar uma movimentação, basta arrastá-la para a direita. Para remover, arraste para a esquerda!'
-      };
+    // ROTA 3: Definição de Limite Direto (Intercepção Local)
+    const limitRegex = /(?:defina|coloque|ajuste|mude|definir|setar|limite)\s+(?:um\s+)?limite\s+(?:de\s+)?([\d.,]+)\s+(?:em|para|no|na|a)\s+([\w\s]+)/i;
+    const limitMatch = text.match(limitRegex);
+    if (limitMatch) {
+      const amount = parseFloat(limitMatch[1].replace(',', '.'));
+      const categoryRaw = limitMatch[2].trim().toLowerCase();
+      const allCats = [...CATEGORIAS_DESPESA, ...CATEGORIAS_RECEITA];
+      const matchedCat = allCats.find(c => categoryRaw.includes(c.id.toLowerCase()) || categoryRaw.includes(c.label.toLowerCase()));
+      
+      if (matchedCat && !isNaN(amount)) {
+        return {
+          action: 'limit',
+          category: matchedCat.id,
+          amount: amount,
+          message: `Entendido! Definindo seu limite de R$${amount.toFixed(2)} para ${matchedCat.label}.`
+        };
+      }
     }
 
     const categoriesExpenseStr = CATEGORIAS_DESPESA.map(c => c.id).join(', ');
@@ -69,14 +79,7 @@ export const analyzeTextWithGemini = async (text, transactions = [], conversatio
       const allCats = [...CATEGORIAS_DESPESA, ...CATEGORIAS_RECEITA];
       const matchedCat = allCats.find(c => lowerText.includes(c.id.toLowerCase()) || lowerText.includes(c.label.toLowerCase()));
       
-      if (matchedCat && (lowerText.includes('quanto') || lowerText.includes('gastei') || lowerText.includes('recebi'))) {
-        // ECONOMIA: Apenas valor total da categoria no mês atual
-        const catTotal = transactions
-          .filter(t => (t.category === matchedCat.id || t.category === matchedCat.label))
-          .reduce((sum, t) => sum + t.amount, 0);
-        contextualData = `═══ DADOS ESPECÍFICOS (CATEGORIA: ${matchedCat.label}) ═══\n• Total no mês atual: R$${catTotal.toFixed(2)}\n═══════════════════════════════════════`;
-      } 
-      else if (matchedCat && (lowerText.includes('sugere') || lowerText.includes('sugestão') || lowerText.includes('recomenda')) && lowerText.includes('limite')) {
+      if (matchedCat && (lowerText.includes('quanto') || lowerText.includes('gastei') || lowerText.includes('recebi') || lowerText.includes('mês') || lowerText.includes('histórico'))) {
         // ECONOMIA: Enviar totais históricos da categoria (sem listar todas as transações)
         const histData = allTransactions.length > 0 ? allTransactions : transactions;
         const historical = {};
@@ -90,7 +93,7 @@ export const analyzeTextWithGemini = async (text, transactions = [], conversatio
         const historicalStr = Object.entries(historical)
           .map(([m, val]) => `- ${m}: R$${val.toFixed(2)}`)
           .join('\n');
-        contextualData = `═══ HISTÓRICO PARA SUGESTÃO DE LIMITE (${matchedCat.label}) ═══\n${historicalStr || "Sem histórico anterior."}\n════════════════════════════════════════════`;
+        contextualData = `═══ HISTÓRICO MENSAL (${matchedCat.label}) ═══\n${historicalStr || "Sem histórico anterior."}\n════════════════════════════════════════════`;
       }
       else {
         // Pergunta geral ou conselho: Enviar resumo de TODAS as transações do mês atual (mas sem metadados pesados)
@@ -103,7 +106,7 @@ export const analyzeTextWithGemini = async (text, transactions = [], conversatio
 
     const currentDateStr = new Date().toLocaleDateString('pt-BR');
     let prompt = "";
-    const model = "gemini-2.5-flash";
+    const model = "gemini-2.0-flash";
 
     if (isQuestion) {
       // ROTA 2: Análise Profunda
@@ -120,12 +123,12 @@ Data de Hoje: ${currentDateStr}.
 ${contextualData}
 
 INSTRUÇÕES:
-1. Responda de forma curta, prestativa e amigável.
-2. Se o usuário quiser DEFINIR um limite (ex: "defina limite de 500 em mercado"), ignore o histórico e retorne o MODELO LIMITE.
-3. Se o usuário pedir uma SUGESTÃO de limite, use os dados históricos fornecidos para recomendar um valor realista baseado no comportamento passado.
+1. Responda de forma curta e amigável.
+2. Se o usuário pedir uma SUGESTÃO de limite, calcule com base na média histórica fornecida.
+3. Se fizer uma sugestão de limite, SEMPRE termine perguntando se ele gostaria que você configurasse esse limite agora.
 4. Retorne APENAS o JSON puro.
 
-MODELO ANÁLISE: {"action": "analysis", "message": "Sua resposta..."}
+MODELO ANÁLISE: {"action": "analysis", "message": "Sua resposta com a pergunta de confirmação no final..."}
 MODELO LIMITE: {"action": "limit", "category": "ID_CATEGORIA", "amount": number, "message": "Confirmação..."}
 `;
     } else {

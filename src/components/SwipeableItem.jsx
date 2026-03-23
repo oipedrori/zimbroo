@@ -29,11 +29,9 @@ const SwipeableItem = ({ children, onDelete, onEdit }) => {
     };
 
     const handleDeleteClick = () => {
-        // Removemos o setShowConfirm(true) interno para evitar duplicidade com o parent
-        setIsDeleted(true);
-        setTimeout(() => {
-            onDelete();
-        }, 300);
+        // Apenas chamamos o onDelete do pai. O pai cuidará da confirmação.
+        // Se confirmado, o pai removerá a transação da lista e ela sumirá naturalmente no re-render.
+        onDelete();
     };
 
     const handleEditClick = () => {
