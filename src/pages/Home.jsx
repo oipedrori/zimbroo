@@ -12,6 +12,7 @@ import ProfileContent from '../components/ProfileContent';
 import NotionImportContent from '../components/NotionImportContent';
 import { Plus, ChevronLeft, ChevronRight, User, Pointer, X, Trash2, PieChart, BarChart2, Shield, Mic, Keyboard, Moon, Globe, DollarSign, LogOut, ArrowUp, ArrowDown } from 'lucide-react';
 import { Link, useOutletContext, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getEmojiForDescription } from '../utils/emojiUtils';
 import { prepareMonthlyTransactions } from '../services/transactionService';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -1423,9 +1424,11 @@ const Home = () => {
                 </div>
             )}
             {/* Onboarding Overlay */}
-            {showOnboarding && (
-                <Onboarding onComplete={() => setShowOnboarding(false)} />
-            )}
+            <AnimatePresence>
+                {showOnboarding && (
+                    <Onboarding key="onboarding" onComplete={() => setShowOnboarding(false)} />
+                )}
+            </AnimatePresence>
         </>
     );
 };

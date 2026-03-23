@@ -54,21 +54,30 @@ const Onboarding = ({ onComplete }) => {
       const step = ONBOARDING_STEPS[currentStep];
       const element = document.getElementById(step.id);
       if (element) {
-        const rect = element.getBoundingClientRect();
-        // Check if actually visible (height > 0)
-        if (rect.height > 0) {
-          setTargetRect({
-            x: rect.left,
-            y: rect.top,
-            width: rect.width,
-            height: rect.height,
-            padding: 8
-          });
-          return;
-        }
+        // Auto-scroll to element ensuring it doesn't need to be scrolled into view
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Small delay to let scroll finish before taking measurements
+        setTimeout(() => {
+          const rect = element.getBoundingClientRect();
+          if (rect.height > 0) {
+            setTargetRect({
+              x: rect.left,
+              y: rect.top,
+              width: rect.width,
+              height: rect.height,
+              padding: step.id === 'onboarding-ai-fab' ? 20 : 8
+            });
+          } else {
+            skipNext();
+          }
+        }, 300);
+      } else {
+        skipNext();
       }
-      
-      // If element not found or invisible, skip to next or complete
+    };
+
+    const skipNext = () => {
       if (currentStep < ONBOARDING_STEPS.length - 1) {
         setCurrentStep(prev => prev + 1);
       } else {
@@ -101,10 +110,19 @@ const Onboarding = ({ onComplete }) => {
 
   if (!isVisible || !targetRect) return null;
 
+  // Fixed region logic: safe top or safe bottom
+  const tooltipStyle = targetRect.y > window.innerHeight / 2 
+    ? { top: '100px' } 
+    : { bottom: '120px' };
+
   return (
-    <div 
+    <motion.div 
       className="onboarding-overlay"
       onClick={handleNext}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
       style={{
         position: 'fixed',
         top: 0,
@@ -120,7 +138,7 @@ const Onboarding = ({ onComplete }) => {
       <svg style={{ position: 'absolute', width: '100%', height: '100%', pointerEvents: 'none' }}>
         <defs>
           <filter id="blurFilter">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="6" />
+            <feGaussianBlur in="SourceGraphic" stdDeviation="8" />
           </filter>
           <mask id="spotlight-mask">
             <rect width="100%" height="100%" fill="white" />
@@ -146,16 +164,9 @@ const Onboarding = ({ onComplete }) => {
         <motion.div
            key={currentStep}
            initial={{ opacity: 0, scale: 0.95 }}
-           animate={{ 
-             opacity: 1, 
-             scale: 1,
-             top: targetRect.y + targetRect.height + 20 > window.innerHeight - 150 
-                  ? targetRect.y - 140 
-                  : targetRect.y + targetRect.height + 20,
-             left: Math.max(20, Math.min(window.innerWidth - 300, targetRect.x))
-           }}
+           animate={{ opacity: 1, scale: 1 }}
            exit={{ opacity: 0, scale: 0.95 }}
-           transition={{ duration: 0.4, ease: "easeOut" }}
+           transition={{ duration: 0.3 }}
            style={{
              position: 'absolute',
              width: '280px',
@@ -167,7 +178,11 @@ const Onboarding = ({ onComplete }) => {
              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
              color: 'var(--text-main)',
              zIndex: 10000,
-             pointerEvents: 'none'
+             pointerEvents: 'none',
+             left: '50%',
+             transform: 'translateX(-50%)',
+             marginLeft: '-140px', // Center it manually
+             ...tooltipStyle
            }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -177,10 +192,13 @@ const Onboarding = ({ onComplete }) => {
             <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.5', fontWeight: '500' }}>
               {ONBOARDING_STEPS[currentStep].text}
             </p>
-            <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.6, fontSize: '0.8rem' }}>
-              <div className="pulse-dot" />
-              Toque em qualquer lugar para continuar
-            </div>
+            
+            {currentStep === 0 && (
+              <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.6, fontSize: '0.8rem' }}>
+                <div className="pulse-dot" />
+                Toque em qualquer lugar para continuar
+              </div>
+            )}
           </div>
         </motion.div>
       </AnimatePresence>
@@ -199,7 +217,7 @@ const Onboarding = ({ onComplete }) => {
           100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(75, 180, 90, 0); }
         }
       `}</style>
-    </div>
+    </motion.div>
   );
 };
 
