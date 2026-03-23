@@ -88,12 +88,26 @@ MODELO ANÁLISE: {"action": "analysis", "message": "Sua resposta curta..."}
 MODELO LIMITE: {"action": "limit", "category": "ID_CATEGORIA", "amount": 500.00, "message": "Confirmação..."}
 `;
     } else {
-      // ROTA 3: Extração de Transação (Prompt Curto)
+      // ROTA 3: Extração de Transação (Prompt Completo e Inteligente)
       prompt = `
-Você é um extrator financeiro. Transforme a frase do usuário em um JSON: {"valor": number, "categoria": string, "tipo": "despesa"|"receita", "descricao": string, "recorrente_sugerida": boolean}. 
+Você é um extrator financeiro de elite. Transforme a frase do usuário em um JSON seguindo estas regras:
 
-INSTRUÇÕES PARA "recorrente_sugerida":
-Defina como true se a descrição sugerir algo que acontece mensalmente, como: Salário, Aluguel, Condomínio, Netflix, Spotify, Internet, Plano de Celular, Academia, Escola/Faculdade, Assinatura, Seguro, etc. Caso contrário, false.
+1. IDENTIFICAÇÃO DE MÚLTIPLAS TRANSAÇÕES:
+   Se o usuário disser mais de uma coisa (ex: "paguei 5 de pão e 10 de leite"), retorne uma lista no campo "transactions".
+
+2. LÓGICA DE CENTAVOS ("e" / "com"):
+   Interprete "24 com 30", "24 e 30" ou "24 30" como o valor decimal 24.30.
+
+3. INFORMAÇÕES FALTANTES (AÇÃO: "need_info"):
+   Se faltar o VALOR, a CATEGORIA ou o TIPO (receita/despesa), retorne {"action": "need_info", "message": "Pergunta amigável...", "pendingData": {...}}.
+   Exemplo: Se o usuário disser "Recebi meu salário", pergunte "Que legal! Qual foi o valor do seu salário?".
+
+4. RECORRÊNCIA:
+   Identifique se a descrição sugere algo mensal (Salário, Aluguel, Netflix, etc) e defina "recorrente_sugerida": true.
+
+5. FORMATO DE SAÍDA:
+   - Se completo: {"action": "add", "recorrente_sugerida": boolean, "transactions": [{"valor": number, "categoria": string, "tipo": "despesa"|"receita", "descricao": string}]}
+   - Se incompleto: {"action": "need_info", "message": string, "pendingData": object}
 
 Categorias de Despesa: [${categoriesExpenseStr}]
 Categorias de Receita: [${categoriesIncomeStr}]
@@ -111,22 +125,24 @@ Mensagem do usuário: "${text}"
     
     const aiJson = JSON.parse(jsonMatch[0]);
 
-    // Se for ROTA 3 (Extração Direta), mapear para o formato do app (MODELO 1)
-    if (!isQuestion && aiJson.valor) {
+    if (aiJson.action === 'need_info') {
+      return aiJson;
+    }
+
+    // Mapear para o formato interno do app
+    if (aiJson.action === 'add' || aiJson.transactions) {
       return {
         action: "add",
         recorrente_sugerida: aiJson.recorrente_sugerida || false,
-        transactions: [
-          {
-            type: aiJson.tipo === 'receita' ? 'income' : 'expense',
-            amount: parseFloat(aiJson.valor),
-            description: aiJson.descricao,
-            category: aiJson.categoria,
-            date: "",
-            repeatType: "none",
-            installments: 1
-          }
-        ]
+        transactions: aiJson.transactions.map(tx => ({
+          type: tx.tipo === 'receita' ? 'income' : 'expense',
+          amount: parseFloat(tx.valor),
+          description: tx.descricao,
+          category: tx.categoria,
+          date: "",
+          repeatType: "none",
+          installments: 1
+        }))
       };
     }
 
