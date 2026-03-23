@@ -52,6 +52,7 @@ const Home = () => {
     const [modalType, setModalType] = useState('expense');
     const [editingTx, setEditingTx] = useState(null);
     const [activeFilter, setActiveFilter] = useState('all');
+    const [showFilterTotal, setShowFilterTotal] = useState(null); // { id, amount }
     const [yearlyStats, setYearlyStats] = useState([]);
     const [loadingYearly, setLoadingYearly] = useState(true);
     const [swipeDirection, setSwipeDirection] = useState(''); // 'left' or 'right'
@@ -271,6 +272,18 @@ const Home = () => {
     const incomes = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
     const expenses = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
     const balance = incomes - expenses;
+
+    const handleFilterClick = (filterId) => {
+        haptic.light();
+        if (activeFilter === filterId) {
+            // Se clicar no já ativo, calcula o total
+            const total = filteredTransactions.reduce((acc, t) => acc + t.amount, 0);
+            setShowFilterTotal({ id: filterId, amount: total });
+        } else {
+            setActiveFilter(filterId);
+            setShowFilterTotal(null); // Reset bubble when changing filter
+        }
+    };
 
     // Filter Logic
     const filteredTransactions = transactions.filter(t => {
@@ -661,19 +674,46 @@ const Home = () => {
                                         { id: 'installment', label: 'filter_installment' },
                                         { id: 'recurring', label: 'filter_recurring' },
                                     ].map(f => (
-                                        <button
-                                            key={f.id}
-                                            onClick={() => { haptic.light(); setActiveFilter(f.id); }}
-                                            style={{
-                                                whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '600',
-                                                background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--surface-color)',
-                                                color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
-                                                border: '1px solid var(--glass-border)', flexShrink: 0,
-                                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-                                            }}
-                                        >
-                                            {t(f.label)}
-                                        </button>
+                                        <div key={f.id} style={{ position: 'relative', flexShrink: 0 }}>
+                                            <button
+                                                onClick={() => handleFilterClick(f.id)}
+                                                style={{
+                                                    whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '600',
+                                                    background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--surface-color)',
+                                                    color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
+                                                    border: '1px solid var(--glass-border)',
+                                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                                                }}
+                                            >
+                                                {t(f.label)}
+                                            </button>
+                                            
+                                            <AnimatePresence>
+                                                {showFilterTotal?.id === f.id && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                                                        animate={{ opacity: 1, y: -45, scale: 1 }}
+                                                        exit={{ opacity: 0, y: 10, scale: 0.8 }}
+                                                        onClick={() => setShowFilterTotal(null)}
+                                                        style={{
+                                                            position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+                                                            background: 'var(--primary-dark)', color: 'white',
+                                                            padding: '6px 12px', borderRadius: '10px', fontSize: '0.75rem',
+                                                            fontWeight: '800', whiteSpace: 'nowrap', zIndex: 100,
+                                                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)', cursor: 'pointer',
+                                                            pointerEvents: 'auto'
+                                                        }}
+                                                    >
+                                                        Total: {formatCurrency(showFilterTotal.amount)}
+                                                        <div style={{
+                                                            position: 'absolute', bottom: '-4px', left: '50%',
+                                                            transform: 'translateX(-50%) rotate(45deg)',
+                                                            width: '8px', height: '8px', background: 'var(--primary-dark)'
+                                                        }} />
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
@@ -822,19 +862,46 @@ const Home = () => {
                                                 { id: 'recurring', label: 'Despesas Recorrentes' },
                                                 { id: 'installment', label: 'Despesas Parceladas' }
                                             ].map(f => (
-                                                <button
-                                                    key={f.id}
-                                                    onClick={() => setActiveFilter(f.id)}
-                                                    style={{
-                                                        whiteSpace: 'nowrap', padding: '10px 18px', borderRadius: '12px', fontSize: '0.9rem', fontWeight: '600',
-                                                        background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--bg-color)',
-                                                        color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
-                                                        border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)',
-                                                        transition: 'all 0.2s'
-                                                    }}
-                                                >
-                                                    {t(f.label, { defaultValue: f.label })}
-                                                </button>
+                                                <div key={f.id} style={{ position: 'relative' }}>
+                                                    <button
+                                                        onClick={() => handleFilterClick(f.id)}
+                                                        style={{
+                                                            whiteSpace: 'nowrap', padding: '10px 18px', borderRadius: '12px', fontSize: '0.9rem', fontWeight: '600',
+                                                            background: activeFilter === f.id ? 'var(--primary-color)' : 'var(--bg-color)',
+                                                            color: activeFilter === f.id ? 'white' : 'var(--text-muted)',
+                                                            border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        {t(f.label, { defaultValue: f.label })}
+                                                    </button>
+                                                    
+                                                    <AnimatePresence>
+                                                        {showFilterTotal?.id === f.id && (
+                                                            <motion.div
+                                                                initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                                                                animate={{ opacity: 1, y: -50, scale: 1 }}
+                                                                exit={{ opacity: 0, y: 10, scale: 0.8 }}
+                                                                onClick={() => setShowFilterTotal(null)}
+                                                                style={{
+                                                                    position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+                                                                    background: 'var(--primary-dark)', color: 'white',
+                                                                    padding: '8px 14px', borderRadius: '12px', fontSize: '0.8rem',
+                                                                    fontWeight: '800', whiteSpace: 'nowrap', zIndex: 100,
+                                                                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)', cursor: 'pointer',
+                                                                    pointerEvents: 'auto'
+                                                                }}
+                                                            >
+                                                                Total: {formatCurrency(showFilterTotal.amount)}
+                                                                <div style={{
+                                                                    position: 'absolute', bottom: '-4px', left: '50%',
+                                                                    transform: 'translateX(-50%) rotate(45deg)',
+                                                                    width: '8px', height: '8px', background: 'var(--primary-dark)'
+                                                                }} />
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+                                                </div>
                                             ))}
                                         </div>
 
