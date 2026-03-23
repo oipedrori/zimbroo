@@ -618,7 +618,7 @@ const Home = () => {
                     )}
 
                     {!isDesktop && (
-                        <section id="onboarding-transactions-list" style={{ marginTop: '32px' }}>
+                        <section id="onboarding-transactions-list" style={{ marginTop: '24px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                                 <h3 style={{ fontSize: '1.2rem', fontWeight: '600', margin: 0 }}>{t('transactions')}</h3>
                             </div>
@@ -867,7 +867,7 @@ const Home = () => {
                                         isDesktop={isDesktop}
                                     />
 
-                                    <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', marginTop: '32px' }}>
+                                    <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', marginTop: '24px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                                             <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>{t('transactions')}</h3>
                                         </div>
@@ -998,7 +998,7 @@ const Home = () => {
                                         <BudgetPieChart transactions={transactions} currentDate={currentDate} />
                                     </section>
 
-                                    <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '32px' }}>
+                                    <section className="glass-panel" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '24px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>Limites Ativos</h3>
                                             <button
