@@ -35,6 +35,15 @@ export const analyzeTextWithGemini = async (text, transactions = [], conversatio
       };
     }
 
+    // ROTA 2: Edição/Remoção (Intercepção Local)
+    const guidanceKeywords = /remov[ae]r|deletar|excluir|edit[ae]r|mud[ae]r|alter[ae]r/i;
+    if (guidanceKeywords.test(text)) {
+      return {
+        action: 'analysis',
+        message: 'Para editar uma movimentação, basta arrastá-la para a direita. Para remover, arraste para a esquerda!'
+      };
+    }
+
     const categoriesExpenseStr = CATEGORIAS_DESPESA.map(c => c.id).join(', ');
     const categoriesIncomeStr = CATEGORIAS_RECEITA.map(c => c.id).join(', ');
 
