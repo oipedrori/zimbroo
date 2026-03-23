@@ -54,24 +54,18 @@ const Onboarding = ({ onComplete }) => {
       const step = ONBOARDING_STEPS[currentStep];
       const element = document.getElementById(step.id);
       if (element) {
-        // Auto-scroll to element ensuring it doesn't need to be scrolled into view
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Small delay to let scroll finish before taking measurements
-        setTimeout(() => {
-          const rect = element.getBoundingClientRect();
-          if (rect.height > 0) {
-            setTargetRect({
-              x: rect.left,
-              y: rect.top,
-              width: rect.width,
-              height: rect.height,
-              padding: step.id === 'onboarding-ai-fab' ? 20 : 8
-            });
-          } else {
-            skipNext();
-          }
-        }, 300);
+        const rect = element.getBoundingClientRect();
+        if (rect.height > 0) {
+          setTargetRect({
+            x: rect.left,
+            y: rect.top,
+            width: rect.width,
+            height: rect.height,
+            padding: step.id === 'onboarding-ai-fab' ? 20 : 8
+          });
+        } else {
+          skipNext();
+        }
       } else {
         skipNext();
       }
@@ -110,10 +104,15 @@ const Onboarding = ({ onComplete }) => {
 
   if (!isVisible || !targetRect) return null;
 
-  // Fixed region logic: safe top or safe bottom
-  const tooltipStyle = targetRect.y > window.innerHeight / 2 
-    ? { top: '100px' } 
-    : { bottom: '120px' };
+  // Visual cohesion: display card near the spotlight
+  // If there's space below, show it below. Otherwise show it above.
+  const tooltipHeight = 160; // Approximate
+  const padding = 20;
+  const isTooLow = targetRect.y + targetRect.height + tooltipHeight + padding > window.innerHeight;
+  
+  const tooltipPosition = isTooLow 
+    ? { top: Math.max(20, targetRect.y - tooltipHeight - padding) }
+    : { top: targetRect.y + targetRect.height + padding };
 
   return (
     <motion.div 
@@ -182,7 +181,7 @@ const Onboarding = ({ onComplete }) => {
              left: '50%',
              transform: 'translateX(-50%)',
              marginLeft: '-140px', // Center it manually
-             ...tooltipStyle
+             ...tooltipPosition
            }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
