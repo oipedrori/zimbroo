@@ -570,7 +570,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                         </div>
                     )}
 
-                    {(!aiMessage || (conversationContext && !isProcessing)) ? (
+                    {(!aiMessage && !conversationContext && !isProcessing) ? (
                         (isTextMode || isManualTextMode) ? (
                             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'center' }}>
                                 <div style={{ textAlign: 'center', marginTop: '10px', flexShrink: 0 }}>
@@ -623,13 +623,8 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                         ) : transcript ? (
                             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center' }}>
                                 <p className="spoken-text">{transcript}</p>
-                                {!isProcessing && !isListening && (
-                                    <button className="send-transcript-btn" onClick={handleProcessManualClick}>
-                                        {t('process', { defaultValue: 'Analisar' })}
-                                    </button>
-                                )}
                             </div>
-                        ) : (
+                        ) : (!conversationContext && !aiMessage) ? (
                             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center' }}>
                                 <div className="ai-status-header">
                                     <h3 style={{ color: 'white', fontSize: '1.4rem', fontWeight: '600', marginBottom: '8px', opacity: 0.9 }}>
@@ -651,7 +646,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                                     </div>
                                 )}
                             </div>
-                        )
+                        ) : null
                     ) : null}
                 </div>
             </div>
