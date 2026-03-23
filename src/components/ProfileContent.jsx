@@ -265,6 +265,23 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
             {/* Destructive Actions */}
             <div style={{ paddingTop: '32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <button
+                    onClick={() => {
+                        localStorage.removeItem('hasCompletedOnboarding');
+                        haptic.medium();
+                        window.location.reload();
+                    }}
+                    style={{ 
+                        width: '100%', padding: '16px', borderRadius: '16px', 
+                        background: 'rgba(34, 197, 94, 0.1)', color: 'var(--primary-color)', 
+                        border: '1px solid rgba(34, 197, 94, 0.3)', fontWeight: '700', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                        marginBottom: '8px'
+                    }}
+                >
+                    <Sparkles size={18} /> <span style={{ fontSize: '1rem' }}>Ver Onboarding (Teste)</span>
+                </button>
+
+                <button
                     onClick={() => logout()}
                     style={{ 
                         width: '100%', padding: '16px', borderRadius: '16px', 
