@@ -390,7 +390,10 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                     }
 
                     // Lógica Conversacional de Recorrência
-                    if (result.recorrente_sugerida && lastAddedTx) {
+                    // Só pergunta se recorrente_sugerida for true E se o usuário NÃO pediu explicitamente pra ser recorrente
+                    const hasExplicitRecurring = txs.some(t => t.repeatType === 'recurring' || t.repeatType === 'recurring_all');
+                    
+                    if (result.recorrente_sugerida && lastAddedTx && !hasExplicitRecurring) {
                         setAiMessage(`Adicionado: ${lastAddedTx.description} (R$ ${lastAddedTx.amount}).\n\nNotei que parece ser uma conta recorrente. Deseja repetir este lançamento todos os meses?`);
                         setConversationContext({ type: 'recurring_suggestion', tx: lastAddedTx });
                         setTranscript('');

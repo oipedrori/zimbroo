@@ -347,7 +347,7 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                     onClick={() => { if (showVerse) { hideVerse(); } else { setShowVerse(true); haptic.medium(); } }}
                     style={{ fontSize: '0.75rem', fontWeight: '700', letterSpacing: '0.5px', color: 'var(--text-muted)', border: 'none', background: 'none', cursor: 'pointer', opacity: 0.4 }}
                 >
-                    ZIMBROO v1.1.3
+                    ZIMBROO v1.1.4
                 </button>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', opacity: 0.35, margin: '4px 0 0', letterSpacing: '0.3px' }}>{t('made_in_brazil')}</p>
             </div>

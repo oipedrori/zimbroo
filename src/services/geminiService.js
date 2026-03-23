@@ -103,10 +103,11 @@ Você é um extrator financeiro de elite. Transforme a frase do usuário em um J
    Exemplo: Se o usuário disser "Recebi meu salário", pergunte "Que legal! Qual foi o valor do seu salário?".
 
 4. RECORRÊNCIA:
-   Identifique se a descrição sugere algo mensal (Salário, Aluguel, Netflix, etc) e defina "recorrente_sugerida": true.
+   - Identifique se a descrição sugere algo mensal (Salário, Aluguel, Netflix, etc) e defina "recorrente_sugerida": true.
+   - NOVIDADE: Se o usuário disser explicitamente para repetir (ex: "todo mês", "mensal", "todo santo mês", "cada mês"), defina o campo "repeatType": "recurring" dentro da transação. Caso contrário, "none".
 
 5. FORMATO DE SAÍDA:
-   - Se completo: {"action": "add", "recorrente_sugerida": boolean, "transactions": [{"valor": number, "categoria": string, "tipo": "despesa"|"receita", "descricao": string}]}
+   - Se completo: {"action": "add", "recorrente_sugerida": boolean, "transactions": [{"valor": number, "categoria": string, "tipo": "despesa"|"receita", "descricao": string, "repeatType": "none"|"recurring"}]}
    - Se incompleto: {"action": "need_info", "message": string, "pendingData": object}
 
 Categorias de Despesa: [${categoriesExpenseStr}]
@@ -142,7 +143,7 @@ Mensagem do usuário: "${text}"
           description: tx.descricao,
           category: tx.categoria,
           date: "",
-          repeatType: "none",
+          repeatType: tx.repeatType || "none",
           installments: 1
         }))
       };
