@@ -24,6 +24,17 @@ const callBackendAi = async (type, payload) => {
 
 export const analyzeTextWithGemini = async (text, transactions = [], conversationContext = null, locale = 'pt') => {
   try {
+    // --- ROUTER DE INTENÇÕES (REGEX) ---
+    
+    // ROTA 1: Relatório (Intercepção Local)
+    const reportKeywords = /relat[óo]rio|gr[áa]fico|balan[çc]o|estat[íi]stica/i;
+    if (reportKeywords.test(text)) {
+      return {
+        action: 'analysis',
+        message: 'Para uma visão detalhada, clique no seu Card de Saldo para ver os gráficos das suas movimentações!'
+      };
+    }
+
     const categoriesExpenseStr = CATEGORIAS_DESPESA.map(c => c.id).join(', ');
     const categoriesIncomeStr = CATEGORIAS_RECEITA.map(c => c.id).join(', ');
 
@@ -36,108 +47,86 @@ export const analyzeTextWithGemini = async (text, transactions = [], conversatio
       .reduce((sum, t) => sum + t.amount, 0);
     const monthlyBalance = totalIncome - totalExpenses;
 
-    // Enviar até 50 transações (em vez de 15) com ID para permitir deletar
+    // Enviar até 50 transações para análise profunda
     const recentTxsStr = transactions.slice(0, 50).map(t =>
       `ID: ${t.id} | Tipo: ${t.type === 'expense' ? 'Despesa' : 'Receita'} | Valor: R$${t.amount.toFixed(2)} | Desc: ${t.description} | Cat: ${t.category} | Data: ${t.date || ''}`
     ).join('\n');
 
+    // ROTA 2: Pergunta (Análise Contextual)
+    const questionKeywords = /^(quem|quando|como|quanto|o que|vale a pena)/i;
+    const isQuestion = questionKeywords.test(text.trim()) || text.includes('?') || text.toLowerCase().includes('limite');
+
     const currentDateStr = new Date().toLocaleDateString('pt-BR');
+    let prompt = "";
+    const model = "gemini-2.5-flash";
 
-    const prompt = `
-Você é um assistente financeiro do aplicativo Zimbroo. O usuário enviará uma mensagem de texto ou voz.
+    if (isQuestion) {
+      // ROTA 2: Análise Profunda (Mantém histórico para perguntas e limites)
+      prompt = `
+Você é um assistente financeiro do aplicativo Zimbroo. O usuário fez uma pergunta ou pediu para gerenciar limites: "${text}"
 
-Data de Hoje: ${currentDateStr}. Sempre que o usuário mencionar uma data específica (ex: "dia 10", "10 de marco"), calcule a data correta no formato YYYY-MM-DD considerando o mês/ano atual. Se não falar data, retorne um texto vazio "".
+Data de Hoje: ${currentDateStr}.
 
 ═══ RESUMO FINANCEIRO DO MÊS ATUAL ═══
 • Total de Receitas: R$${totalIncome.toFixed(2)}
 • Total de Despesas: R$${totalExpenses.toFixed(2)}
 • Saldo do Mês: R$${monthlyBalance.toFixed(2)} ${monthlyBalance >= 0 ? '(positivo ✓)' : '(negativo ✗)'}
-• Número de transações: ${transactions.length}
 ═══════════════════════════════════════
 
-TRANSAÇÕES DO MÊS (últimas ${Math.min(transactions.length, 50)} de ${transactions.length}):
+TRANSAÇÕES DO MÊS:
 ${recentTxsStr || "Nenhuma transação registrada este mês"}
 
 Categorias de Despesa: [${categoriesExpenseStr}]
 Categorias de Receita: [${categoriesIncomeStr}]
 
-CONVERSA PENDENTE ANTERIOR (O usuário está respondendo a uma pergunta sua):
-${conversationContext ? JSON.stringify(conversationContext) : "Nenhuma pendência"}
+INSTRUÇÕES:
+1. Responda à pergunta do usuário considerando o contexto financeiro acima.
+2. Se o usuário quiser definir um limite (ex: "limite de 500 em mercado"), retorne MODELO LIMITE.
+3. Retorne APENAS o JSON puro.
 
-REGRAS DE OURO:
-1. PARCELAMENTO: Se o usuário falar que algo foi "parcelado em X vezes", "em 10x", etc., você DEVE calcular o valor de CADA parcela (Valor Total / X) e retornar no campo "amount". Defina "repeatType": "installment" e "installments": X.
-2. RECORRÊNCIA: Se a transação parece ser um gasto fixo mensal (Aluguel, Energia, Internet, Plano de Celular, Condomínio, Netflix, Spotify, etc.) e o usuário AINDA não especificou se é recorrente, você DEVE retornar "action": "need_info" com uma mensagem perguntando se ele deseja tornar recorrente.
-3. Se o usuário confirmar algo que você sugeriu (ex: "Sim", "Pode ser"), complete a ação usando o contexto anterior.
-4. SALDO E ANÁLISES: Ao responder sobre saldo, receitas, despesas ou qualquer análise financeira, use SEMPRE os valores do RESUMO FINANCEIRO acima. Nunca tente calcular da lista de transações.
+MODELO ANÁLISE: {"action": "analysis", "message": "Sua resposta curta..."}
+MODELO LIMITE: {"action": "limit", "category": "ID_CATEGORIA", "amount": 500.00, "message": "Confirmação..."}
+`;
+    } else {
+      // ROTA 3: Extração de Transação (Prompt Curto)
+      prompt = `
+Você é um extrator financeiro. Transforme a frase do usuário em um JSON: {"valor": number, "categoria": string, "tipo": "despesa"|"receita", "descricao": string}. Não responda com texto, apenas o JSON.
 
-REGRAS ESTRITAS:
-1. Você DEVE retornar APENAS um ÚNICO objeto JSON válido. NÃO inclua marcações markdown (\`\`\`json), nem texto antes ou depois. APENAS o JSON puro.
-2. Você DEVE responder toda a chave "message" estritamente no idioma do usuário (${locale}). Se for "en", responda em Inglês. Se for "es", Espanhol, etc. E não traduza as propriedades do objeto JSON, apenas o conteúdo de "message".
-3. Quando a ação for "analysis" ou apenas responder a informações ou opiniões pedidas pelo usuário, o campo "message" DEVE ter NO MÁXIMO 2 parágrafos. Seja conciso e direto.
-
-Você APENAS PODE RESPONDER com um objeto JSON puro. NÃO INCLUA \`\`\`json ou markdown. Seu JSON deve obrigatoriamente seguir um destes modelos abaixo baseado no objetivo da fala:
-
-MODELO 1: ADICIONAR NOVA(S) TRANSAÇÃO(ÕES)
-{
-  "action": "add",
-  "transactions": [
-    {
-      "type": "expense", // ou "income"
-      "amount": 10.50, // O valor de UMA parcela se for installment. Use PONTO (.) decimal.
-      "description": "Ex: Padaria",
-      "category": "ID_CATEGORIA",
-      "date": "2026-03-04",
-      "repeatType": "none", // "none", "recurring", "installment"
-      "installments": 1 // Quantidade de parcelas se for installment.
-    }
-  ]
-}
-
-MODELO 2: PEDIR MAIS INFORMAÇÕES
-{
-  "action": "need_info",
-  "message": "Deseja que eu coloque como recorrente todos os meses?",
-  "pendingData": { "type": "expense", "amount": 1200, "description": "Aluguel", "category": "moradia", "repeatType": "recurring" }
-}
-
-MODELO 3: DELETAR UMA TRANSAÇÃO
-{
-  "action": "delete",
-  "targetId": "ID_DA_TRANSACAO",
-  "message": "Ok, apaguei o registro."
-}
-
-MODELO 4: ANÁLISE GENÉRICA
-{
-  "action": "analysis",
-  "message": "Resumo aqui..."
-}
-
-MODELO 5: GERENCIAR LIMITE
-{
-  "action": "limit",
-  "category": "ID_CATEGORIA",
-  "amount": 500.00,
-  "message": "Tudo certo! Defini o limite de Alimentação para R$ 500,00."
-}
+Categorias de Despesa: [${categoriesExpenseStr}]
+Categorias de Receita: [${categoriesIncomeStr}]
 
 Mensagem do usuário: "${text}"
 `;
-
-    const result = await callBackendAi('analyze', { prompt, model: "gemini-2.5-flash" });
-    let responseText = result.text;
-
-    // Fallback: strip markdown ticks if Gemini included them despite instructions
-    responseText = responseText.replace(/\`\`\`json/gi, '').replace(/\`\`\`/g, '').trim();
-
-    // Use regex to strictly extract JSON object
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    } else {
-      throw new Error("Invalid output format from AI");
     }
 
+    const result = await callBackendAi('analyze', { prompt, model });
+    let responseText = result.text;
+    responseText = responseText.replace(/\`\`\`json/gi, '').replace(/\`\`\`/g, '').trim();
+
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("Invalid output format from AI");
+    
+    const aiJson = JSON.parse(jsonMatch[0]);
+
+    // Se for ROTA 3 (Extração Direta), mapear para o formato do app (MODELO 1)
+    if (!isQuestion && aiJson.valor) {
+      return {
+        action: "add",
+        transactions: [
+          {
+            type: aiJson.tipo === 'receita' ? 'income' : 'expense',
+            amount: parseFloat(aiJson.valor),
+            description: aiJson.descricao,
+            category: aiJson.categoria,
+            date: "",
+            repeatType: "none",
+            installments: 1
+          }
+        ]
+      };
+    }
+
+    return aiJson;
   } catch (error) {
     console.error("Gemini AI Error:", error);
     return { error: `IA protegida: ${error.message || "Tente novamente."}` };
