@@ -20,11 +20,13 @@ export const InstallProvider = ({ children }) => {
 
         // Detect iOS
         const userAgent = window.navigator.userAgent.toLowerCase();
-        const ios = /iphone|ipad|ipod/.test(userAgent);
+        const isIpadOS = (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const ios = /iphone|ipad|ipod/.test(userAgent) || isIpadOS;
         setIsIOS(ios);
 
         // Pre-set installable for iOS if not standalone
-        if (ios && !window.navigator.standalone) {
+        // Safari iOS supports "Add to Home Screen" but doesn't fire 'beforeinstallprompt'
+        if (ios && !isStandalone) {
             setIsInstallable(true);
         }
 
