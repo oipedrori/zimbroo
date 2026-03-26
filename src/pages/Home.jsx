@@ -70,6 +70,16 @@ const Home = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
     const [isLimitActionOpen, setIsLimitActionOpen] = useState(false);
+    const [isLimitModalClosing, setIsLimitModalClosing] = useState(false);
+
+    const closeLimitModal = () => {
+        setIsLimitModalClosing(true);
+        setTimeout(() => {
+            setIsLimitModalOpen(false);
+            setIsLimitModalClosing(false);
+        }, 300);
+    };
+
     const [selectedLimitCat, setSelectedLimitCat] = useState(null);
     const [tempLimit, setTempLimit] = useState({ categoryId: '', amount: '' });
     const currentYear = currentDate.getFullYear();
@@ -1444,11 +1454,12 @@ const Home = () => {
                     {isLimitModalOpen && (
                         <>
                             <div
-                                onClick={() => setIsLimitModalOpen(false)}
+                                onClick={closeLimitModal}
                                 style={{
                                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                                     background: 'rgba(27, 69, 32, 0.4)', backdropFilter: 'blur(8px)',
-                                    zIndex: 12000, transition: 'all 0.3s ease'
+                                    zIndex: 12000, transition: 'all 0.3s ease',
+                                    animation: isLimitModalClosing ? 'fadeOut 0.3s forwards' : 'fadeIn 0.3s forwards'
                                 }}
                             />
                             <div style={{
@@ -1470,7 +1481,9 @@ const Home = () => {
                                 flexDirection: 'column',
                                 gap: '24px',
                                 overflow: 'hidden',
-                                animation: isDesktop ? 'modalOpen 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' : 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+                                animation: isDesktop 
+                                    ? (isLimitModalClosing ? 'modalClose 0.3s forwards' : 'modalOpen 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards') 
+                                    : (isLimitModalClosing ? 'slideOutDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards')
                             }}>
                                 {!isDesktop && (
                                     <div style={{
@@ -1487,7 +1500,7 @@ const Home = () => {
                                         <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Defina quanto você pretende gastar em uma categoria específica.</p>
                                     </div>
                                     <button
-                                        onClick={() => { haptic.light(); setIsLimitModalOpen(false); }}
+                                        onClick={() => { haptic.light(); closeLimitModal(); }}
                                         style={{
                                             width: '40px', height: '40px', borderRadius: 'var(--btn-radius)',
                                             background: 'var(--surface-color)', border: '1px solid var(--glass-border)',
@@ -1563,7 +1576,7 @@ const Home = () => {
                                                     const newLimits = { ...limits };
                                                     delete newLimits[tempLimit.categoryId];
                                                     setLimits(newLimits);
-                                                    setIsLimitModalOpen(false);
+                                                    closeLimitModal();
                                                     haptic.medium();
                                                 }}
                                                 style={{ flex: 1, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'transparent', border: '1px solid var(--danger-color)', color: 'var(--danger-color)', fontWeight: '700', cursor: 'pointer' }}
@@ -1574,7 +1587,7 @@ const Home = () => {
                                                 onClick={() => {
                                                     if (tempLimit.categoryId && tempLimit.amount) {
                                                         setLimits({ ...limits, [tempLimit.categoryId]: parseFloat(tempLimit.amount) });
-                                                        setIsLimitModalOpen(false);
+                                                        closeLimitModal();
                                                         haptic.medium();
                                                     }
                                                 }}
@@ -1586,7 +1599,7 @@ const Home = () => {
                                     ) : (
                                         <>
                                             <button
-                                                onClick={() => setIsLimitModalOpen(false)}
+                                                onClick={closeLimitModal}
                                                 style={{ flex: 1, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--surface-color)', border: 'none', color: 'var(--text-main)', fontWeight: '700', cursor: 'pointer' }}
                                             >
                                                 Cancelar
@@ -1595,7 +1608,7 @@ const Home = () => {
                                                 onClick={() => {
                                                     if (tempLimit.categoryId && tempLimit.amount) {
                                                         setLimits({ ...limits, [tempLimit.categoryId]: parseFloat(tempLimit.amount) });
-                                                        setIsLimitModalOpen(false);
+                                                        closeLimitModal();
                                                         haptic.medium();
                                                     }
                                                 }}
@@ -1613,9 +1626,21 @@ const Home = () => {
                                 0% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
                                 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
                             }
+                            @keyframes modalClose {
+                                0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                                100% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
+                            }
                             @keyframes slideUp {
                                 from { transform: translateY(100%); }
                                 to { transform: translateY(0); }
+                            }
+                            @keyframes slideOutDown {
+                                from { transform: translateY(0); }
+                                to { transform: translateY(100%); }
+                            }
+                            @keyframes fadeOut {
+                                from { opacity: 1; }
+                                to { opacity: 0; }
                             }
                             @keyframes bubbleBounce {
                                 0% { transform: translateY(10px) scale(0.8); opacity: 0; }

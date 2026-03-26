@@ -1,12 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Sparkles, MessageCircle, Brain, Target, History, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const PaywallModal = ({ isOpen, onClose, reason = 'feature' }) => {
     const { currentUser } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
+    
+    const [shouldRender, setShouldRender] = useState(isOpen);
+    const [isAnimating, setIsAnimating] = useState(false);
 
-    if (!isOpen) return null;
+    useEffect(() => {
+        if (isOpen) {
+            setShouldRender(true);
+            setTimeout(() => setIsAnimating(true), 10);
+        } else {
+            setIsAnimating(false);
+            const timeout = setTimeout(() => {
+                setShouldRender(false);
+            }, 300);
+            return () => clearTimeout(timeout);
+        }
+    }, [isOpen]);
+
+    if (!shouldRender && !isOpen) return null;
 
     const handleSubscribe = async (priceId) => {
         setIsLoading(true);
@@ -43,8 +59,11 @@ const PaywallModal = ({ isOpen, onClose, reason = 'feature' }) => {
         <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             background: 'var(--bg-color)', zIndex: 9999,
-            display: 'flex', flexDirection: 'column'
-        }} className="animate-slide-up">
+            display: 'flex', flexDirection: 'column',
+            transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+            transform: isAnimating ? 'translateY(0)' : 'translateY(100vh)',
+            opacity: isAnimating ? 1 : 0
+        }}>
             
             {/* Header Decorativo */}
             <div style={{

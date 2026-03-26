@@ -10,22 +10,25 @@ import LoadingDots from './LoadingDots';
 import { useInstall } from '../contexts/InstallContext';
 import { useSubscription } from '../hooks/useSubscription';
 import PaywallModal from './PaywallModal';
+import { useTheme } from '../contexts/ThemeContext'; // Added this import
 
 const ProfileContent = ({ onOpenNotion, onClose }) => {
     const { currentUser, logout, deleteAccount } = useAuth();
     const { t, locale, changeLocale, currency, changeCurrency } = useI18n();
     const { isInstallable, isStandalone, promptInstall } = useInstall();
+    const { theme, setTheme } = useTheme(); // Changed to useTheme hook
 
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isResettingData, setIsResettingData] = useState(false);
+    const [view, setView] = useState('main'); // 'main' or 'subscription'
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
-    const [theme, setTheme] = useState(localStorage.getItem('zimbroo_theme') || 'system');
+    // const [theme, setTheme] = useState(localStorage.getItem('zimbroo_theme') || 'system'); // Removed, now using useTheme
     const [showVerse, setShowVerse] = useState(false);
     const [verseHiding, setVerseHiding] = useState(false);
 
-    const { isPremium, status, loading: subLoading } = useSubscription();
+    const { isPremium, status, loading: subLoading, subscriptionStart, currentPeriodEnd } = useSubscription(); // Added subscriptionStart, currentPeriodEnd
     const [showPaywall, setShowPaywall] = useState(false);
     const [isManagingSub, setIsManagingSub] = useState(false);
 
@@ -42,19 +45,20 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
         }
     }, [showVerse]);
 
-    useEffect(() => {
-        const root = document.documentElement;
-        if (theme === 'dark') {
-            root.classList.add('theme-dark');
-            root.classList.remove('theme-light');
-        } else if (theme === 'light') {
-            root.classList.add('theme-light');
-            root.classList.remove('theme-dark');
-        } else {
-            root.classList.remove('theme-dark', 'theme-light');
-        }
-        localStorage.setItem('zimbroo_theme', theme);
-    }, [theme]);
+    // Removed theme useEffect, now handled by useTheme hook
+    // useEffect(() => {
+    //     const root = document.documentElement;
+    //     if (theme === 'dark') {
+    //         root.classList.add('theme-dark');
+    //         root.classList.remove('theme-light');
+    //     } else if (theme === 'light') {
+    //         root.classList.add('theme-light');
+    //         root.classList.remove('theme-dark');
+    //     } else {
+    //         root.classList.remove('theme-dark', 'theme-light');
+    //     }
+    //     localStorage.setItem('zimbroo_theme', theme);
+    // }, [theme]);
 
     const handleResetData = async () => {
         setIsResettingData(true);
@@ -137,6 +141,12 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
         }
     };
 
+    const handleLogout = () => { // Added handleLogout function
+        logout();
+    };
+
+    const [isResetDialogOpen, setIsResetDialogOpen] = useState(false); // Added state for reset dialog
+
     return (
         <div className="animate-fade-in" style={{ paddingBottom: '40px' }}>
             {/* Header with Close Button */}
@@ -155,6 +165,64 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                 </button>
             </div>
 
+            {view === 'subscription' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                        <button onClick={() => setView('main')} style={{ 
+                            background: 'var(--surface-color)', border: '1px solid var(--glass-border)', width: '36px', height: '36px', 
+                            borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--text-main)', cursor: 'pointer' 
+                        }}>
+                            ←
+                        </button>
+                        <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-main)' }}>Assinatura PRO</h3>
+                    </div>
+
+                    <div style={{ 
+                        background: 'var(--primary-gradient)', borderRadius: '24px', padding: '32px', 
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', 
+                        boxShadow: '0 12px 30px rgba(var(--primary-rgb), 0.3)', color: 'white', position: 'relative', overflow: 'hidden'
+                    }}>
+                        <div style={{ position: 'absolute', top: '-20px', right: '-20px', opacity: 0.1 }}>
+                            <Sparkles size={120} />
+                        </div>
+                        <img src="/Z.png" alt="Zimbro" style={{ width: '64px', height: '64px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }} />
+                        <h2 style={{ fontSize: '1.4rem', fontWeight: '800', margin: 0, textAlign: 'center' }}>
+                            {currentUser?.displayName || 'Você'} é PRO!
+                        </h2>
+                        
+                        {subscriptionStart && (
+                            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px 20px', borderRadius: '100px', backdropFilter: 'blur(10px)' }}>
+                                <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>
+                                    ✨ PRO há {Math.max(0, Math.floor((Date.now() - subscriptionStart) / (1000 * 60 * 60 * 24)))} dias
+                                </span>
+                            </div>
+                        )}
+                        
+                        {currentPeriodEnd && (
+                            <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.9 }}>
+                                Próxima renovação: {new Date(currentPeriodEnd).toLocaleDateString()}
+                            </p>
+                        )}
+                    </div>
+
+                    <button
+                        onClick={handleManageSubscription}
+                        disabled={isManagingSub || subLoading}
+                        style={{
+                            width: '100%', background: 'var(--surface-color)', 
+                            padding: '16px 20px', borderRadius: '20px',
+                            display: 'flex', justifyContent: 'center', alignItems: 'center',
+                            color: 'var(--text-main)', cursor: 'pointer',
+                            border: '1px solid var(--glass-border)',
+                            marginTop: 'auto', transition: 'all 0.2s', opacity: (isManagingSub || subLoading) ? 0.7 : 1,
+                            fontWeight: '700', fontSize: '1rem'
+                        }}
+                    >
+                        {isManagingSub ? 'Redirecionando...' : 'Gerenciar Pagamento/Plano'}
+                    </button>
+                </div>
+            ) : (
+                <>
             {/* Profile Info Summary */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px', background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)' }}>
                 <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'var(--bg-color)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-color)', border: '1px solid var(--glass-border)', position: 'relative' }}>
@@ -178,7 +246,7 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
 
             {/* Premium Action */}
             <button
-                onClick={isPremium ? handleManageSubscription : () => setShowPaywall(true)}
+                onClick={isPremium ? () => setView('subscription') : () => setShowPaywall(true)}
                 disabled={isManagingSub || subLoading}
                 style={{
                     width: '100%', background: isPremium ? 'var(--surface-color)' : 'rgba(75, 180, 90, 0.1)',
@@ -449,6 +517,9 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                 </button>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', opacity: 0.35, margin: '4px 0 0', letterSpacing: '0.3px' }}>{t('made_in_brazil')}</p>
             </div>
+
+            </>
+            )}
 
             {/* Modals de Confirmação */}
             <ConfirmDialog

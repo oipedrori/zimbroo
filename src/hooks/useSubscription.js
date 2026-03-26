@@ -24,6 +24,8 @@ export const useSubscription = () => {
                 setSubscription({
                     status,
                     isPremium: status === 'active' || status === 'trialing',
+                    currentPeriodEnd: data.current_period_end?.toMillis ? data.current_period_end.toMillis() : null,
+                    subscriptionStart: data.subscription_start?.toMillis ? data.subscription_start.toMillis() : null,
                     loading: false
                 });
             } else {

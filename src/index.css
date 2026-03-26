@@ -52,9 +52,9 @@
   :root:not(.theme-light) {
     --bg-color: #050a06;
     --surface-color: #0a140b;
-    --text-main: #ffffff;
-    --text-muted: #b8dfc4;
-    --btn-text: #ffffff; /* Fundo escuro da primary = texto claro */
+    --text-main: #FBFEFB;
+    --text-muted: rgba(251, 254, 251, 0.7);
+    --btn-text: #FBFEFB; /* Fundo escuro da primary = texto claro */
     --glass-bg: rgba(5, 10, 6, 0.85);
     --glass-border: rgba(255, 255, 255, 0.1);
     --notion-btn-bg: #ffffff;
@@ -75,9 +75,9 @@
 :root.theme-dark {
   --bg-color: #050a06;
   --surface-color: #0a140b;
-  --text-main: #ffffff;
-  --text-muted: #b8dfc4;
-  --btn-text: #ffffff;
+  --text-main: #FBFEFB;
+  --text-muted: rgba(251, 254, 251, 0.7);
+  --btn-text: #FBFEFB;
   --glass-bg: rgba(5, 10, 6, 0.85);
   --glass-border: rgba(255, 255, 255, 0.1);
   --notion-btn-bg: #ffffff;

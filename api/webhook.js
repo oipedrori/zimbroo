@@ -92,6 +92,7 @@ export default async function handler(req, res) {
                 stripe_subscription_id: subscription.id,
                 subscription_status: status,
                 current_period_end: admin.firestore.Timestamp.fromMillis(subscription.current_period_end * 1000),
+                subscription_start: admin.firestore.Timestamp.fromMillis(subscription.start_date * 1000),
             }, { merge: true });
 
             console.log(`Sucesso: Usuário ${firebaseUID} atualizado para status: ${status}`);
