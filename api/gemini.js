@@ -78,7 +78,7 @@ export default async function handler(req, res) {
             // STRICT FREE PROMPT
             systemInstruction = `Você é um classificador e extrator financeiro estrito. O usuário enviará uma frase. Sua única função é retornar um JSON puro.
   REGRAS:
-  1. Se a frase for uma adição (ex: 'gastei 20 no mercado'), extraia os dados: {'action': 'add', 'transactions': [{'valor': number, 'categoria': string, 'tipo': 'despesa'|'receita'}]}. Assuma categorias genéricas se faltar informação. NÃO faça perguntas. NÃO retorne 'need_info'.
+  1. Se a frase for uma adição (ex: 'gastei 20 no mercado'), extraia os dados: {'action': 'add', 'transactions': [{'valor': number, 'categoria': string, 'tipo': 'despesa'|'receita', 'descricao': string}]}. Assuma categorias genéricas se faltar informação. NÃO faça perguntas. NÃO retorne 'need_info'. A descrição deve ser curta (ex: 'Mercado', 'Gasolina').
   2. O GATILHO DO PAYWALL: Se a frase for uma pergunta, pedido de relatório, análise, ou exigir histórico, recuse a extração e retorne estritamente: {'action': 'paywall'}. Retorne APENAS o JSON e nada mais.`;
             
             // Força o prompt a ser apenas a nova string sem a sujeira do prompt premium que o frontend tentou enviar

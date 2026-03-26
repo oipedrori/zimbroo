@@ -194,7 +194,7 @@ const ProfileContent = ({ onOpenNotion, onClose }) => {
                         <Sparkles size={18} />
                     </div>
                     <span style={{ fontWeight: '700', fontSize: '0.95rem' }}>
-                        {subLoading ? 'Verificando...' : isManagingSub ? 'Redirecionando...' : isPremium ? 'Gerenciar Assinatura' : 'Assinar Zimbroo Premium'}
+                        {subLoading ? 'Verificando...' : isManagingSub ? 'Redirecionando...' : isPremium ? 'Gerenciar Assinatura' : 'Assinar Zimbroo PRO'}
                     </span>
                 </div>
             </button>

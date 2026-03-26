@@ -42,53 +42,48 @@ const PaywallModal = ({ isOpen, onClose, reason = 'feature' }) => {
     return (
         <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(10px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 9999, padding: '24px', opacity: 1, transition: 'opacity 0.3s'
-        }}>
-            <div className="animate-fade-in" style={{
-                background: 'var(--surface-color)', width: '100%', maxWidth: '450px',
-                borderRadius: '32px', border: '1px solid var(--glass-border)',
-                overflow: 'hidden', position: 'relative', boxShadow: '0 25px 50px rgba(0,0,0,0.5)'
+            background: 'var(--bg-color)', zIndex: 9999,
+            display: 'flex', flexDirection: 'column'
+        }} className="animate-slide-up">
+            
+            {/* Header Decorativo */}
+            <div style={{
+                background: 'var(--surface-color)', padding: '40px 24px 24px',
+                textAlign: 'center', borderBottom: '1px solid var(--glass-border)'
             }}>
-                {/* Header Decorativo */}
-                <div style={{
-                    background: 'var(--primary-gradient)', padding: '32px 24px',
-                    position: 'relative', textAlign: 'center'
+                <button onClick={onClose} style={{
+                    position: 'absolute', top: '24px', right: '24px',
+                    background: 'var(--bg-color)', border: '1px solid var(--glass-border)',
+                    width: '36px', height: '36px', borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--text-main)', cursor: 'pointer'
                 }}>
-                    <button onClick={onClose} style={{
-                        position: 'absolute', top: '16px', right: '16px',
-                        background: 'rgba(255,255,255,0.2)', border: 'none',
-                        width: '36px', height: '36px', borderRadius: '50%',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: 'white', cursor: 'pointer'
-                    }}>
-                        <X size={20} />
-                    </button>
-                    <div style={{
-                        width: '64px', height: '64px', borderRadius: '20px',
-                        background: 'rgba(255,255,255,0.2)', display: 'flex',
-                        alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
-                        backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.3)'
-                    }}>
-                        <Brain size={32} color="white" />
-                    </div>
-                    
-                    <h2 style={{ color: 'white', fontSize: '1.4rem', fontWeight: '800', margin: '0 0 8px', letterSpacing: '-0.5px' }}>
-                        {isQuota ? 'Você atingiu seu limite de 5 adições mágicas hoje! 🛑' : 'Desbloqueie o cérebro do Zimbroo 🧠'}
-                    </h2>
-                    <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.9rem', margin: 0, lineHeight: 1.5 }}>
-                        {isQuota 
-                            ? 'Cansado de digitar? Assine o Premium para ter adições manuais e por voz ilimitadas, além de inteligência financeira completa. Comece com 7 dias grátis!' 
-                            : 'Assuma o controle total do seu dinheiro com a ajuda da nossa Inteligência Artificial. Comece com 7 dias grátis!'}
-                    </p>
+                    <X size={20} />
+                </button>
+                <div style={{
+                    width: '64px', height: '64px', borderRadius: '20px',
+                    background: 'rgba(75, 180, 90, 0.1)', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
+                    backdropFilter: 'blur(5px)'
+                }}>
+                    <Brain size={32} color="var(--primary-color)" />
                 </div>
+                
+                <h2 style={{ color: 'var(--text-main)', fontSize: '1.4rem', fontWeight: '800', margin: '0 0 8px', letterSpacing: '-0.5px' }}>
+                    {isQuota ? 'Você atingiu seu limite de 5 adições mágicas hoje! 🛑' : 'Desbloqueie o cérebro do Zimbroo 🧠'}
+                </h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0, lineHeight: 1.5 }}>
+                    {isQuota 
+                        ? 'Cansado de digitar? Assine o PRO para ter adições manuais e por voz ilimitadas, além de inteligência financeira completa. Comece com 7 dias grátis!' 
+                        : 'Assuma o controle total do seu dinheiro com a ajuda da nossa Inteligência Artificial. Comece com 7 dias grátis!'}
+                </p>
+            </div>
 
-                {/* Corpo do Modal */}
-                <div style={{ padding: '16px 24px 24px', overflowY: 'auto', maxHeight: '50vh' }}>
-                    <h3 style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        O que você ganha no Premium:
-                    </h3>
+            {/* Corpo do Modal */}
+            <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    O que você ganha no PRO:
+                </h3>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
                         {[
@@ -139,11 +134,10 @@ const PaywallModal = ({ isOpen, onClose, reason = 'feature' }) => {
                             }}
                         >
                             Anual - R$ 199,90 / ano
-                            <div style={{ fontSize: '0.75rem', fontWeight: '600', opacity: 0.9, marginTop: '4px' }}>Economize 10% - 2 meses grátis!</div>
+                            <div style={{ fontSize: '0.75rem', fontWeight: '600', opacity: 0.9, marginTop: '4px' }}>2 meses grátis!</div>
                         </button>
                     </div>
                 </div>
-            </div>
         </div>
     );
 };
