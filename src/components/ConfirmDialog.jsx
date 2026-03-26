@@ -160,6 +160,7 @@ const ConfirmDialog = ({
                                 disabled={requireConfirm && confirmText !== requireConfirm}
                                 style={{ 
                                     background: opt.color || 'var(--primary-gradient)', 
+                                    border: opt.border || 'none',
                                     color: 'white',
                                     opacity: (requireConfirm && confirmText !== requireConfirm) ? 0.5 : 1,
                                     flex: layout === 'row' ? 1 : 'none'

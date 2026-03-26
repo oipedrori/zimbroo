@@ -455,15 +455,15 @@ const Home = () => {
                                 <BarChart2 size={18} color="var(--primary-color)" />
                                 {t('monthly_balance_chart', { defaultValue: 'Balanço Mensal' })}
                             </h3>
-                            <div style={{ height: '180px', display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+                            <div style={{ height: '180px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px' }}>
                                 {yearlyStats.map((s, i) => {
                                     const maxVal = Math.max(...yearlyStats.map(x => Math.max(x.incomes, x.expenses, 1)), 1);
                                     const isCurrentMonth = s.month === currentDate.getMonth() + 1;
                                     return (
                                         <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{ width: '100%', height: '140px', display: 'flex', alignItems: 'flex-end', gap: '2px', position: 'relative' }}>
-                                                <div style={{ flex: 1, height: `${(s.incomes / maxVal) * 100}%`, background: 'var(--success-color)', borderRadius: '2px 2px 0 0', opacity: isCurrentMonth ? 1 : 0.4 }}></div>
-                                                <div style={{ flex: 1, height: `${(s.expenses / maxVal) * 100}%`, background: 'var(--danger-color)', borderRadius: '2px 2px 0 0', opacity: isCurrentMonth ? 1 : 0.4 }}></div>
+                                            <div style={{ width: '16px', height: '140px', display: 'flex', alignItems: 'flex-end', gap: '2px', position: 'relative' }}>
+                                                <div style={{ width: '8px', height: `${Math.max(2, (s.incomes / maxVal) * 100)}%`, background: 'var(--success-color)', borderRadius: '2px 2px 0 0', opacity: isCurrentMonth ? 1 : 0.4 }}></div>
+                                                <div style={{ width: '8px', height: `${Math.max(2, (s.expenses / maxVal) * 100)}%`, background: 'var(--danger-color)', borderRadius: '2px 2px 0 0', opacity: isCurrentMonth ? 1 : 0.4 }}></div>
                                             </div>
                                             <span style={{ fontSize: '0.65rem', fontWeight: isCurrentMonth ? '800' : '500', color: isCurrentMonth ? 'var(--primary-color)' : 'var(--text-muted)' }}>{s.label}</span>
                                         </div>
@@ -986,7 +986,7 @@ const Home = () => {
                                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                                 <p style={{ fontWeight: '600', margin: 0, color: 'var(--text-main)' }}>{tx.dynamicDescription || tx.description}</p>
                                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{tx.virtualDate.split('-').slice(1).reverse().join('/')}</p>
+                                                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{format(new Date(tx.virtualDate || tx.date), 'dd/MM', { locale: ptBR })}</p>
                                                                     {tx.repeatType && (
                                                                         <span style={{
                                                                             fontSize: '0.65rem',
@@ -1373,13 +1373,13 @@ const Home = () => {
                         wide={true}
                         options={[
                             { label: t('edit', { defaultValue: 'Editar' }), value: 'edit', color: 'var(--primary-gradient)' },
-                            { label: t('delete', { defaultValue: 'Excluir' }), value: 'transparent', textColor: 'var(--danger-color)' }
+                            { label: t('delete', { defaultValue: 'Excluir' }), value: 'delete', color: 'transparent', border: '1px solid var(--danger-color)', textColor: 'var(--danger-color)' }
                         ]}
                         onConfirm={(val) => {
                             if (val === 'edit') {
                                 setTempLimit({ categoryId: selectedLimitCat, amount: limits[selectedLimitCat].toString() });
                                 setIsLimitModalOpen(true);
-                            } else if (val === 'transparent') { // Represents Delete when outlined
+                            } else if (val === 'delete' || val === 'transparent') { // Represents Delete when outlined
                                 const newLimits = { ...limits };
                                 delete newLimits[selectedLimitCat];
                                 setLimits(newLimits);
@@ -1457,7 +1457,8 @@ const Home = () => {
                                 top: isDesktop ? '50%' : 'auto',
                                 left: isDesktop ? '50%' : 0,
                                 right: isDesktop ? 'auto' : 0,
-                                transform: isDesktop ? 'translate(-50%, -50%)' : 'translateY(0)',
+                                height: 'auto',
+                                maxHeight: isDesktop ? '90vh' : '90vh',
                                 width: isDesktop ? 'min(90%, 550px)' : '100%',
                                 backgroundColor: 'var(--bg-color)',
                                 borderRadius: isDesktop ? '32px' : '32px 32px 0 0',
