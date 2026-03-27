@@ -24,9 +24,6 @@ import Onboarding from '../components/Onboarding';
 import { useSubscription } from '../hooks/useSubscription';
 import PaywallModal from '../components/PaywallModal';
 
-const HEADER_MAX = 330;
-const HEADER_MIN = 120;
-
 const Home = () => {
     const { currentUser, logout, deleteAccount } = useAuth();
     const { setIsAiActive, setIsBottomNavHidden } = useOutletContext();
@@ -103,10 +100,6 @@ const Home = () => {
     // Freemium
     const { isPremium, loading: subLoading } = useSubscription();
     const [showPaywall, setShowPaywall] = useState(false);
-
-    // --- Parallax Header State ---
-    const [scrollProgress, setScrollProgress] = useState(0); // 0 to 1
-    const scrollRef = React.useRef(null);
 
     useEffect(() => {
         const hasCompleted = localStorage.getItem('hasCompletedOnboarding');
@@ -332,13 +325,6 @@ const Home = () => {
         setTouchStart(null);
     };
 
-    const handleScroll = (e) => {
-        if (isDesktop) return; // Parallax only for mobile
-        const scrollTop = e.currentTarget.scrollTop;
-        const progress = Math.min(1, scrollTop / (HEADER_MAX - HEADER_MIN));
-        setScrollProgress(progress);
-    };
-
     // Cálculos do Dashboard
     const incomes = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
     const expenses = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
@@ -509,250 +495,155 @@ const Home = () => {
             ) : (
                 <div
                     className={`page-container animate-fade-in`}
-                    style={{ padding: 0, overflow: 'hidden', animation: 'slideUp 0.3s forwards' }}
+                    style={{ paddingBottom: isDesktop ? '120px' : '180px', animation: 'slideUp 0.3s forwards' }}
                 >
-                    {!isDesktop && (
+                    {/* Header (Now always visible but behaves differently on desktop) */}
+                    <header style={{
+                        display: 'flex',
+                        flexDirection: isDesktop ? 'row' : 'column',
+                        justifyContent: 'space-between',
+                        alignItems: isDesktop ? 'center' : 'flex-start',
+                        paddingTop: '8px',
+                        marginBottom: isDesktop ? '24px' : '0',
+                        gap: isDesktop ? '0' : '10px'
+                    }}>
                         <div
-                            className={`dynamic-header ${theme === 'dark' ? 'dark' : 'light'}`}
-                            style={{ height: `${HEADER_MAX - (HEADER_MAX - HEADER_MIN) * scrollProgress}px` }}
+                            id="onboarding-profile-btn"
+                            onClick={() => setIsSidebarOpen(true)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
                         >
-                            <div className="header-content-wrapper">
-                                {/* Top Row: Profile & Stats Button */}
-                                <div
-                                    className="header-fade-out"
-                                    style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        opacity: 1 - scrollProgress * 2,
-                                        pointerEvents: scrollProgress > 0.4 ? 'none' : 'auto',
-                                        marginBottom: '20px'
-                                    }}
-                                >
-                                    <div
-                                        id="onboarding-profile-btn"
-                                        onClick={() => setIsSidebarOpen(true)}
-                                        style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
-                                    >
-                                        <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white' }}>
-                                            <User size={22} />
-                                        </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                            <h1 style={{ fontSize: '1.1rem', color: 'white', fontWeight: '700', margin: 0 }}>
-                                                {(() => {
-                                                    const hour = new Date().getHours();
-                                                    const greetingKey = (hour >= 3 && hour < 12) ? 'good_morning' :
-                                                        (hour >= 12 && hour < 18) ? 'good_afternoon' : 'good_night';
-                                                    return t(greetingKey, { name: currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }) });
-                                                })()}
-                                            </h1>
-                                        </div>
-                                    </div>
-                                    <div
-                                        id="onboarding-stats-btn"
-                                        onClick={() => { haptic.medium(); setIsFlipped(true); }}
-                                        style={{
-                                            background: 'rgba(255, 255, 255, 0.2)',
-                                            padding: '8px',
-                                            borderRadius: '10px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            border: '1px solid rgba(255, 255, 255, 0.2)',
-                                            color: 'white'
-                                        }}>
-                                        <BarChart2 size={20} />
-                                    </div>
-                                </div>
+                            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-color)' }}>
+                                <User size={22} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <h1 style={{ fontSize: '1.2rem', color: 'var(--text-main)', fontWeight: '700', margin: 0 }}>
+                                    {(() => {
+                                        const hour = new Date().getHours();
+                                        const greetingKey = (hour >= 3 && hour < 12) ? 'good_morning' :
+                                            (hour >= 12 && hour < 18) ? 'good_afternoon' : 'good_night';
+                                        return t(greetingKey, { name: currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }) });
+                                    })()}
+                                </h1>
+                            </div>
+                        </div>
 
-                                {/* Row 2: Month Nav (Fade Out) */}
+                        {/* Desktop/Mobile Month Navigation */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: 'transparent',
+                            padding: '6px 12px',
+                            borderRadius: 'var(--btn-radius)',
+                            border: 'none',
+                            alignSelf: isDesktop ? 'auto' : 'stretch',
+                            justifyContent: isDesktop ? 'flex-start' : 'space-between'
+                        }}>
+                            <button onClick={() => { haptic.light(); setCurrentDate(subMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
+                                <ChevronLeft size={20} />
+                            </button>
+                            <span
+                                onClick={handleReturnToToday}
+                                style={{
+                                    fontWeight: '700',
+                                    color: 'var(--text-main)',
+                                    fontSize: '0.95rem',
+                                    textTransform: 'capitalize',
+                                    minWidth: '110px',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    userSelect: 'none'
+                                }}
+                            >
+                                {format(currentDate, 'MMMM yyyy', { locale: { pt: ptBR, en: enUS, es: es, fr: fr }[locale] || ptBR })}
+                            </span>
+                            <button onClick={() => { haptic.light(); setCurrentDate(addMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
+                                <ChevronRight size={20} />
+                            </button>
+                        </div>
+                    </header>
+
+                    {!isDesktop && (
+                        <section
+                            id="onboarding-balance-card"
+                            key={monthPrefix}
+                            className="glass-panel"
+                            onClick={() => { haptic.medium(); setIsFlipped(true); }}
+                            onTouchStart={onTouchStart}
+                            onTouchMove={onTouchMove}
+                            onTouchEnd={onTouchEnd}
+                            style={{
+                                flexShrink: 0, padding: '24px', background: cardGradient, color: 'var(--btn-text)', border: 'none',
+                                position: 'relative', overflow: 'hidden',
+                                touchAction: 'pan-y',
+                                cursor: 'pointer',
+                                transform: `translateX(${swipeOffset}px)`,
+                                transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1)',
+                                animation: !isSwiping ? (swipeDirection === 'left' ? 'slideLeftIn 0.3s ease-out' : swipeDirection === 'right' ? 'slideRightIn 0.3s ease-out' : 'none') : 'none'
+                            }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div>
+                                    <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '8px' }}>{t('monthly_balance')}</p>
+                                    <h2 style={{ fontSize: 'clamp(1.8rem, 8vw, 2.5rem)', marginBottom: '24px', fontWeight: '700', letterSpacing: '-1px', wordBreak: 'break-word' }}>{formatCurrency(balance)}</h2>
+                                </div>
                                 <div
-                                    className="header-fade-out"
+                                    id="onboarding-stats-btn"
                                     style={{
+                                        background: 'rgba(255, 255, 255, 0.15)',
+                                        padding: '8px',
+                                        borderRadius: '10px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        gap: '12px',
-                                        opacity: 1 - scrollProgress * 3,
-                                        pointerEvents: scrollProgress > 0.3 ? 'none' : 'auto',
-                                        marginBottom: '32px'
-                                    }}
-                                >
-                                    <button onClick={() => { haptic.light(); setCurrentDate(subMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'white', cursor: 'pointer', padding: '4px' }}>
-                                        <ChevronLeft size={20} />
-                                    </button>
-                                    <span
-                                        onClick={handleReturnToToday}
-                                        style={{ fontWeight: '700', color: 'white', fontSize: '0.95rem', textTransform: 'capitalize', minWidth: '110px', textAlign: 'center' }}
-                                    >
-                                        {format(currentDate, 'MMMM yyyy', { locale: { pt: ptBR, en: enUS, es: es, fr: fr }[locale] || ptBR })}
+                                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                    }}>
+                                    <BarChart2 size={20} />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '24px', opacity: 0.9 }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                        <ArrowUp size={16} color="#4ade80" />
+                                        <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
+                                    </div>
+                                    <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(incomes)}</p>
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                        <ArrowDown size={16} color="#f87171" />
+                                        <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
+                                    </div>
+                                    <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(expenses)}</p>
+                                </div>
+                            </div>
+
+                            {/* Barra de Porcentagem de Gastos */}
+                            {incomes > 0 && (
+                                <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ flex: 1, height: '6px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '10px', overflow: 'hidden' }}>
+                                        <div style={{
+                                            width: `${Math.min((expenses / incomes) * 100, 100)}%`,
+                                            height: '100%',
+                                            background: 'white',
+                                            borderRadius: '10px',
+                                            transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                                        }}></div>
+                                    </div>
+                                    <span style={{ fontSize: '0.85rem', fontWeight: '800', opacity: 0.9, minWidth: '35px', textAlign: 'right' }}>
+                                        {Math.round((expenses / incomes) * 100)}%
                                     </span>
-                                    <button onClick={() => { haptic.light(); setCurrentDate(addMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'white', cursor: 'pointer', padding: '4px' }}>
-                                        <ChevronRight size={20} />
-                                    </button>
                                 </div>
+                            )}
 
-                                {/* Row 3: Main Balance (Sticky & Horizontal Collapse) */}
-                                <div
-                                    className="sticky-balance"
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: (scrollProgress > 0.6) ? 'row' : 'column',
-                                        alignItems: (scrollProgress > 0.6) ? 'center' : 'flex-start',
-                                        justifyContent: 'space-between',
-                                        transform: `translate3d(${scrollProgress * 40}px, ${scrollProgress * -110}px, 0) scale(${1 - scrollProgress * 0.35})`,
-                                        marginBottom: '24px',
-                                        transition: 'all 0.1s ease-out',
-                                        gap: (scrollProgress > 0.6) ? '20px' : '0'
-                                    }}
-                                >
-                                    <div style={{ flexShrink: 0 }}>
-                                        <p style={{ 
-                                            fontSize: '0.85rem', 
-                                            color: 'white', 
-                                            opacity: 0.8 * (1 - scrollProgress), 
-                                            marginBottom: '4px',
-                                            display: (scrollProgress > 0.8) ? 'none' : 'block'
-                                        }}>
-                                            {t('monthly_balance')}
-                                        </p>
-                                        <h2 style={{ 
-                                            fontSize: '3.2rem', 
-                                            fontWeight: '800', 
-                                            color: 'white', 
-                                            letterSpacing: '-1.5px', 
-                                            margin: 0,
-                                            lineHeight: 1
-                                        }}>
-                                            {formatCurrency(balance)}
-                                        </h2>
-                                    </div>
 
-                                    {/* Progress Bar (Visible on right when collapsed) */}
-                                    {incomes > 0 && (
-                                        <div style={{ 
-                                            marginTop: (scrollProgress > 0.6) ? '0' : '20px',
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            gap: '12px',
-                                            flex: (scrollProgress > 0.6) ? 1 : 'none',
-                                            maxWidth: (scrollProgress > 0.6) ? '180px' : 'none',
-                                            opacity: 0.9 + (0.1 * scrollProgress),
-                                            transition: 'all 0.2s ease-out'
-                                        }}>
-                                            <div style={{ flex: 1, height: '6px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '10px', overflow: 'hidden' }}>
-                                                <div style={{ 
-                                                    width: `${Math.min((expenses / incomes) * 100, 100)}%`, 
-                                                    height: '100%', 
-                                                    background: 'white', 
-                                                    borderRadius: '10px',
-                                                    transition: 'width 0.8s'
-                                                }}></div>
-                                            </div>
-                                            <span style={{ fontSize: '0.85rem', fontWeight: '800', opacity: 1, minWidth: '40px', textAlign: 'right', color: 'white' }}>
-                                                {Math.round((expenses / incomes) * 100)}%
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Row 5: Incomes/Expenses Detail (Fade Out) */}
-                                <div
-                                    className="header-fade-out"
-                                    style={{
-                                        display: 'flex',
-                                        gap: '24px',
-                                        opacity: 1 - scrollProgress * 4,
-                                        pointerEvents: scrollProgress > 0.2 ? 'none' : 'auto',
-                                        marginTop: 'auto',
-                                        paddingBottom: '20px'
-                                    }}
-                                >
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                                            <ArrowUp size={14} color="#4ade80" />
-                                            <p style={{ fontSize: '0.75rem', margin: 0, color: 'white', opacity: 0.8 }}>{t('incomes_plural')}</p>
-                                        </div>
-                                        <p style={{ fontWeight: '700', fontSize: '1rem', margin: 0, color: 'white' }}>{formatCurrency(incomes)}</p>
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                                            <ArrowDown size={14} color="#f87171" />
-                                            <p style={{ fontSize: '0.75rem', margin: 0, color: 'white', opacity: 0.8 }}>{t('expenses_plural')}</p>
-                                        </div>
-                                        <p style={{ fontWeight: '700', fontSize: '1rem', margin: 0, color: 'white' }}>{formatCurrency(expenses)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="header-overlay-fade" style={{ opacity: 1 - scrollProgress }} />
-                        </div>
+                        </section>
                     )}
-
-                    {/* Desktop Static Header */}
-                    {isDesktop && (
-                        <header style={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '32px 80px',
-                            background: 'transparent',
-                            marginBottom: '0'
-                        }}>
-                            <div
-                                id="onboarding-profile-btn"
-                                onClick={() => setIsSidebarOpen(true)}
-                                style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
-                            >
-                                <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-color)' }}>
-                                    <User size={22} />
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <h1 style={{ fontSize: '1.2rem', color: 'var(--text-main)', fontWeight: '700', margin: 0 }}>
-                                        {(() => {
-                                            const hour = new Date().getHours();
-                                            const greetingKey = (hour >= 3 && hour < 12) ? 'good_morning' :
-                                                (hour >= 12 && hour < 18) ? 'good_afternoon' : 'good_night';
-                                            return t(greetingKey, { name: currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }) });
-                                        })()}
-                                    </h1>
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <button onClick={() => { haptic.light(); setCurrentDate(subMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', padding: '4px' }}>
-                                    <ChevronLeft size={20} />
-                                </button>
-                                <span
-                                    onClick={handleReturnToToday}
-                                    style={{ fontWeight: '700', color: 'var(--text-main)', fontSize: '0.95rem', textTransform: 'capitalize', minWidth: '110px', textAlign: 'center', cursor: 'pointer' }}
-                                >
-                                    {format(currentDate, 'MMMM yyyy', { locale: { pt: ptBR, en: enUS, es: es, fr: fr }[locale] || ptBR })}
-                                </span>
-                                <button onClick={() => { haptic.light(); setCurrentDate(addMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', padding: '4px' }}>
-                                    <ChevronRight size={20} />
-                                </button>
-                            </div>
-                        </header>
-                    )}
-
-                    {/* Scrollable Content */}
-                    <div
-                        className={isDesktop ? "" : "scroll-content-wrapper masked-content"}
-                        onScroll={handleScroll}
-                        style={{
-                            '--mask-start': `${HEADER_MAX - (HEADER_MAX - HEADER_MIN) * scrollProgress}px`,
-                            '--mask-end': `${HEADER_MAX - (HEADER_MAX - HEADER_MIN) * scrollProgress + 35}px`
-                        }}
-                    >
-                        <div style={{
-                            padding: isDesktop ? '0 80px' : '0 20px',
-                            paddingTop: isDesktop ? '0' : `${HEADER_MAX}px`,
-                            paddingBottom: '120px'
-                        }}>
 
                     {!isDesktop && (
-                        <div id="onboarding-limits-section" style={{ marginTop: '48px' }}>
+                        <div id="onboarding-limits-section">
                             <LimitsSection
                                 limits={limits}
                                 transactions={transactions}
@@ -1341,284 +1232,453 @@ const Home = () => {
                                     )}
                                 </div>
                             </section>
-                        </div> 
+                        </div>
                     )}
-                </div> 
-            </div> 
-        </div> 
-    )}
 
-            {/* --- Modals & Overlays --- */}
-            <TransactionModal 
-                isOpen={isModalOpen} 
-                onClose={() => { setIsModalOpen(false); setEditingTx(null); }} 
-                defaultType={modalType} 
-                initialData={editingTx} 
-                onSuccess={refetch} 
-            />
+                    {/* --- Fixed Elements (Outside of transformed container) --- */}
 
-            <ConfirmDialog
-                isOpen={isConfirmOpen}
-                onClose={() => setIsConfirmOpen(false)}
-                {...confirmConfig}
-            />
+                    {/* Fixed Elements removed as they are now in Layout.jsx */}
+                    <TransactionModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingTx(null); }} defaultType={modalType} initialData={editingTx} onSuccess={refetch} />
 
-            {/* Unified Sidebar / Bottom Sheet */}
-            {isSidebarOpen && (
-                <>
-                    <div
-                        onClick={closeSidebar}
-                        style={{
-                            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                            background: 'rgba(27, 69, 32, 0.4)', backdropFilter: 'blur(8px)',
-                            zIndex: 11000,
-                            transition: 'all 0.3s ease',
-                            animation: isSidebarClosing ? 'fadeOut 0.3s forwards' : 'fadeIn 0.3s forwards'
-                        }}
+                    <ConfirmDialog
+                        isOpen={isConfirmOpen}
+                        onClose={() => setIsConfirmOpen(false)}
+                        {...confirmConfig}
                     />
-                    <div style={{
-                        position: 'fixed',
-                        top: isDesktop ? 0 : 'auto',
-                        bottom: 0,
-                        left: 0,
-                        right: isDesktop ? 'auto' : 0,
-                        width: isDesktop ? '360px' : '100%',
-                        height: isDesktop ? '100%' : (sidebarView === 'notion' ? '100%' : 'auto'),
-                        maxHeight: (isDesktop || sidebarView === 'notion') ? 'none' : '90dvh',
-                        background: 'var(--bg-color)',
-                        boxShadow: '0 -10px 50px rgba(0,0,0,0.15)',
-                        zIndex: 11001,
-                        borderRadius: (isDesktop || sidebarView === 'notion') ? '0' : '32px 32px 0 0',
-                        animation: isDesktop
-                            ? (isSidebarClosing ? 'slideOutLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards')
-                            : (isSidebarClosing ? 'slideOutDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'),
-                        padding: isDesktop ? '32px' : (sidebarView === 'notion' ? '24px 24px 40px' : '32px 24px 120px 24px'),
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflowY: 'auto',
-                        overscrollBehavior: 'contain',
-                        borderTop: isDesktop ? 'none' : '1px solid var(--glass-border)'
-                    }}>
-                        {!isDesktop && (
-                            <div style={{
-                                width: '40px', height: '4px', background: 'var(--glass-border)',
-                                borderRadius: '2px', margin: '-16px auto 24px auto', opacity: 0.6
-                            }} />
-                        )}
-                        {sidebarView === 'settings' ? (
-                            <ProfileContent
-                                onOpenNotion={() => setSidebarView('notion')}
-                                onClose={closeSidebar}
-                                theme={theme}
-                                setTheme={setTheme}
-                            />
-                        ) : (
-                            <NotionImportContent
-                                onBack={() => setSidebarView('settings')}
-                                onFinish={() => {
-                                    setSidebarView('settings');
-                                    closeSidebar();
-                                }}
-                                initialOAuthCode={pendingNotionCode}
-                            />
-                        )}
-                    </div>
-                </>
-            )}
 
-            {/* Modal Dinâmico de Limite */}
-            {isLimitModalOpen && (
-                <>
-                    <div
-                        onClick={closeLimitModal}
-                        style={{
-                            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                            background: 'rgba(27, 69, 32, 0.4)', backdropFilter: 'blur(8px)',
-                            zIndex: 12000, transition: 'all 0.3s ease',
-                            animation: isLimitModalClosing ? 'fadeOut 0.3s forwards' : 'fadeIn 0.3s forwards'
-                        }}
-                    />
-                    <div style={{
-                        position: 'fixed',
-                        bottom: isDesktop ? 'auto' : 0,
-                        top: isDesktop ? '50%' : 'auto',
-                        left: isDesktop ? '50%' : 0,
-                        right: isDesktop ? 'auto' : 0,
-                        width: isDesktop ? 'min(90%, 550px)' : '100%',
-                        backgroundColor: 'var(--bg-color)',
-                        borderRadius: isDesktop ? '32px' : '32px 32px 0 0',
-                        padding: isDesktop ? '32px' : '32px 24px 48px',
-                        zIndex: 12001,
-                        boxShadow: isDesktop ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : '0 -10px 40px rgba(0,0,0,0.2)',
-                        border: '1px solid var(--glass-border)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '24px',
-                        overflow: 'hidden',
-                        animation: isDesktop 
-                            ? (isLimitModalClosing ? 'modalClose 0.3s forwards' : 'modalOpen 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards') 
-                            : (isLimitModalClosing ? 'slideOutDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards')
-                    }}>
-                        {!isDesktop && (
-                            <div style={{
-                                position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)',
-                                width: '40px', height: '4px', background: 'var(--glass-border)', borderRadius: '2px'
-                            }} />
-                        )}
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div>
-                                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>
-                                    {tempLimit.categoryId && limits[tempLimit.categoryId] ? 'Editar Limite Mensal' : 'Novo Limite Mensal'}
-                                </h2>
-                                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Defina quanto você pretende gastar em uma categoria específica.</p>
-                            </div>
-                            <button
-                                onClick={() => { haptic.light(); closeLimitModal(); }}
+                    <style>{`
+                @keyframes slideInUp {
+                    from { transform: translateY(100%); }
+                    to { transform: translateY(0); }
+                }
+                @keyframes slideInLeft {
+                    from { transform: translateX(-100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOutLeft {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(-100%); opacity: 0; }
+                }
+                .form-input {
+                    border: 1px solid var(--glass-border) !important;
+                    transition: all 0.2s ease-in-out !important;
+                }
+                .form-input:focus {
+                    border-color: var(--primary-color) !important;
+                    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1) !important;
+                    background: var(--surface-color) !important;
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes fadeOut {
+                    from { opacity: 1; }
+                    to { opacity: 0; }
+                }
+                @keyframes slideOutDown {
+                    from { transform: translateY(0); }
+                    to { transform: translateY(100%); }
+                }
+                .pointer-icon {
+                    animation: subtlePulse 5s infinite ease-in-out;
+                }
+                @keyframes subtlePulse {
+                    0%, 90% { transform: scale(1); opacity: 0.8; }
+                    95% { transform: scale(1.2); opacity: 1; }
+                    100% { transform: scale(1); opacity: 0.8; }
+                }
+            `}</style>
+                    {/* Unified Sidebar / Bottom Sheet */}
+                    {isSidebarOpen && (
+                        <>
+                            {/* Backdrop */}
+                            <div
+                                onClick={closeSidebar}
                                 style={{
-                                    width: '40px', height: '40px', borderRadius: 'var(--btn-radius)',
-                                    background: 'var(--surface-color)', border: '1px solid var(--glass-border)',
-                                    color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
+                                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                                    background: 'rgba(27, 69, 32, 0.4)', backdropFilter: 'blur(8px)',
+                                    zIndex: 11000,
+                                    transition: 'all 0.3s ease',
+                                    animation: isSidebarClosing ? 'fadeOut 0.3s forwards' : 'fadeIn 0.3s forwards'
                                 }}
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
+                            />
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            <div style={{ position: 'relative' }}>
-                                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', marginLeft: '4px' }}>CATEGORIA</label>
-                                <div style={{ position: 'relative' }}>
-                                    <select
-                                        value={tempLimit.categoryId}
-                                        onChange={(e) => setTempLimit({ ...tempLimit, categoryId: e.target.value })}
-                                        className="form-input"
-                                        style={{
-                                            color: 'var(--text-main)', boxSizing: 'border-box', width: '100%',
-                                            padding: '14px', borderRadius: '16px', background: 'var(--surface-color)',
-                                            fontSize: '1rem', outline: 'none', appearance: 'none', minHeight: '48px',
-                                            cursor: 'pointer', border: '1px solid var(--glass-border)'
-                                        }}
-                                    >
-                                        <option value="" disabled>{t('select_category')}</option>
-                                        {CATEGORIAS_DESPESA.map(cat => (
-                                            <option key={cat.id} value={cat.id}>
-                                                {cat.icon} {t(cat.label)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }}>▼</div>
-                                </div>
-                            </div>
+                            {/* Sheet/Drawer Content */}
+                            <div style={{
+                                position: 'fixed',
+                                top: isDesktop ? 0 : 'auto',
+                                bottom: 0,
+                                left: 0,
+                                right: isDesktop ? 'auto' : 0,
+                                width: isDesktop ? '360px' : '100%',
+                                height: isDesktop ? '100%' : (sidebarView === 'notion' ? '100%' : 'auto'),
+                                maxHeight: (isDesktop || sidebarView === 'notion') ? 'none' : '90dvh',
+                                background: 'var(--bg-color)',
+                                boxShadow: '0 -10px 50px rgba(0,0,0,0.15)',
+                                zIndex: 11001,
+                                borderRadius: (isDesktop || sidebarView === 'notion') ? '0' : '32px 32px 0 0',
+                                animation: isDesktop
+                                    ? (isSidebarClosing ? 'slideOutLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards')
+                                    : (isSidebarClosing ? 'slideOutDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'),
+                                padding: isDesktop ? '32px' : (sidebarView === 'notion' ? '24px 24px 40px' : '32px 24px 120px 24px'),
+                                display: 'flex',
+                                flexDirection: 'column',
+                                overflowY: 'auto',
+                                overscrollBehavior: 'contain',
+                                borderTop: isDesktop ? 'none' : '1px solid var(--glass-border)'
+                            }}>
+                                {/* Bottom Sheet Handle for Mobile */}
+                                {!isDesktop && (
+                                    <div style={{
+                                        width: '40px', height: '4px', background: 'var(--glass-border)',
+                                        borderRadius: '2px', margin: '-16px auto 24px auto', opacity: 0.6
+                                    }} />
+                                )}
 
-                            <div style={{ position: 'relative' }}>
-                                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', marginLeft: '4px' }}>VALOR LIMITE</label>
-                                <div style={{ position: 'relative' }}>
-                                    <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: '700', color: 'var(--text-muted)' }}>R$</div>
-                                    <input
-                                        type="number"
-                                        value={tempLimit.amount}
-                                        onChange={(e) => setTempLimit({ ...tempLimit, amount: e.target.value })}
-                                        placeholder="0,00"
-                                        className="form-input"
-                                        style={{
-                                            width: '100%', padding: '16px 16px 16px 45px', borderRadius: '16px',
-                                            background: 'var(--surface-color)', color: 'var(--text-main)', 
-                                            fontSize: '1.2rem', fontWeight: '700', outline: 'none'
-                                        }}
+                                {sidebarView === 'settings' ? (
+                                    <ProfileContent
+                                        onOpenNotion={() => setSidebarView('notion')}
+                                        onClose={closeSidebar}
+                                        theme={theme}
+                                        setTheme={setTheme}
                                     />
+                                ) : (
+                                    <NotionImportContent
+                                        onBack={() => setSidebarView('settings')}
+                                        onFinish={() => {
+                                            setSidebarView('settings');
+                                            closeSidebar();
+                                        }}
+                                        // Pass the captured code from state instead of reading directly from URL
+                                        initialOAuthCode={pendingNotionCode}
+                                    />
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    {/* Delete Account Confirmation Overlay */}
+                    <ConfirmDialog
+                        isOpen={showDeleteConfirm}
+                        onClose={() => setShowDeleteConfirm(false)}
+                        title="Tem certeza?"
+                        requireConfirm="DELETE"
+                        message="Esta ação excluirá todos os seus dados permanentemente e não pode ser desfeita. Para confirmar, digite DELETE no campo abaixo."
+                        confirmLabel={isDeleting ? "Excluindo..." : "Sim, excluir minha conta"}
+                        type="danger"
+                        onConfirm={async () => {
+                            setIsDeleting(true);
+                            try {
+                                await deleteAccount();
+                            } catch (e) {
+                                alert(e.message);
+                            } finally {
+                                setIsDeleting(false);
+                                setShowDeleteConfirm(false);
+                            }
+                        }}
+                    />
+
+                    {/* Menu de Ações do Limite */}
+                    <ConfirmDialog
+                        isOpen={isLimitActionOpen}
+                        onClose={() => setIsLimitActionOpen(false)}
+                        title={getCategoryInfo(selectedLimitCat, 'expense')?.label || 'Gerenciar Limite'}
+                        message="O que você deseja fazer com este limite?"
+                        showIcon={false}
+                        showCancel={false}
+                        childrenPosition="top"
+                        layout="row"
+                        wide={true}
+                        options={[
+                            { label: t('edit', { defaultValue: 'Editar' }), value: 'edit', color: 'var(--primary-gradient)' },
+                            { label: t('delete', { defaultValue: 'Excluir' }), value: 'delete', color: 'transparent', border: '1px solid var(--danger-color)', textColor: 'var(--danger-color)' }
+                        ]}
+                        onConfirm={(val) => {
+                            if (val === 'edit') {
+                                setTempLimit({ categoryId: selectedLimitCat, amount: limits[selectedLimitCat].toString() });
+                                setIsLimitModalOpen(true);
+                            } else if (val === 'delete' || val === 'transparent') { // Represents Delete when outlined
+                                const newLimits = { ...limits };
+                                delete newLimits[selectedLimitCat];
+                                setLimits(newLimits);
+                                haptic.medium();
+                            }
+                            setIsLimitActionOpen(false);
+                        }}
+                    >
+                        <div style={{
+                            maxHeight: '350px',
+                            overflowY: 'auto',
+                            paddingRight: '4px'
+                        }}>
+                            {(() => {
+                                const catTxs = transactions.filter(t => {
+                                    const info = getCategoryInfo(t.category, t.type);
+                                    return info.id === selectedLimitCat;
+                                });
+
+                                if (catTxs.length > 0) {
+                                    return catTxs.map((tx, idx) => {
+                                        const theme = getCategoryTheme(tx.category, tx.type);
+                                        return (
+                                            <div key={idx} style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                padding: '12px 0',
+                                                borderBottom: 'none'
+                                            }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                                    <div style={{
+                                                        width: '40px', height: '40px', borderRadius: 'var(--btn-radius)',
+                                                        background: theme.color + '20',
+                                                        display: 'flex', justifyContent: 'center', alignItems: 'center',
+                                                        color: theme.color, fontSize: '1.2rem', flexShrink: 0
+                                                    }}>
+                                                        {getEmojiForDescription(tx.description, theme.icon)}
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                                                        <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: '600', margin: 0 }}>
+                                                            {tx.dynamicDescription || tx.description}
+                                                        </span>
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                            {format(new Date(tx.virtualDate || tx.date), 'dd MMM', { locale: ptBR })}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <span style={{ fontSize: '1rem', color: 'var(--danger-color)', fontWeight: '800', whiteSpace: 'nowrap' }}>
+                                                    - {formatCurrency(tx.amount)}
+                                                </span>
+                                            </div>
+                                        );
+                                    });
+                                }
+                                return <p style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{t('no_transactions')}</p>
+                            })()}
+                        </div>
+                    </ConfirmDialog>
+
+                    {/* Modal Dinâmico de Limite */}
+                    {isLimitModalOpen && (
+                        <>
+                            <div
+                                onClick={closeLimitModal}
+                                style={{
+                                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                                    background: 'rgba(27, 69, 32, 0.4)', backdropFilter: 'blur(8px)',
+                                    zIndex: 12000, transition: 'all 0.3s ease',
+                                    animation: isLimitModalClosing ? 'fadeOut 0.3s forwards' : 'fadeIn 0.3s forwards'
+                                }}
+                            />
+                            <div style={{
+                                position: 'fixed',
+                                bottom: isDesktop ? 'auto' : 0,
+                                top: isDesktop ? '50%' : 'auto',
+                                left: isDesktop ? '50%' : 0,
+                                right: isDesktop ? 'auto' : 0,
+                                height: 'auto',
+                                maxHeight: isDesktop ? '90vh' : '90vh',
+                                width: isDesktop ? 'min(90%, 550px)' : '100%',
+                                backgroundColor: 'var(--bg-color)',
+                                borderRadius: isDesktop ? '32px' : '32px 32px 0 0',
+                                padding: isDesktop ? '32px' : '32px 24px 48px',
+                                zIndex: 12001,
+                                boxShadow: isDesktop ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : '0 -10px 40px rgba(0,0,0,0.2)',
+                                border: '1px solid var(--glass-border)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '24px',
+                                overflow: 'hidden',
+                                animation: isDesktop 
+                                    ? (isLimitModalClosing ? 'modalClose 0.3s forwards' : 'modalOpen 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards') 
+                                    : (isLimitModalClosing ? 'slideOutDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards')
+                            }}>
+                                {!isDesktop && (
+                                    <div style={{
+                                        position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)',
+                                        width: '40px', height: '4px', background: 'var(--glass-border)', borderRadius: '2px'
+                                    }} />
+                                )}
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <div>
+                                        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>
+                                            {tempLimit.categoryId && limits[tempLimit.categoryId] ? 'Editar Limite Mensal' : 'Novo Limite Mensal'}
+                                        </h2>
+                                        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Defina quanto você pretende gastar em uma categoria específica.</p>
+                                    </div>
+                                    <button
+                                        onClick={() => { haptic.light(); closeLimitModal(); }}
+                                        style={{
+                                            width: '40px', height: '40px', borderRadius: 'var(--btn-radius)',
+                                            background: 'var(--surface-color)', border: '1px solid var(--glass-border)',
+                                            color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
+                                        }}
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    <div style={{ position: 'relative' }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', marginLeft: '4px' }}>CATEGORIA</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <select
+                                                value={tempLimit.categoryId}
+                                                onChange={(e) => setTempLimit({ ...tempLimit, categoryId: e.target.value })}
+                                                className="form-input"
+                                                style={{
+                                                    color: 'var(--text-main)',
+                                                    boxSizing: 'border-box',
+                                                    width: '100%',
+                                                    padding: '14px',
+                                                    borderRadius: '16px',
+                                                    background: 'var(--surface-color)',
+                                                    fontSize: '1rem',
+                                                    outline: 'none',
+                                                    appearance: 'none',
+                                                    minHeight: '48px',
+                                                    cursor: 'pointer',
+                                                    border: '1px solid var(--glass-border)'
+                                                }}
+                                            >
+                                                <option value="" disabled>{t('select_category', { defaultValue: 'Selecionar Categoria' })}</option>
+                                                {CATEGORIAS_DESPESA.map(cat => (
+                                                    <option key={cat.id} value={cat.id}>
+                                                        {cat.icon} {t(cat.label, { defaultValue: cat.label })}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }}>
+                                                ▼
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ position: 'relative' }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', marginLeft: '4px' }}>VALOR LIMITE</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: '700', color: 'var(--text-muted)' }}>R$</div>
+                                            <input
+                                                type="number"
+                                                value={tempLimit.amount}
+                                                onChange={(e) => setTempLimit({ ...tempLimit, amount: e.target.value })}
+                                                placeholder="0,00"
+                                                className="form-input"
+                                                style={{
+                                                    width: '100%', padding: '16px 16px 16px 45px', borderRadius: '16px',
+                                                    background: 'var(--surface-color)',
+                                                    color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: '700', outline: 'none'
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                                    {tempLimit.categoryId && limits[tempLimit.categoryId] ? (
+                                        <>
+                                            <button
+                                                onClick={() => {
+                                                    const newLimits = { ...limits };
+                                                    delete newLimits[tempLimit.categoryId];
+                                                    setLimits(newLimits);
+                                                    closeLimitModal();
+                                                    haptic.medium();
+                                                }}
+                                                style={{ flex: 1, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'transparent', border: '1px solid var(--danger-color)', color: 'var(--danger-color)', fontWeight: '700', cursor: 'pointer' }}
+                                            >
+                                                Excluir
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (tempLimit.categoryId && tempLimit.amount) {
+                                                        setLimits({ ...limits, [tempLimit.categoryId]: parseFloat(tempLimit.amount) });
+                                                        closeLimitModal();
+                                                        haptic.medium();
+                                                    }
+                                                }}
+                                                style={{ flex: 2, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--primary-gradient)', border: 'none', color: 'var(--btn-text)', fontWeight: '700', cursor: 'pointer', boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.3)' }}
+                                            >
+                                                Salvar
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={closeLimitModal}
+                                                style={{ flex: 1, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--surface-color)', border: 'none', color: 'var(--text-main)', fontWeight: '700', cursor: 'pointer' }}
+                                            >
+                                                Cancelar
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (tempLimit.categoryId && tempLimit.amount) {
+                                                        setLimits({ ...limits, [tempLimit.categoryId]: parseFloat(tempLimit.amount) });
+                                                        closeLimitModal();
+                                                        haptic.medium();
+                                                    }
+                                                }}
+                                                style={{ flex: 2, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--primary-gradient)', border: 'none', color: 'var(--btn-text)', fontWeight: '700', cursor: 'pointer', boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.3)' }}
+                                            >
+                                                Criar Limite
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
-                        </div>
 
-                        <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                            {tempLimit.categoryId && limits[tempLimit.categoryId] ? (
-                                <>
-                                    <button
-                                        onClick={() => {
-                                            const newLimits = { ...limits };
-                                            delete newLimits[tempLimit.categoryId];
-                                            setLimits(newLimits);
-                                            closeLimitModal();
-                                            haptic.medium();
-                                        }}
-                                        style={{ flex: 1, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'transparent', border: '1px solid var(--danger-color)', color: 'var(--danger-color)', fontWeight: '700', cursor: 'pointer' }}
-                                    >
-                                        Excluir
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (tempLimit.categoryId && tempLimit.amount) {
-                                                setLimits({ ...limits, [tempLimit.categoryId]: parseFloat(tempLimit.amount) });
-                                                closeLimitModal();
-                                                haptic.medium();
-                                            }
-                                        }}
-                                        style={{ flex: 2, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--primary-gradient)', border: 'none', color: 'var(--btn-text)', fontWeight: '700', cursor: 'pointer', boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.3)' }}
-                                    >
-                                        Salvar
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <button
-                                        onClick={closeLimitModal}
-                                        style={{ flex: 1, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--surface-color)', border: 'none', color: 'var(--text-main)', fontWeight: '700', cursor: 'pointer' }}
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (tempLimit.categoryId && tempLimit.amount) {
-                                                setLimits({ ...limits, [tempLimit.categoryId]: parseFloat(tempLimit.amount) });
-                                                closeLimitModal();
-                                                haptic.medium();
-                                            }
-                                        }}
-                                        style={{ flex: 2, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--primary-gradient)', border: 'none', color: 'var(--btn-text)', fontWeight: '700', cursor: 'pointer', boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.3)' }}
-                                    >
-                                        Criar Limite
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </>
+                            <style>{`
+                            @keyframes modalOpen {
+                                0% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
+                                100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                            }
+                            @keyframes modalClose {
+                                0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                                100% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
+                            }
+                            @keyframes slideUp {
+                                from { transform: translateY(100%); }
+                                to { transform: translateY(0); }
+                            }
+                            @keyframes slideOutDown {
+                                from { transform: translateY(0); }
+                                to { transform: translateY(100%); }
+                            }
+                            @keyframes fadeOut {
+                                from { opacity: 1; }
+                                to { opacity: 0; }
+                            }
+                            @keyframes bubbleBounce {
+                                0% { transform: translateY(10px) scale(0.8); opacity: 0; }
+                                100% { transform: translateY(0) scale(1); opacity: 1; }
+                            }
+                            @keyframes sparklePulse {
+                                0% { transform: scale(0.8); opacity: 0.3; }
+                                50% { transform: scale(1.2); opacity: 0.6; }
+                                100% { transform: scale(0.8); opacity: 0.3; }
+                            }
+                        `}</style>
+                        </>
+                    )}
+                </div>
             )}
-
-            <ConfirmDialog
-                isOpen={showDeleteConfirm}
-                onClose={() => setShowDeleteConfirm(false)}
-                title="Tem certeza?"
-                requireConfirm="DELETE"
-                message="Esta ação excluirá todos os seus dados permanentemente. Digite DELETE para confirmar."
-                confirmLabel={isDeleting ? "Excluindo..." : "Sim, excluir minha conta"}
-                type="danger"
-                onConfirm={async () => {
-                    setIsDeleting(true);
-                    try { await deleteAccount(); } finally { setIsDeleting(false); setShowDeleteConfirm(false); }
-                }}
-            />
-
+            {/* Onboarding Overlay */}
             <AnimatePresence>
-                {showOnboarding && <Onboarding key="onboarding" onComplete={() => setShowOnboarding(false)} />}
+                {showOnboarding && (
+                    <Onboarding key="onboarding" onComplete={() => setShowOnboarding(false)} />
+                )}
             </AnimatePresence>
 
-            <PaywallModal isOpen={showPaywall} onClose={() => setShowPaywall(false)} reason="feature" />
-
-            <style>{`
-                @keyframes slideInUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-                @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-                @keyframes slideOutLeft { from { transform: translateX(0); opacity: 1; } to { transform: translateX(-100%); opacity: 0; } }
-                .form-input { border: 1px solid var(--glass-border) !important; transition: all 0.2s ease-in-out !important; }
-                .form-input:focus { border-color: var(--primary-color) !important; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1) !important; }
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-                @keyframes slideOutDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
-                @keyframes modalOpen { 0% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
-                @keyframes modalClose { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); } }
-            `}</style>
+            <PaywallModal 
+                isOpen={showPaywall} 
+                onClose={() => setShowPaywall(false)} 
+                reason="feature" 
+            />
         </>
     );
 };
