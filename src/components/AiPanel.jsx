@@ -142,7 +142,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                     if (transcriptRef.current.trim().length > 0 && !isProcessing) {
                         processTextRef.current(transcriptRef.current);
                     }
-                }, 1500);
+                }, 800);
             };
 
             recognition.onerror = (event) => {

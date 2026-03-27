@@ -97,6 +97,7 @@ export default async function handler(req, res) {
             contents: promptText,
             config: {
                 systemInstruction: systemInstruction,
+                responseMimeType: "application/json",
             }
         });
 

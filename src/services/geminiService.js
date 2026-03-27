@@ -153,7 +153,7 @@ FORMATO DE SAÍDA:
           amount: parseFloat(tx.valor),
           description: tx.descricao,
           category: tx.categoria,
-          date: new Date().toISOString(),
+          date: new Date().toISOString().split('T')[0],
           repeatType: tx.tipo_recorrencia || "none",
           installments: tx.parcelas || 1
         }))

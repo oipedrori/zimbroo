@@ -108,6 +108,7 @@ export const translations = {
         installments_hint: "O valor será cobrado mensalmente por {count} meses.",
         save: "Salvar Alterações",
         add: "Adicionar",
+        delete: "Apagar",
         saving: "Salvando...",
 
         // AI Panel
@@ -326,6 +327,7 @@ export const translations = {
         installments_hint: "The amount will be charged monthly for {count} months.",
         save: "Save Changes",
         add: "Add",
+        delete: "Delete",
         saving: "Saving...",
 
         ai_status_listening: "Listening...",
@@ -541,6 +543,7 @@ export const translations = {
         installments_hint: "El monto se cobrará mensualmente durante {count} meses.",
         save: "Guardar Cambios",
         add: "Añadir",
+        delete: "Eliminar",
         saving: "Guardando...",
 
         ai_status_listening: "Escuchando...",
