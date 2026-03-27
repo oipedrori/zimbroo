@@ -178,6 +178,11 @@ export const prepareMonthlyTransactions = (allTxs, targetMonth) => {
     }).map(tx => {
         const txCopy = { ...tx };
         
+        // CORREÇÃO: Normalizar datas inválidas ou em formato ISO string (de adições antigas da IA)
+        if (txCopy.date && txCopy.date.includes('T')) {
+            txCopy.date = txCopy.date.split('T')[0];
+        }
+        
         // Pós-processamento na cópia para evitar mutação do original
         if (txCopy.repeatType === 'installment') {
             const txDate = txCopy.date;

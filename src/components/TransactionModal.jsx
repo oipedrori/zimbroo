@@ -52,7 +52,8 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
             setCategory(initialData.category || (initialData.type === 'expense' ? CATEGORIAS_DESPESA[0].id : CATEGORIAS_RECEITA[0].id));
 
             // Extract original date, not virtualDate, for editing
-            setDate(initialData.date || format(new Date(), 'yyyy-MM-dd'));
+            const rawDate = initialData.date || format(new Date(), 'yyyy-MM-dd');
+            setDate(rawDate.includes('T') ? rawDate.split('T')[0] : rawDate);
             setRepeatType(initialData.repeatType || 'none');
             setInstallments(initialData.installments || 1);
         } else if (isOpen && !initialData) {

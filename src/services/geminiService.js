@@ -1,5 +1,6 @@
 import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA } from '../utils/categories';
 import { AI_BUBBLE_PHRASES } from '../utils/phrases';
+import { format } from 'date-fns';
 
 const callBackendAi = async (type, payload, uid, premiumPrompt) => {
   try {
@@ -153,7 +154,7 @@ FORMATO DE SAÍDA:
           amount: parseFloat(tx.valor),
           description: tx.descricao,
           category: tx.categoria,
-          date: new Date().toISOString().split('T')[0],
+          date: format(new Date(), 'yyyy-MM-dd'),
           repeatType: tx.tipo_recorrencia || "none",
           installments: tx.parcelas || 1
         }))

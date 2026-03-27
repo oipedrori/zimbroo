@@ -71,6 +71,15 @@ const Home = () => {
     const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
     const [isLimitActionOpen, setIsLimitActionOpen] = useState(false);
     const [isLimitModalClosing, setIsLimitModalClosing] = useState(false);
+    const [isClosingFlipped, setIsClosingFlipped] = useState(false);
+
+    const closeFlipped = () => {
+        setIsClosingFlipped(true);
+        setTimeout(() => {
+            setIsFlipped(false);
+            setIsClosingFlipped(false);
+        }, 300);
+    };
 
     const closeLimitModal = () => {
         setIsLimitModalClosing(true);
@@ -434,11 +443,11 @@ const Home = () => {
         <>
 
             {isFlipped && !isDesktop ? (
-                <div className="page-container" style={{ paddingBottom: '120px', animation: 'slideUpModal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
+                <div className="page-container" style={{ paddingBottom: '120px', animation: isClosingFlipped ? 'slideDownModal 0.3s forwards' : 'slideUpModal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)' }}>{t('statistics', { defaultValue: 'Estatísticas' })}</h2>
                         <button
-                            onClick={() => { haptic.light(); setIsFlipped(false); }}
+                            onClick={() => { haptic.light(); closeFlipped(); }}
                             style={{
                                 width: '40px', height: '40px', borderRadius: 'var(--btn-radius)', background: 'var(--surface-color)',
                                 border: '1px solid var(--glass-border)', color: 'var(--text-main)',
