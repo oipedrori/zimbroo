@@ -366,7 +366,7 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                 <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <Eye size={18} style={{ opacity: 0.6 }} />
-                        <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)' }}>{t('show_values_default')}</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)' }}>{t('visibility_caps')}</span>
                     </div>
 
                     <div

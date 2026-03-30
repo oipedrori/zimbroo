@@ -12,6 +12,7 @@ import ProfileContent from '../components/ProfileContent';
 import NotionImportContent from '../components/NotionImportContent';
 import { Plus, ChevronLeft, ChevronRight, User, Pointer, X, Trash2, PieChart, BarChart2, Shield, Mic, Keyboard, Moon, Globe, DollarSign, LogOut, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
 import { Link, useOutletContext, useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getEmojiForDescription } from '../utils/emojiUtils';
 import { prepareMonthlyTransactions } from '../services/transactionService';
@@ -1129,7 +1130,15 @@ const Home = () => {
                                                     const isOverLimit = spent > limitAmount;
 
                                                     return (
-                                                        <div key={cat.id} style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                        <div 
+                                                            key={cat.id} 
+                                                            onClick={() => {
+                                                                haptic.light();
+                                                                setSelectedLimitCat(cat.id);
+                                                                setIsLimitActionOpen(true);
+                                                            }}
+                                                            style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '8px', cursor: 'pointer' }}
+                                                        >
                                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                                     <span style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-main)' }}>{cat.icon} {t(cat.label)}</span>
@@ -1516,7 +1525,7 @@ const Home = () => {
                     </ConfirmDialog>
 
                     {/* Modal Dinâmico de Limite */}
-                    {isLimitModalOpen && (
+                    {isLimitModalOpen && createPortal(
                         <>
                             <div
                                 onClick={closeLimitModal}
@@ -1650,38 +1659,28 @@ const Home = () => {
                                             </button>
                                             <button
                                                 onClick={() => {
-                                                    if (tempLimit.categoryId && tempLimit.amount) {
-                                                        setLimits({ ...limits, [tempLimit.categoryId]: parseFloat(tempLimit.amount) });
-                                                        closeLimitModal();
-                                                        haptic.medium();
-                                                    }
+                                                    if (!tempLimit.amount) return;
+                                                    setLimits(prev => ({ ...prev, [tempLimit.categoryId]: parseFloat(tempLimit.amount) }));
+                                                    closeLimitModal();
+                                                    haptic.success();
                                                 }}
-                                                style={{ flex: 2, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--primary-gradient)', border: 'none', color: 'var(--btn-text)', fontWeight: '700', cursor: 'pointer', boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.3)' }}
+                                                style={{ flex: 2, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--primary-gradient)', border: 'none', color: 'white', fontWeight: '800', cursor: 'pointer', boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.2)' }}
                                             >
-                                                Salvar
+                                                Salvar Alterações
                                             </button>
                                         </>
                                     ) : (
-                                        <>
-                                            <button
-                                                onClick={closeLimitModal}
-                                                style={{ flex: 1, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--surface-color)', border: 'none', color: 'var(--text-main)', fontWeight: '700', cursor: 'pointer' }}
-                                            >
-                                                Cancelar
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    if (tempLimit.categoryId && tempLimit.amount) {
-                                                        setLimits({ ...limits, [tempLimit.categoryId]: parseFloat(tempLimit.amount) });
-                                                        closeLimitModal();
-                                                        haptic.medium();
-                                                    }
-                                                }}
-                                                style={{ flex: 2, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--primary-gradient)', border: 'none', color: 'var(--btn-text)', fontWeight: '700', cursor: 'pointer', boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.3)' }}
-                                            >
-                                                Criar Limite
-                                            </button>
-                                        </>
+                                        <button
+                                            onClick={() => {
+                                                if (!tempLimit.categoryId || !tempLimit.amount) return;
+                                                setLimits(prev => ({ ...prev, [tempLimit.categoryId]: parseFloat(tempLimit.amount) }));
+                                                closeLimitModal();
+                                                haptic.success();
+                                            }}
+                                            style={{ width: '100%', padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--primary-gradient)', border: 'none', color: 'white', fontWeight: '800', cursor: 'pointer', boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.2)' }}
+                                        >
+                                            Criar Limite
+                                        </button>
                                     )}
                                 </div>
                             </div>
