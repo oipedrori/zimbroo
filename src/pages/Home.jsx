@@ -10,7 +10,7 @@ import SwipeableItem from '../components/SwipeableItem';
 import LoadingDots from '../components/LoadingDots';
 import ProfileContent from '../components/ProfileContent';
 import NotionImportContent from '../components/NotionImportContent';
-import { Plus, ChevronLeft, ChevronRight, User, Pointer, X, Trash2, PieChart, BarChart2, Shield, Mic, Keyboard, Moon, Globe, DollarSign, LogOut, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, User, Pointer, X, Trash2, PieChart, BarChart2, Shield, Mic, Keyboard, Moon, Globe, DollarSign, LogOut, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
 import { Link, useOutletContext, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getEmojiForDescription } from '../utils/emojiUtils';
@@ -100,6 +100,7 @@ const Home = () => {
     // Freemium
     const { isPremium, loading: subLoading } = useSubscription();
     const [showPaywall, setShowPaywall] = useState(false);
+    const [showValues, setShowValues] = useState(localStorage.getItem('zimbroo_default_hide_values') !== 'true');
 
     useEffect(() => {
         const hasCompleted = localStorage.getItem('hasCompletedOnboarding');
@@ -585,21 +586,52 @@ const Home = () => {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div>
                                     <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '8px' }}>{t('monthly_balance')}</p>
-                                    <h2 style={{ fontSize: 'clamp(1.8rem, 8vw, 2.5rem)', marginBottom: '24px', fontWeight: '700', letterSpacing: '-1px', wordBreak: 'break-word' }}>{formatCurrency(balance)}</h2>
+                                    <div style={{ height: '2.5rem', display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
+                                        <AnimatePresence mode="wait">
+                                            <motion.h2
+                                                key={showValues ? 'visible' : 'hidden'}
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                transition={{ duration: 0.2 }}
+                                                style={{ fontSize: 'clamp(1.8rem, 8vw, 2.5rem)', margin: 0, fontWeight: '700', letterSpacing: '-1px', wordBreak: 'break-word' }}
+                                            >
+                                                {showValues ? formatCurrency(balance) : '•••••'}
+                                            </motion.h2>
+                                        </AnimatePresence>
+                                    </div>
                                 </div>
                                 <div
                                     id="onboarding-stats-btn"
-                                    style={{
-                                        background: 'rgba(255, 255, 255, 0.15)',
-                                        padding: '8px',
-                                        borderRadius: '10px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                                    }}>
-                                    <BarChart2 size={20} />
+                                    style={{ display: 'flex', gap: '8px' }}>
+                                    <div
+                                        onClick={(e) => { e.stopPropagation(); haptic.light(); setShowValues(!showValues); }}
+                                        style={{
+                                            background: 'rgba(255, 255, 255, 0.15)',
+                                            padding: '8px',
+                                            borderRadius: '10px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                        }}>
+                                        {showValues ? <Eye size={20} /> : <EyeOff size={20} />}
+                                    </div>
+                                    <div
+                                        onClick={(e) => { e.stopPropagation(); haptic.medium(); setIsFlipped(true); }}
+                                        style={{
+                                            background: 'rgba(255, 255, 255, 0.15)',
+                                            padding: '8px',
+                                            borderRadius: '10px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                        }}>
+                                        <BarChart2 size={20} />
+                                    </div>
                                 </div>
                             </div>
 
@@ -609,14 +641,36 @@ const Home = () => {
                                         <ArrowUp size={16} color="#4ade80" />
                                         <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('incomes_plural', { defaultValue: 'Receitas' })}</p>
                                     </div>
-                                    <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(incomes)}</p>
+                                    <AnimatePresence mode="wait">
+                                        <motion.p
+                                            key={showValues ? 'visible' : 'hidden'}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}
+                                        >
+                                            {showValues ? formatCurrency(incomes) : '•••••'}
+                                        </motion.p>
+                                    </AnimatePresence>
                                 </div>
                                 <div style={{ flex: 1 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                                         <ArrowDown size={16} color="#f87171" />
                                         <p style={{ fontSize: '0.8rem', margin: 0 }}>{t('expenses_plural', { defaultValue: 'Despesas' })}</p>
                                     </div>
-                                    <p style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>{formatCurrency(expenses)}</p>
+                                    <AnimatePresence mode="wait">
+                                        <motion.p
+                                            key={showValues ? 'visible' : 'hidden'}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            style={{ fontWeight: '600', fontSize: '1.1rem', margin: 0 }}
+                                        >
+                                            {showValues ? formatCurrency(expenses) : '•••••'}
+                                        </motion.p>
+                                    </AnimatePresence>
                                 </div>
                             </div>
 

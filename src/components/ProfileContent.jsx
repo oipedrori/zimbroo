@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
-import { User, LogOut, Trash2, Moon, Globe, DollarSign, ArrowRight, RefreshCcw, X, Sparkles, Bell } from 'lucide-react';
+import { User, LogOut, Trash2, Moon, Globe, DollarSign, ArrowRight, RefreshCcw, X, Sparkles, Bell, Eye } from 'lucide-react';
 import { requestNotificationPermission } from './NotificationHandler';
 import { deleteAllUserTransactions } from '../services/transactionService';
 import { haptic } from '../utils/haptic';
@@ -137,6 +137,16 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
             setNotificationsEnabled(false);
             localStorage.setItem('zimbroo_notifications_enabled', 'false');
         }
+    };
+    const [defaultHideValues, setDefaultHideValues] = useState(
+        localStorage.getItem('zimbroo_default_hide_values') === 'true'
+    );
+
+    const handleToggleDefaultHide = () => {
+        haptic.medium();
+        const newValue = !defaultHideValues;
+        setDefaultHideValues(newValue);
+        localStorage.setItem('zimbroo_default_hide_values', newValue ? 'true' : 'false');
     };
 
     const handleLogout = () => { // Added handleLogout function
@@ -351,6 +361,39 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                         <option value="INR">Rupia (₹)</option>
                         <option value="JPY">Iene (¥)</option>
                     </select>
+                </div>
+
+                <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Eye size={18} style={{ opacity: 0.6 }} />
+                        <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)' }}>{t('visibility_caps')}</span>
+                    </div>
+
+                    <div
+                        onClick={handleToggleDefaultHide}
+                        style={{
+                            width: '56px',
+                            height: '32px',
+                            background: defaultHideValues ? 'var(--primary-color)' : 'var(--bg-color)',
+                            borderRadius: '10px',
+                            border: '1px solid var(--glass-border)',
+                            position: 'relative',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1)'
+                        }}
+                    >
+                        <div style={{
+                            position: 'absolute',
+                            top: '4px',
+                            left: defaultHideValues ? '28px' : '4px',
+                            width: '22px',
+                            height: '22px',
+                            background: 'white',
+                            borderRadius: '6px',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1)'
+                        }} />
+                    </div>
                 </div>
 
                 <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
