@@ -1716,7 +1716,8 @@ const Home = () => {
                                 100% { transform: scale(0.8); opacity: 0.3; }
                             }
                         `}</style>
-                        </>
+                        </>,
+                        document.body
                     )}
                 </div>
             )}
