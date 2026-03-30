@@ -138,15 +138,15 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
             localStorage.setItem('zimbroo_notifications_enabled', 'false');
         }
     };
-    const [defaultHideValues, setDefaultHideValues] = useState(
-        localStorage.getItem('zimbroo_default_hide_values') === 'true'
+    const [defaultShowValues, setDefaultShowValues] = useState(
+        localStorage.getItem('zimbroo_default_show_values') !== 'false'
     );
 
-    const handleToggleDefaultHide = () => {
+    const handleToggleDefaultShow = () => {
         haptic.medium();
-        const newValue = !defaultHideValues;
-        setDefaultHideValues(newValue);
-        localStorage.setItem('zimbroo_default_hide_values', newValue ? 'true' : 'false');
+        const newValue = !defaultShowValues;
+        setDefaultShowValues(newValue);
+        localStorage.setItem('zimbroo_default_show_values', newValue ? 'true' : 'false');
     };
 
     const handleLogout = () => { // Added handleLogout function
@@ -366,15 +366,15 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                 <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <Eye size={18} style={{ opacity: 0.6 }} />
-                        <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)' }}>{t('visibility_caps')}</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)' }}>{t('show_values_default')}</span>
                     </div>
 
                     <div
-                        onClick={handleToggleDefaultHide}
+                        onClick={handleToggleDefaultShow}
                         style={{
                             width: '56px',
                             height: '32px',
-                            background: defaultHideValues ? 'var(--primary-color)' : 'var(--bg-color)',
+                            background: defaultShowValues ? 'var(--primary-color)' : 'var(--bg-color)',
                             borderRadius: '10px',
                             border: '1px solid var(--glass-border)',
                             position: 'relative',
@@ -385,7 +385,7 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                         <div style={{
                             position: 'absolute',
                             top: '4px',
-                            left: defaultHideValues ? '28px' : '4px',
+                            left: defaultShowValues ? '28px' : '4px',
                             width: '22px',
                             height: '22px',
                             background: 'white',

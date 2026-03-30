@@ -100,7 +100,7 @@ const Home = () => {
     // Freemium
     const { isPremium, loading: subLoading } = useSubscription();
     const [showPaywall, setShowPaywall] = useState(false);
-    const [showValues, setShowValues] = useState(localStorage.getItem('zimbroo_default_hide_values') !== 'true');
+    const [showValues, setShowValues] = useState(localStorage.getItem('zimbroo_default_show_values') !== 'false');
 
     useEffect(() => {
         const hasCompleted = localStorage.getItem('hasCompletedOnboarding');
