@@ -43,7 +43,9 @@ const callBackendAi = async (payload, uid, retries = 1) => {
     if (!response.ok) {
         const errData = await response.json();
         if (errData.action === 'show_paywall') return { action: 'paywall' };
-        throw new Error(errData.error || 'Erro no servidor de IA');
+        // Mostra os detalhes técnicos se disponíveis (ajuda a debugar)
+        const errorMessage = errData.details || errData.error || 'Erro no servidor de IA';
+        throw new Error(errorMessage);
     }
 
     const data = await response.json();
