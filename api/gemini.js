@@ -1,16 +1,21 @@
 import { GoogleGenAI } from '@google/genai';
 import admin from 'firebase-admin';
 
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-        }),
-    });
+let db;
+try {
+    if (!admin.apps.length) {
+        admin.initializeApp({
+            credential: admin.credential.cert({
+                projectId: process.env.FIREBASE_PROJECT_ID,
+                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+            }),
+        });
+    }
+    db = admin.firestore();
+} catch (e) {
+    console.error("[FirebaseAdmin] Initialization Error:", e.message);
 }
-const db = admin.firestore();
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -27,10 +32,24 @@ export default async function handler(req, res) {
     const API_KEY = RAW_KEY.trim().replace(/['"]/g, '');
 
     // Verifica se a chave existe e se tem o prefixo padrão do Google (AIza)
-    if (!API_KEY || !API_KEY.startsWith('AIza')) {
+    if (!API_KEY) {
         return res.status(500).json({ 
-            error: 'Erro de Configuração de Chave', 
-            details: 'A GEMINI_API_KEY não foi encontrada ou é inválida (precisa começar com "AIza"). Verifique o seu arquivo .env ou as variáveis na Vercel.' 
+            error: 'GEMINI_API_KEY_MISSING', 
+            details: 'A variável de ambiente GEMINI_API_KEY não foi configurada. Verifique suas variáveis na Vercel.' 
+        });
+    }
+
+    if (!API_KEY.startsWith('AIza')) {
+        return res.status(500).json({ 
+            error: 'GEMINI_API_KEY_INVALID', 
+            details: `A chave Gemini fornecida é inválida (começa com "${API_KEY.substring(0, 4)}...", deveria começar com "AIza"). Verifique se você copiou a chave correta do Google AI Studio.` 
+        });
+    }
+
+    if (!db) {
+        return res.status(500).json({
+            error: 'FIREBASE_ADMIN_ERROR',
+            details: 'O Firebase Admin não pôde ser inicializado. Verifique se as variáveis FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL e FIREBASE_PRIVATE_KEY estão corretas e se a chave privada inclui os delimitadores BEGIN/END.'
         });
     }
 

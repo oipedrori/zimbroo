@@ -129,7 +129,7 @@ export const analyzeTextWithGemini = async (text, currentMonthTransactions = [],
     return aiResponse;
   } catch (error) {
     console.error("Gemini AI Error:", error);
-    return { error: `Instabilidade na IA. Tente novamente em breve.` };
+    return { error: error.message || "Erro desconhecido na IA. Tente novamente em breve." };
   }
 };
 
