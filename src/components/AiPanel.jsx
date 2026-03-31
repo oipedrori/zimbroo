@@ -91,6 +91,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
     // Paywall State
     const [showPaywall, setShowPaywall] = useState(false);
     const [paywallReason, setPaywallReason] = useState('feature'); // 'feature' ou 'quota'
+    const [pendingAiData, setPendingAiData] = useState(null);
 
     const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
     const [viewportOffset, setViewportOffset] = useState(0);
@@ -283,7 +284,8 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
             setAiMessage(''); 
 
             try {
-                const result = await analyzeTextWithGemini(textToProcess, transactions, allTransactions, currentUser?.uid);
+                // Passa o contexto pendente para a IA (Pro)
+                const result = await analyzeTextWithGemini(textToProcess, transactions, allTransactions, currentUser?.uid, pendingAiData);
                 
                 if (result.action === 'show_paywall' || result.action === 'paywall') {
                     setPaywallReason('feature');
@@ -321,8 +323,23 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
 
                     haptic.success();
                     setAiMessage(result.message || "Movimentação adicionada!");
+                    setPendingAiData(null); // Limpa contexto após sucesso
                     setTimeout(() => onClose(), 2500);
-                } else if (result.action === 'limit') {
+                } else if (result.action === 'need_info') {
+                    haptic.medium();
+                    setAiMessage(result.message);
+                    setPendingAiData(result.pending_data);
+                } else if (result.action === 'suggest_recurrence') {
+                    haptic.medium();
+                    setAiMessage(result.message);
+                    setPendingAiData(result.pending_data);
+                } else if (result.action === 'add_recurrent') {
+                    // Similar ao add, mas pode ter lógica de confirmação se necessário
+                    haptic.success();
+                    setAiMessage(result.message || "Recorrência configurada!");
+                    setPendingAiData(null);
+                    setTimeout(() => onClose(), 2500);
+                } else if (result.action === 'set_limit' || result.action === 'limit') {
                     if (!subscription.isPremium) {
                         setShowPaywall(true);
                         return;
@@ -330,7 +347,13 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                     haptic.success();
                     setLimits({ ...limits, [result.category]: parseFloat(result.amount) });
                     setAiMessage(result.message || 'Limite definido com sucesso!');
+                    setPendingAiData(null);
                     setTimeout(() => onClose(), 2500);
+                } else if (result.action === 'suggest_limit') {
+                    haptic.medium();
+                    setAiMessage(result.message);
+                    // Opcionalmente guardar suggeted_val em pendingAiData para confirmação
+                    setPendingAiData({ action: 'set_limit', category: result.category, amount: result.suggested_val });
                 }
             } catch (err) {
                 console.error(err);

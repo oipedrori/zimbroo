@@ -65,7 +65,7 @@ const callBackendAi = async (payload, uid, retries = 1) => {
 /**
  * REFAZENDO DO ZERO: O "Cérebro" da Interação com IA
  */
-export const analyzeTextWithGemini = async (text, currentMonthTransactions = [], allTransactions = [], uid = null) => {
+export const analyzeTextWithGemini = async (text, currentMonthTransactions = [], allTransactions = [], uid = null, pendingData = null) => {
   try {
     const lowerText = text.toLowerCase();
     let context = "";
@@ -87,8 +87,8 @@ export const analyzeTextWithGemini = async (text, currentMonthTransactions = [],
         context = `Transações do mês atual: ${currentMonthTransactions.map(t => `${t.description}: R$${t.amount} (${t.category})`).join(', ')}`;
     }
 
-    // 2. Chamar Backend
-    const aiResponse = await callBackendAi({ prompt: text, context }, uid);
+    // 2. Chamar Backend com pendingData para manter conversa (Pro)
+    const aiResponse = await callBackendAi({ prompt: text, pending_data: pendingData }, uid);
 
     // 3. Processar Ação
     if (aiResponse.action === 'paywall') {
@@ -116,16 +116,24 @@ export const analyzeTextWithGemini = async (text, currentMonthTransactions = [],
         };
     }
 
-    if (aiResponse.action === 'limit') {
-        return {
-            action: 'limit',
-            category: aiResponse.category,
-            amount: aiResponse.amount,
-            message: aiResponse.message || `Limite de R$${aiResponse.amount} definido para ${aiResponse.category}.`
-        };
+    // Novas Ações do Roteador Pro
+    if (aiResponse.action === 'need_info') {
+        return { action: 'need_info', message: aiResponse.message, pending_data: aiResponse.pending_data };
     }
 
-    if (aiResponse.action === 'analyze') {
+    if (aiResponse.action === 'suggest_recurrence') {
+        return { action: 'suggest_recurrence', message: aiResponse.message, pending_data: aiResponse.pending_data };
+    }
+
+    if (aiResponse.action === 'add_recurrent') {
+        return { action: 'add_recurrent', ...aiResponse };
+    }
+
+    if (aiResponse.action === 'set_limit' || aiResponse.action === 'suggest_limit') {
+        return aiResponse;
+    }
+
+    if (aiResponse.action === 'advice') {
         return { action: 'analysis', message: aiResponse.message };
     }
 
