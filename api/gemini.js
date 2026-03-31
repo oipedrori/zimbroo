@@ -123,7 +123,7 @@ LAYOUT DE SAÍDA:
 
         // Chamada usando a sintaxe CORRETA do @google/genai (v1.x)
         const result = await ai.models.generateContent({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
             systemInstruction: systemInstruction,
             contents: [{ role: 'user', parts: [{ text: promptContent }] }],
             config: {
