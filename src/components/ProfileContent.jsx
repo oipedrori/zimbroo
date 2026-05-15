@@ -275,24 +275,7 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                 </div>
             </button>
 
-            {/* Notion Trigger */}
-            <button
-                onClick={onOpenNotion}
-                style={{
-                    width: '100%', background: 'var(--notion-btn-bg)', padding: '16px 20px', borderRadius: '20px',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    color: 'var(--notion-btn-text)', cursor: 'pointer', border: 'none', marginBottom: '32px',
-                    boxShadow: '0 8px 15px rgba(0,0,0,0.1)'
-                }}
-            >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '32px', height: '32px', background: 'white', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <img src="/notion_logo.png" style={{ width: '18px', height: '18px' }} alt="" />
-                    </div>
-                    <span style={{ fontWeight: '600', fontSize: '1rem' }}>{t('import_hub')}</span>
-                </div>
-                <ArrowRight size={18} opacity={0.5} />
-            </button>
+
 
             {/* Quick Settings */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
