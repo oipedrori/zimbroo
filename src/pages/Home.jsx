@@ -25,6 +25,7 @@ import { useLimits } from '../hooks/useLimits';
 import Onboarding from '../components/Onboarding';
 import { useSubscription } from '../hooks/useSubscription';
 import PaywallModal from '../components/PaywallModal';
+import { Button } from '@/components/ui/button';
 
 const Home = () => {
     const { currentUser, logout, deleteAccount } = useAuth();
@@ -501,25 +502,17 @@ const Home = () => {
                     style={{ paddingBottom: isDesktop ? '120px' : '180px', animation: 'slideUp 0.3s forwards' }}
                 >
                     {/* Header (Now always visible but behaves differently on desktop) */}
-                    <header style={{
-                        display: 'flex',
-                        flexDirection: isDesktop ? 'row' : 'column',
-                        justifyContent: 'space-between',
-                        alignItems: isDesktop ? 'center' : 'flex-start',
-                        paddingTop: '8px',
-                        marginBottom: isDesktop ? '24px' : '0',
-                        gap: isDesktop ? '0' : '10px'
-                    }}>
+                    <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center pt-2 mb-0 lg:mb-6 gap-2.5 lg:gap-0">
                         <div
                             id="onboarding-profile-btn"
                             onClick={() => setIsSidebarOpen(true)}
-                            style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+                            className="flex items-center gap-3 cursor-pointer"
                         >
-                            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-color)' }}>
+                            <div className="w-11 h-11 rounded-xl bg-card border border-border flex items-center justify-center text-primary">
                                 <User size={22} />
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <h1 style={{ fontSize: '1.2rem', color: 'var(--text-main)', fontWeight: '700', margin: 0 }}>
+                            <div className="flex flex-col">
+                                <h1 className="text-xl text-foreground font-bold m-0">
                                     {(() => {
                                         const hour = new Date().getHours();
                                         const greetingKey = (hour >= 3 && hour < 12) ? 'good_morning' :
@@ -531,38 +524,29 @@ const Home = () => {
                         </div>
 
                         {/* Desktop/Mobile Month Navigation */}
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            background: 'transparent',
-                            padding: '6px 12px',
-                            borderRadius: 'var(--btn-radius)',
-                            border: 'none',
-                            alignSelf: isDesktop ? 'auto' : 'stretch',
-                            justifyContent: isDesktop ? 'flex-start' : 'space-between'
-                        }}>
-                            <button onClick={() => { haptic.light(); setCurrentDate(subMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
+                        <div className="flex items-center gap-2 p-1.5 rounded-lg border-none self-stretch lg:self-auto justify-between lg:justify-start">
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => { haptic.light(); setCurrentDate(subMonths(currentDate, 1)); }}
+                                className="text-foreground"
+                            >
                                 <ChevronLeft size={20} />
-                            </button>
+                            </Button>
                             <span
                                 onClick={handleReturnToToday}
-                                style={{
-                                    fontWeight: '700',
-                                    color: 'var(--text-main)',
-                                    fontSize: '0.95rem',
-                                    textTransform: 'capitalize',
-                                    minWidth: '110px',
-                                    textAlign: 'center',
-                                    cursor: 'pointer',
-                                    userSelect: 'none'
-                                }}
+                                className="font-bold text-foreground text-sm capitalize min-w-[110px] text-center cursor-pointer select-none"
                             >
                                 {format(currentDate, 'MMMM yyyy', { locale: { pt: ptBR, en: enUS, es: es, fr: fr }[locale] || ptBR })}
                             </span>
-                            <button onClick={() => { haptic.light(); setCurrentDate(addMonths(currentDate, 1)); }} style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => { haptic.light(); setCurrentDate(addMonths(currentDate, 1)); }}
+                                className="text-foreground"
+                            >
                                 <ChevronRight size={20} />
-                            </button>
+                            </Button>
                         </div>
                     </header>
 
