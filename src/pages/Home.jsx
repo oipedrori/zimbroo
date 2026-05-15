@@ -1031,8 +1031,8 @@ const Home = () => {
                                                                             fontSize: '0.65rem',
                                                                             padding: '1px 6px',
                                                                             borderRadius: '6px',
-                                                                            background: 'rgba(75, 180, 90, 0.1)',
-                                                                            color: '#4BB45A',
+                                                                            background: 'var(--muted)',
+                                                                            color: 'var(--muted-foreground)',
                                                                             fontWeight: '700',
                                                                             textTransform: 'uppercase'
                                                                         }}>
