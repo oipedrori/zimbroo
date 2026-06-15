@@ -26,6 +26,7 @@ import Onboarding from '../components/Onboarding';
 import { useSubscription } from '../hooks/useSubscription';
 import PaywallModal from '../components/PaywallModal';
 import { Button } from '@/components/ui/button';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 
 const Home = () => {
     const { currentUser, logout, deleteAccount } = useAuth();
@@ -472,26 +473,29 @@ const Home = () => {
                             <BudgetPieChart transactions={transactions} currentDate={currentDate} />
                         </section>
 
-                        {/* Bar Chart Section - Second */}
+                        {/* Line Chart Section - Second */}
                         <section className="glass-panel" style={{ padding: '24px' }}>
                             <h3 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <BarChart2 size={18} color="var(--primary-color)" />
                                 {t('monthly_balance_chart', { defaultValue: 'Balanço Mensal' })}
                             </h3>
-                            <div style={{ height: '180px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px' }}>
-                                {yearlyStats.map((s, i) => {
-                                    const maxVal = Math.max(...yearlyStats.map(x => Math.max(x.incomes, x.expenses, 1)), 1);
-                                    const isCurrentMonth = s.month === currentDate.getMonth() + 1;
-                                    return (
-                                        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{ width: '16px', height: '140px', display: 'flex', alignItems: 'flex-end', gap: '2px', position: 'relative' }}>
-                                                <div style={{ width: '8px', height: `${Math.max(2, (s.incomes / maxVal) * 100)}%`, background: 'var(--success-color)', borderRadius: '2px 2px 0 0', opacity: isCurrentMonth ? 1 : 0.4 }}></div>
-                                                <div style={{ width: '8px', height: `${Math.max(2, (s.expenses / maxVal) * 100)}%`, background: 'var(--danger-color)', borderRadius: '2px 2px 0 0', opacity: isCurrentMonth ? 1 : 0.4 }}></div>
-                                            </div>
-                                            <span style={{ fontSize: '0.65rem', fontWeight: isCurrentMonth ? '800' : '500', color: isCurrentMonth ? 'var(--primary-color)' : 'var(--text-muted)' }}>{s.label}</span>
-                                        </div>
-                                    );
-                                })}
+                            <div style={{ height: '220px', width: '100%', marginLeft: '-15px' }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={yearlyStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--glass-border)" />
+                                        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} tickFormatter={(value) => value > 1000 ? `${(value/1000).toFixed(0)}k` : value} />
+                                        <Tooltip 
+                                            contentStyle={{ borderRadius: '12px', border: '1px solid var(--glass-border)', background: 'var(--surface-color)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                            itemStyle={{ fontSize: '0.85rem', fontWeight: 600 }}
+                                            labelStyle={{ color: 'var(--text-muted)', marginBottom: '4px', fontSize: '0.85rem' }}
+                                            formatter={(value) => formatCurrency(value)}
+                                        />
+                                        <Legend iconType="circle" wrapperStyle={{ fontSize: '0.8rem', paddingTop: '10px' }} />
+                                        <Line type="monotone" dataKey="incomes" name={t('incomes_plural', { defaultValue: 'Receitas' })} stroke="#D0E3C9" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                                        <Line type="monotone" dataKey="expenses" name={t('expenses_plural', { defaultValue: 'Despesas' })} stroke="#FFD2CE" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
                             </div>
                         </section>
                     </div>

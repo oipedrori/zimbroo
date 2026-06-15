@@ -1,29 +1,29 @@
 export const CATEGORIAS_DESPESA = [
-    { id: 'alimentacao', label: 'Alimentação', icon: '🥑', color: '#FCD34D' }, // Amber 300
-    { id: 'comunicacao', label: 'Comunicação', icon: '📱', color: '#A5B4FC' }, // Indigo 300
-    { id: 'doacao', label: 'Doação', icon: '🤲', color: '#C4B5FD' }, // Violet 300
-    { id: 'educacao', label: 'Educação', icon: '📚', color: '#93C5FD' }, // Blue 300
-    { id: 'equipamentos', label: 'Equipamentos', icon: '💻', color: '#5EEAD4' }, // Teal 300
-    { id: 'impostos', label: 'Impostos', icon: '🏛️', color: '#CBD5E1' }, // Slate 300
-    { id: 'investimento', label: 'Investimento', icon: '📈', color: '#F9A8D4' }, // Pink 300
-    { id: 'lazer', label: 'Lazer', icon: '🎭', color: '#FDA4AF' }, // Rose 300
-    { id: 'moradia', label: 'Moradia', icon: '🏠', color: '#7DD3FC' }, // Sky 300
-    { id: 'pet', label: 'Pet', icon: '🐾', color: '#FDBA74' }, // Orange 300
-    { id: 'saude', label: 'Saúde', icon: '💊', color: '#F5D0FE' }, // Fuchsia 300
-    { id: 'seguro', label: 'Seguro', icon: '🛡️', color: '#67E8F9' }, // Cyan 300
-    { id: 'transporte', label: 'Transporte', icon: '🚗', color: '#D8B4FE' }, // Purple 300
-    { id: 'vestuario', label: 'Vestuário', icon: '👕', color: '#86EFAC' }, // Green 300
-    { id: 'higiene', label: 'Higiene Pessoal', icon: '🪥', color: '#BEF264' }, // Lime 300
-    { id: 'assinaturas', label: 'Assinaturas', icon: '💎', color: '#818CF8' }, // Indigo 400
-    { id: 'outros', label: 'Outros', icon: '📌', color: '#D1D5DB' }, // Gray 300
+    { id: 'alimentacao', label: 'Alimentação', icon: '🥑', color: '#FAD5B4' }, // Orange
+    { id: 'comunicacao', label: 'Comunicação', icon: '📱', color: '#B3DDE0' }, // Cian
+    { id: 'doacao', label: 'Doação', icon: '🤲', color: '#E4C8E7' }, // Purple
+    { id: 'educacao', label: 'Educação', icon: '📚', color: '#CAD2EE' }, // Blue
+    { id: 'equipamentos', label: 'Equipamentos', icon: '💻', color: '#DBCBCE' }, // Gray
+    { id: 'impostos', label: 'Impostos', icon: '🏛️', color: '#DBCBCE' }, // Gray
+    { id: 'investimento', label: 'Investimento', icon: '📈', color: '#D0E3C9' }, // Green
+    { id: 'lazer', label: 'Lazer', icon: '🎭', color: '#FFD2CE' }, // Pink
+    { id: 'moradia', label: 'Moradia', icon: '🏠', color: '#F8E9B7' }, // Yellow
+    { id: 'pet', label: 'Pet', icon: '🐾', color: '#FAD5B4' }, // Orange
+    { id: 'saude', label: 'Saúde', icon: '💊', color: '#FFD2CE' }, // Pink
+    { id: 'seguro', label: 'Seguro', icon: '🛡️', color: '#B3DDE0' }, // Cian
+    { id: 'transporte', label: 'Transporte', icon: '🚗', color: '#E4C8E7' }, // Purple
+    { id: 'vestuario', label: 'Vestuário', icon: '👕', color: '#FFD2CE' }, // Pink
+    { id: 'higiene', label: 'Higiene Pessoal', icon: '🪥', color: '#D0E3C9' }, // Green
+    { id: 'assinaturas', label: 'Assinaturas', icon: '💎', color: '#CAD2EE' }, // Blue
+    { id: 'outros', label: 'Outros', icon: '📌', color: '#DBCBCE' }, // Gray
 ];
 
 export const CATEGORIAS_RECEITA = [
-    { id: 'salario', label: 'Salário', icon: '💵', color: '#6EE7B7' }, // Emerald 300
-    { id: 'freela', label: 'Freelance', icon: '💼', color: '#93C5FD' }, // Blue 300
-    { id: 'investimento', label: 'Rendimentos', icon: '📈', color: '#C4B5FD' }, // Violet 300
-    { id: 'reembolso', label: 'Reembolso', icon: '🔄', color: '#FCD34D' }, // Amber 300
-    { id: 'outros', label: 'Outros', icon: '➕', color: '#D1D5DB' }, // Gray 300
+    { id: 'salario', label: 'Salário', icon: '💵', color: '#D0E3C9' }, // Green
+    { id: 'freela', label: 'Freelance', icon: '💼', color: '#CAD2EE' }, // Blue
+    { id: 'investimento', label: 'Rendimentos', icon: '📈', color: '#F8E9B7' }, // Yellow
+    { id: 'reembolso', label: 'Reembolso', icon: '🔄', color: '#FAD5B4' }, // Orange
+    { id: 'outros', label: 'Outros', icon: '➕', color: '#DBCBCE' }, // Gray
 ];
 
 export const getCategoryInfo = (id, type = 'expense') => {
