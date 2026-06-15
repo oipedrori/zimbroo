@@ -662,7 +662,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
         }
         .ai-overlay.active { 
           opacity: 1; 
-          background: rgba(27, 69, 32, 0.4); /* Greenish brand overlay */
+          background: rgba(0, 0, 0, 0.4); 
           pointer-events: auto; 
           backdrop-filter: blur(8px);
           -webkit-backdrop-filter: blur(8px);
@@ -724,7 +724,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 10px 30px rgba(27, 69, 32, 0.5);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
           cursor: pointer;
           position: relative;
           transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
