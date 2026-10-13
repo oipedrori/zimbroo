@@ -252,7 +252,7 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                 </div>
             </div>
 
-            {/* Premium Action */}
+            {/* [OCULTO TEMPORARIAMENTE] Premium Action / Gerenciamento de Inscrição
             <button
                 onClick={isPremium ? () => setView('subscription') : () => setShowPaywall(true)}
                 disabled={isManagingSub || subLoading}
@@ -274,8 +274,9 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                     </span>
                 </div>
             </button>
+            */}
 
-            {/* Notion Trigger */}
+            {/* [OCULTO TEMPORARIAMENTE] Notion Trigger
             <button
                 onClick={onOpenNotion}
                 style={{
@@ -293,6 +294,7 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                 </div>
                 <ArrowRight size={18} opacity={0.5} />
             </button>
+            */}
 
             {/* Quick Settings */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
@@ -318,6 +320,7 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                     </div>
                 </div>
 
+                {/* [OCULTO TEMPORARIAMENTE] Troca de Idioma
                 <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', opacity: 0.6 }}>
                         <Globe size={16} />
@@ -333,7 +336,9 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                         <option value="es">Español</option>
                     </select>
                 </div>
+                */}
 
+                {/* [OCULTO TEMPORARIAMENTE] Troca de Moeda
                 <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', opacity: 0.6 }}>
                         <DollarSign size={16} />
@@ -362,6 +367,7 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                         <option value="JPY">Iene (¥)</option>
                     </select>
                 </div>
+                */}
 
                 <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
