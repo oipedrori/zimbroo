@@ -121,15 +121,23 @@ const Home = () => {
     const monthPrefix = format(currentDate, 'yyyy-MM');
     const { transactions, allTransactions, loading, refetch, deleteTx } = useTransactions(monthPrefix);
 
-    // Lock body scroll when any modal or sidebar is open
+    // Lock body scroll and blur background when any modal or sidebar is open
     useEffect(() => {
         if (isSidebarOpen || isModalOpen || isLimitModalOpen || isConfirmOpen || isLimitActionOpen) {
             document.body.classList.add('no-scroll');
         } else {
             document.body.classList.remove('no-scroll');
         }
+
+        if (isSidebarOpen) {
+            document.body.classList.add('sidebar-open');
+        } else {
+            document.body.classList.remove('sidebar-open');
+        }
+
         return () => {
             document.body.classList.remove('modal-open');
+            document.body.classList.remove('sidebar-open');
         };
     }, [isSidebarOpen, isModalOpen, isLimitModalOpen, isConfirmOpen, isLimitActionOpen]);
 
@@ -1319,14 +1327,16 @@ const Home = () => {
                 }
             `}</style>
                     {/* Unified Sidebar / Bottom Sheet */}
-                    {isSidebarOpen && (
+                    {isSidebarOpen && createPortal(
                         <>
                             {/* Backdrop */}
                             <div
                                 onClick={closeSidebar}
                                 style={{
                                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                                    background: 'rgba(27, 69, 32, 0.4)', backdropFilter: 'blur(8px)',
+                                    background: 'rgba(5, 10, 6, 0.55)',
+                                    backdropFilter: 'blur(20px)',
+                                    WebkitBackdropFilter: 'blur(20px)',
                                     zIndex: 11000,
                                     transition: 'all 0.3s ease',
                                     animation: isSidebarClosing ? 'fadeOut 0.3s forwards' : 'fadeIn 0.3s forwards'
@@ -1384,7 +1394,8 @@ const Home = () => {
                                     />
                                 )}
                             </div>
-                        </>
+                        </>,
+                        document.body
                     )}
 
                     {/* Delete Account Confirmation Overlay */}
@@ -1496,7 +1507,9 @@ const Home = () => {
                                 onClick={closeLimitModal}
                                 style={{
                                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                                    background: 'rgba(27, 69, 32, 0.4)', backdropFilter: 'blur(8px)',
+                                    background: 'rgba(5, 10, 6, 0.55)',
+                                    backdropFilter: 'blur(20px)',
+                                    WebkitBackdropFilter: 'blur(20px)',
                                     zIndex: 12000, transition: 'all 0.3s ease',
                                     animation: isLimitModalClosing ? 'fadeOut 0.3s forwards' : 'fadeIn 0.3s forwards'
                                 }}

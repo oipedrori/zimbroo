@@ -141,6 +141,18 @@ body.no-scroll .page-container {
   overflow: hidden !important;
 }
 
+body.sidebar-open .main-content {
+  filter: blur(16px);
+  -webkit-filter: blur(16px);
+  pointer-events: none;
+  transform: scale(0.985);
+  transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1), -webkit-filter 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.main-content {
+  transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1), -webkit-filter 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 #root {
   min-height: 100vh;
   min-height: 100dvh;
