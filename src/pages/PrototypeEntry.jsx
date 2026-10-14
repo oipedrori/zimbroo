@@ -519,7 +519,7 @@ const PrototypeEntry = ({ onStart }) => {
                             border: 'none'
                         }}
                     >
-                        <span>{selectedModel === 'individual' ? 'Iniciar no Modo Individual' : 'Continuar'}</span>
+                        <span>Continuar</span>
                         <ArrowRight size={20} />
                     </button>
                 )}
