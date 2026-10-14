@@ -27,13 +27,13 @@ import { useSubscription } from '../hooks/useSubscription';
 import PaywallModal from '../components/PaywallModal';
 import { usePrototype } from '../contexts/PrototypeContext';
 import { usePrototypeFinancial } from '../contexts/PrototypeFinancialContext';
+import PrototypeContextSelector from '../components/PrototypeContextSelector';
 
 const Home = () => {
     const { currentUser, logout, deleteAccount } = useAuth();
     const { isPrototype } = usePrototype();
     const { financialContext, activeFamilySpace, triggerBlockedAction } = usePrototypeFinancial();
     const [familyTxNotice, setFamilyTxNotice] = useState(null);
-    const [familyLimitsNotice, setFamilyLimitsNotice] = useState(false);
     const { setIsAiActive, setIsBottomNavHidden } = useOutletContext();
     const { t, formatCurrency, locale, changeLocale, currency, changeCurrency } = useI18n();
     const navigate = useNavigate();
@@ -99,7 +99,7 @@ const Home = () => {
     const [selectedLimitCat, setSelectedLimitCat] = useState(null);
     const [tempLimit, setTempLimit] = useState({ categoryId: '', amount: '' });
     const currentYear = currentDate.getFullYear();
-    const { limits, individualLimits, familyLimits, hasFamilySpace, setLimits } = useLimits(currentYear);
+    const { limits, setLimits } = useLimits(currentYear);
     const [chartType, setChartType] = useState('bar'); // 'bar' or 'line'
     const [isFlipped, setIsFlipped] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
@@ -112,9 +112,13 @@ const Home = () => {
     useEffect(() => {
         const hasCompleted = localStorage.getItem('hasCompletedOnboarding');
         if (hasCompleted !== 'true') {
-            setShowOnboarding(true);
+            if (isPrototype) {
+                localStorage.setItem('hasCompletedOnboarding', 'true');
+            } else {
+                setShowOnboarding(true);
+            }
         }
-    }, []);
+    }, [isPrototype]);
 
     useEffect(() => {
         if (setIsBottomNavHidden) {
@@ -341,15 +345,6 @@ const Home = () => {
     const expenses = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
     const balance = incomes - expenses;
 
-    // Subtotais por escopo (usados na visão detalhada do contexto Ambos no Protótipo)
-    const indIncomes = transactions.filter(t => t.scope === 'individual' && t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-    const indExpenses = transactions.filter(t => t.scope === 'individual' && t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-    const indBalance = indIncomes - indExpenses;
-
-    const famIncomes = transactions.filter(t => t.scope === 'family' && t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-    const famExpenses = transactions.filter(t => t.scope === 'family' && t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-    const famBalance = famIncomes - famExpenses;
-
     const handleFilterClick = (filterId) => {
         haptic.light();
         if (activeFilter === filterId && filterId !== 'all') {
@@ -560,6 +555,13 @@ const Home = () => {
                             </div>
                         </div>
 
+                        {/* 2. Seletor Individual / Familiar (exclusivo do protótipo) */}
+                        {isPrototype && (
+                            <div style={{ width: '100%' }}>
+                                <PrototypeContextSelector />
+                            </div>
+                        )}
+
                         {/* Month Navigation */}
                         <div style={{
                             display: 'flex',
@@ -727,93 +729,20 @@ const Home = () => {
                         </section>
 
                         {/* Subtotais detalhados no contexto Ambos */}
-                        {isPrototype && financialContext === 'both' && (
-                            <div style={{
-                                marginTop: '12px',
-                                padding: '14px 16px',
-                                background: 'var(--surface-color)',
-                                borderRadius: '16px',
-                                border: '1px solid var(--glass-border)',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '10px',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
-                            }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-                                    <span style={{ fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
-                                        Individual:
-                                    </span>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <span style={{ fontWeight: '700', color: indBalance >= 0 ? 'var(--success-color)' : 'var(--danger-color)', display: 'block' }}>
-                                            {showValues ? formatCurrency(indBalance) : '•••••'}
-                                        </span>
-                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                                            +{showValues ? formatCurrency(indIncomes) : '••'} / -{showValues ? formatCurrency(indExpenses) : '••'}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', borderTop: '1px solid var(--glass-border)', paddingTop: '8px' }}>
-                                    <span style={{ fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6366f1' }} />
-                                        Familiar ({activeFamilySpace?.name || 'Sem espaço ativo'}):
-                                    </span>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <span style={{ fontWeight: '700', color: famBalance >= 0 ? 'var(--success-color)' : 'var(--danger-color)', display: 'block' }}>
-                                            {showValues ? formatCurrency(famBalance) : '•••••'}
-                                        </span>
-                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                                            +{showValues ? formatCurrency(famIncomes) : '••'} / -{showValues ? formatCurrency(famExpenses) : '••'}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
                         <div id="onboarding-limits-section">
-                            {isPrototype && financialContext === 'both' ? (
-                                <>
-                                    <LimitsSection
-                                        title="Limites Individuais"
-                                        limits={individualLimits}
-                                        transactions={transactions.filter(t => t.scope === 'individual')}
-                                        formatCurrency={formatCurrency}
-                                        t={t}
-                                        setIsLimitModalOpen={(val, catId, amount) => {
-                                            if (val && catId) {
-                                                setTempLimit({ categoryId: catId, amount: amount ? amount.toString() : '' });
-                                                setIsLimitModalOpen(true);
-                                            } else {
-                                                setTempLimit({ categoryId: '', amount: '' });
-                                                setIsLimitModalOpen(val);
-                                            }
-                                        }}
-                                        setTempLimit={setTempLimit}
-                                    />
-                                    {hasFamilySpace && activeFamilySpace && (
-                                        <LimitsSection
-                                            title={`Limites Familiares (${activeFamilySpace.name})`}
-                                            limits={familyLimits}
-                                            transactions={transactions.filter(t => t.scope === 'family')}
-                                            formatCurrency={formatCurrency}
-                                            t={t}
-                                            readOnly={true}
-                                            onReadOnlyClick={() => setFamilyLimitsNotice(true)}
-                                        />
-                                    )}
-                                </>
-                            ) : isPrototype && financialContext === 'family' ? (
-                                activeFamilySpace ? (
-                                    <LimitsSection
-                                        title={`Limites Familiares (${activeFamilySpace.name})`}
-                                        limits={familyLimits}
-                                        transactions={transactions}
-                                        formatCurrency={formatCurrency}
-                                        t={t}
-                                        readOnly={true}
-                                        onReadOnlyClick={() => setFamilyLimitsNotice(true)}
-                                    />
-                                ) : null
+                            {isPrototype && financialContext === 'family' && !activeFamilySpace ? (
+                                <div style={{
+                                    padding: '20px 16px',
+                                    borderRadius: '16px',
+                                    background: 'var(--surface-color)',
+                                    border: '1px dashed var(--glass-border)',
+                                    marginTop: '20px',
+                                    textAlign: 'center'
+                                }}>
+                                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                        Nenhum espaço familiar configurado. Para gerenciar limites familiares, configure um espaço familiar ou selecione o contexto <strong>Individual</strong>.
+                                    </p>
+                                </div>
                             ) : (
                                 <LimitsSection
                                     limits={limits}
@@ -1020,18 +949,6 @@ const Home = () => {
                         showCancel={false}
                         confirmLabel="Entendi"
                         onConfirm={() => setFamilyTxNotice(null)}
-                    />
-
-                    {/* Modal explicativo de Limites Familiares (somente leitura) */}
-                    <ConfirmDialog
-                        isOpen={familyLimitsNotice}
-                        onClose={() => setFamilyLimitsNotice(false)}
-                        title="Limites Familiares"
-                        message={`Os limites do espaço familiar "${activeFamilySpace?.name || 'Familiar'}" estão em modo de visualização nesta etapa. O formulário de edição de limites familiares será integrado na Etapa 5.`}
-                        showIcon={true}
-                        showCancel={false}
-                        confirmLabel="Entendi"
-                        onConfirm={() => setFamilyLimitsNotice(false)}
                     />
 
 
@@ -1293,9 +1210,15 @@ const Home = () => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                     <div>
                                         <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>
-                                            {tempLimit.categoryId && limits[tempLimit.categoryId] ? 'Editar Limite Mensal' : 'Novo Limite Mensal'}
+                                            {tempLimit.categoryId && limits[tempLimit.categoryId] 
+                                                ? (isPrototype && financialContext === 'family' ? 'Editar Limite Familiar' : 'Editar Limite Mensal') 
+                                                : (isPrototype && financialContext === 'family' ? 'Novo Limite Familiar' : 'Novo Limite Mensal')}
                                         </h2>
-                                        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Defina quanto você pretende gastar em uma categoria específica.</p>
+                                        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                                            {isPrototype && financialContext === 'family' 
+                                                ? `Defina o teto de gastos do espaço ${activeFamilySpace?.name || 'familiar'} para esta categoria.` 
+                                                : 'Defina quanto você pretende gastar em uma categoria específica.'}
+                                        </p>
                                     </div>
                                     <button
                                         onClick={() => { haptic.light(); closeLimitModal(); }}
@@ -1370,23 +1293,31 @@ const Home = () => {
                                     {tempLimit.categoryId && limits[tempLimit.categoryId] ? (
                                         <>
                                             <button
-                                                onClick={() => {
-                                                    const newLimits = { ...limits };
-                                                    delete newLimits[tempLimit.categoryId];
-                                                    setLimits(newLimits);
-                                                    closeLimitModal();
-                                                    haptic.medium();
+                                                onClick={async () => {
+                                                    try {
+                                                        const newLimits = { ...limits };
+                                                        delete newLimits[tempLimit.categoryId];
+                                                        await setLimits(newLimits);
+                                                        closeLimitModal();
+                                                        haptic.medium();
+                                                    } catch (err) {
+                                                        alert(err.message || 'Erro ao excluir limite.');
+                                                    }
                                                 }}
                                                 style={{ flex: 1, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'transparent', border: '1px solid var(--danger-color)', color: 'var(--danger-color)', fontWeight: '700', cursor: 'pointer' }}
                                             >
                                                 Excluir
                                             </button>
                                             <button
-                                                onClick={() => {
+                                                onClick={async () => {
                                                     if (!tempLimit.amount) return;
-                                                    setLimits(prev => ({ ...prev, [tempLimit.categoryId]: parseFloat(tempLimit.amount) }));
-                                                    closeLimitModal();
-                                                    haptic.success();
+                                                    try {
+                                                        await setLimits(prev => ({ ...prev, [tempLimit.categoryId]: parseFloat(tempLimit.amount) }));
+                                                        closeLimitModal();
+                                                        haptic.success();
+                                                    } catch (err) {
+                                                        alert(err.message || 'Erro ao salvar alterações.');
+                                                    }
                                                 }}
                                                 style={{ flex: 2, padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--primary-gradient)', border: 'none', color: 'white', fontWeight: '800', cursor: 'pointer', boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.2)' }}
                                             >
@@ -1395,11 +1326,15 @@ const Home = () => {
                                         </>
                                     ) : (
                                         <button
-                                            onClick={() => {
+                                            onClick={async () => {
                                                 if (!tempLimit.categoryId || !tempLimit.amount) return;
-                                                setLimits(prev => ({ ...prev, [tempLimit.categoryId]: parseFloat(tempLimit.amount) }));
-                                                closeLimitModal();
-                                                haptic.success();
+                                                try {
+                                                    await setLimits(prev => ({ ...prev, [tempLimit.categoryId]: parseFloat(tempLimit.amount) }));
+                                                    closeLimitModal();
+                                                    haptic.success();
+                                                } catch (err) {
+                                                    alert(err.message || 'Erro ao criar limite.');
+                                                }
                                             }}
                                             style={{ width: '100%', padding: '16px', borderRadius: 'var(--btn-radius)', background: 'var(--primary-gradient)', border: 'none', color: 'white', fontWeight: '800', cursor: 'pointer', boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.2)' }}
                                         >

@@ -55,24 +55,12 @@ export const PrototypeFinancialProvider = ({ children }) => {
     useEffect(() => {
         const syncState = () => {
             const currentContext = prototypeStorage.getActiveFinancialContext();
-            const currentFamilyId = prototypeStorage.getActiveFamilyId();
             const currentSpaces = prototypeStorage.getFamilySpaces();
+            const currentFamilyId = prototypeStorage.getActiveFamilyId();
 
             setFinancialContextState(currentContext);
             setFamilySpaces(currentSpaces);
-
-            // Validação do espaço ativo: se o id salvo não existir mais entre os espaços, trata com segurança
-            if (currentFamilyId && !currentSpaces.some(s => s.id === currentFamilyId)) {
-                if (currentSpaces.length > 0) {
-                    prototypeStorage.setActiveFamilyId(currentSpaces[0].id);
-                    setActiveFamilyIdState(currentSpaces[0].id);
-                } else {
-                    prototypeStorage.setActiveFamilyId(null);
-                    setActiveFamilyIdState(null);
-                }
-            } else {
-                setActiveFamilyIdState(currentFamilyId);
-            }
+            setActiveFamilyIdState(currentFamilyId);
         };
 
         syncState();
@@ -91,12 +79,12 @@ export const PrototypeFinancialProvider = ({ children }) => {
 
     const setFinancialContext = useCallback((newContext) => {
         prototypeStorage.setActiveFinancialContext(newContext);
-        setFinancialContextState(newContext);
+        setFinancialContextState(prototypeStorage.getActiveFinancialContext());
     }, []);
 
     const setActiveFamilyId = useCallback((id) => {
         prototypeStorage.setActiveFamilyId(id);
-        setActiveFamilyIdState(id);
+        setActiveFamilyIdState(prototypeStorage.getActiveFamilyId());
     }, []);
 
     const triggerBlockedAction = useCallback((notice) => {
@@ -108,10 +96,8 @@ export const PrototypeFinancialProvider = ({ children }) => {
     }, []);
 
     const activeFamilySpace = useMemo(() => {
-        if (!activeFamilyId) {
-            return familySpaces[0] || null;
-        }
-        return familySpaces.find(s => s.id === activeFamilyId) || familySpaces[0] || null;
+        if (!activeFamilyId) return null;
+        return familySpaces.find(s => s.id === activeFamilyId) || null;
     }, [activeFamilyId, familySpaces]);
 
     const familyMembers = useMemo(() => {

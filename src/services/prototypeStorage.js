@@ -165,29 +165,38 @@ export const prototypeStorage = {
     },
 
     /**
-     * Retorna o contexto financeiro ativo no protótipo ('individual', 'family', 'both').
+     * Retorna o contexto financeiro ativo no protótipo ('individual', 'family').
+     * O contexto 'both' fica reservado ao onboarding futuro e é normalizado para 'individual'.
      * Fallback seguro para 'individual' caso não haja preferência salva ou o valor seja inválido.
      */
     getActiveFinancialContext() {
         if (typeof window === 'undefined') return FINANCIAL_CONTEXTS.INDIVIDUAL;
         const saved = localStorage.getItem(KEYS.ACTIVE_FINANCIAL_CONTEXT);
-        if (saved === FINANCIAL_CONTEXTS.INDIVIDUAL || saved === FINANCIAL_CONTEXTS.FAMILY || saved === FINANCIAL_CONTEXTS.BOTH) {
+        if (saved === FINANCIAL_CONTEXTS.BOTH || saved === 'both') {
+            // Normalizar contexto visível para Individual sem apagar dados financeiros
+            localStorage.setItem(KEYS.ACTIVE_FINANCIAL_CONTEXT, FINANCIAL_CONTEXTS.INDIVIDUAL);
+            return FINANCIAL_CONTEXTS.INDIVIDUAL;
+        }
+        if (saved === FINANCIAL_CONTEXTS.INDIVIDUAL || saved === FINANCIAL_CONTEXTS.FAMILY) {
             return saved;
         }
         return FINANCIAL_CONTEXTS.INDIVIDUAL;
     },
 
     /**
-     * Define o contexto financeiro ativo no protótipo ('individual', 'family', 'both').
-     * Valida os valores permitidos e emite evento reativo PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED.
+     * Define o contexto financeiro ativo no protótipo ('individual', 'family').
+     * Normaliza 'both' para 'individual' e emite evento reativo PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED.
      */
     setActiveFinancialContext(context) {
         if (typeof window === 'undefined') return;
-        const validValues = Object.values(FINANCIAL_CONTEXTS);
-        if (!validValues.includes(context)) {
-            throw new Error(`Contexto financeiro inválido: "${context}". Valores válidos: ${validValues.join(', ')}.`);
+        let target = context;
+        if (target === FINANCIAL_CONTEXTS.BOTH || target === 'both') {
+            target = FINANCIAL_CONTEXTS.INDIVIDUAL;
         }
-        localStorage.setItem(KEYS.ACTIVE_FINANCIAL_CONTEXT, context);
+        if (target !== FINANCIAL_CONTEXTS.INDIVIDUAL && target !== FINANCIAL_CONTEXTS.FAMILY) {
+            throw new Error(`Contexto financeiro inválido: "${context}". Valores válidos: individual, family.`);
+        }
+        localStorage.setItem(KEYS.ACTIVE_FINANCIAL_CONTEXT, target);
         notify(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED);
     },
 
@@ -286,24 +295,37 @@ export const prototypeStorage = {
     },
 
     /**
-     * Busca os limites individuais definidos no protótipo
+     * Busca os limites individuais definidos no protótipo.
+     * Prioriza os limites anuais se informados, aplicando fallback para limites gerais.
      */
     getLimits(year) {
         const allLimits = safeGetJson(KEYS.LIMITS, {});
-        const fieldName = year ? `limits_${year}` : 'limits';
-        return allLimits[fieldName] || {};
+        const generalLimits = allLimits.limits && typeof allLimits.limits === 'object' ? allLimits.limits : {};
+        if (!year) return generalLimits;
+        const yearLimits = allLimits[`limits_${year}`];
+        if (!yearLimits || typeof yearLimits !== 'object') {
+            return generalLimits;
+        }
+        return {
+            ...generalLimits,
+            ...yearLimits
+        };
     },
 
     /**
-     * Salva novos limites individuais no protótipo
+     * Salva novos limites individuais no protótipo mantendo a independência anual vs geral.
      */
     saveLimits(newLimits, year) {
         const allLimits = safeGetJson(KEYS.LIMITS, {});
-        const fieldName = year ? `limits_${year}` : 'limits';
-        allLimits[fieldName] = newLimits;
+        const safeLimits = newLimits && typeof newLimits === 'object' ? newLimits : {};
+        if (year) {
+            allLimits[`limits_${year}`] = safeLimits;
+        } else {
+            allLimits.limits = safeLimits;
+        }
         safeSetJson(KEYS.LIMITS, allLimits);
         notify(PROTOTYPE_EVENTS.LIMITS_CHANGED);
-        return newLimits;
+        return safeLimits;
     },
 
     // ==========================================
@@ -440,9 +462,14 @@ export const prototypeStorage = {
         delete settings[id];
         safeSetJson(KEYS.FAMILY_SETTINGS, settings);
 
-        // Se for o espaço ativo, remove a seleção
-        if (this.getActiveFamilyId() === id) {
-            localStorage.removeItem(KEYS.ACTIVE_FAMILY_ID);
+        // Se for o espaço ativo, seleciona outro espaço restante se houver, ou remove a seleção
+        const currentActiveId = localStorage.getItem(KEYS.ACTIVE_FAMILY_ID);
+        if (currentActiveId === id) {
+            if (filteredSpaces.length > 0) {
+                localStorage.setItem(KEYS.ACTIVE_FAMILY_ID, filteredSpaces[0].id);
+            } else {
+                localStorage.removeItem(KEYS.ACTIVE_FAMILY_ID);
+            }
         }
 
         notify(PROTOTYPE_EVENTS.FAMILY_SPACES_CHANGED);
@@ -453,11 +480,24 @@ export const prototypeStorage = {
     },
 
     /**
-     * Retorna o ID do espaço familiar ativo na sessão local
+     * Retorna o ID do espaço familiar ativo na sessão local.
+     * Garante consistência com os espaços existentes (seleciona o primeiro válido se o id for ausente ou inválido).
      */
     getActiveFamilyId() {
         if (typeof window === 'undefined') return null;
-        return localStorage.getItem(KEYS.ACTIVE_FAMILY_ID);
+        const savedId = localStorage.getItem(KEYS.ACTIVE_FAMILY_ID);
+        const spaces = this.getFamilySpaces();
+        if (!Array.isArray(spaces) || spaces.length === 0) {
+            if (savedId) localStorage.removeItem(KEYS.ACTIVE_FAMILY_ID);
+            return null;
+        }
+        if (savedId && spaces.some(s => s.id === savedId)) {
+            return savedId;
+        }
+        // Se o identificador estiver ausente ou inválido e existirem espaços, selecionar e persistir um espaço válido
+        const fallbackId = spaces[0].id;
+        localStorage.setItem(KEYS.ACTIVE_FAMILY_ID, fallbackId);
+        return fallbackId;
     },
 
     /**

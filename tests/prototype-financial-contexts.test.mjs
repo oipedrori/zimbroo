@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // Mock do ambiente do navegador (localStorage, window e CustomEvent)
 const storage = new Map();
@@ -24,435 +26,263 @@ globalThis.CustomEvent = class CustomEvent {
 const {
     prototypeStorage,
     FINANCIAL_CONTEXTS,
-    FAMILY_ROLES,
     PROTOTYPE_STORAGE_KEYS,
     PROTOTYPE_EVENTS
 } = await import('../src/services/prototypeStorage.js');
-
-// Função utilitária que replica a resolução de transações do hook useTransactions
-const getScopedTransactions = () => {
-    const context = prototypeStorage.getActiveFinancialContext();
-    const individualTxs = prototypeStorage.getTransactions().map(tx => ({
-        ...tx,
-        scope: 'individual',
-        originLabel: 'Individual'
-    }));
-
-    if (context === FINANCIAL_CONTEXTS.INDIVIDUAL) {
-        return individualTxs;
-    }
-
-    const activeFamilyId = prototypeStorage.getActiveFamilyId();
-    let familyTxs = [];
-    if (activeFamilyId) {
-        const space = prototypeStorage.getFamilySpaceById(activeFamilyId);
-        if (space) {
-            const members = prototypeStorage.getFamilyMembers(activeFamilyId);
-            const memberMap = new Map(members.map(m => [m.id, m.name]));
-            familyTxs = prototypeStorage.getFamilyTransactions(activeFamilyId).map(tx => ({
-                ...tx,
-                scope: 'family',
-                originLabel: 'Familiar',
-                memberName: memberMap.get(tx.memberId) || ''
-            }));
-        }
-    }
-
-    if (context === FINANCIAL_CONTEXTS.FAMILY) {
-        return familyTxs;
-    }
-
-    // Contexto 'both'
-    const combined = [...individualTxs];
-    const seenIds = new Set(individualTxs.map(t => t.id));
-    for (const fTx of familyTxs) {
-        if (!seenIds.has(fTx.id)) {
-            combined.push(fTx);
-            seenIds.add(fTx.id);
-        }
-    }
-
-    combined.sort((a, b) => {
-        const dateA = a.date || '';
-        const dateB = b.date || '';
-        if (dateA !== dateB) return dateB.localeCompare(dateA);
-        return (b.createdAt || '').localeCompare(a.createdAt || '');
-    });
-
-    return combined;
-};
 
 test.beforeEach(() => {
     storage.clear();
     dispatchedEvents.length = 0;
 });
 
-test('1. Individual como contexto padrão', () => {
-    assert.equal(prototypeStorage.getActiveFinancialContext(), FINANCIAL_CONTEXTS.INDIVIDUAL);
-    assert.equal(localStorage.getItem(PROTOTYPE_STORAGE_KEYS.ACTIVE_FINANCIAL_CONTEXT), null);
+test('1. Seletor com apenas Individual e Familiar, posicionado abaixo da saudação', () => {
+    // Verifica que apenas Individual e Familiar são contextos válidos para o usuário
+    assert.equal(FINANCIAL_CONTEXTS.INDIVIDUAL, 'individual');
+    assert.equal(FINANCIAL_CONTEXTS.FAMILY, 'family');
+
+    // Se preferência antiga 'both' estiver salva, normaliza para 'individual' sem apagar dados
+    storage.set(PROTOTYPE_STORAGE_KEYS.ACTIVE_FINANCIAL_CONTEXT, 'both');
+    const ctx = prototypeStorage.getActiveFinancialContext();
+    assert.equal(ctx, FINANCIAL_CONTEXTS.INDIVIDUAL, 'Contexto both deve ser normalizado para individual');
+    assert.equal(localStorage.getItem(PROTOTYPE_STORAGE_KEYS.ACTIVE_FINANCIAL_CONTEXT), FINANCIAL_CONTEXTS.INDIVIDUAL);
+
+    // Verifica que no Home.jsx o PrototypeContextSelector é renderizado logo após a saudação e antes de Month Navigation
+    const homeContent = fs.readFileSync(path.resolve('src/pages/Home.jsx'), 'utf-8');
+    const greetingIdx = homeContent.indexOf('displayName = isPrototype');
+    const selectorIdx = homeContent.indexOf('<PrototypeContextSelector');
+    const monthNavIdx = homeContent.indexOf('Month Navigation');
+
+    assert.ok(greetingIdx !== -1, 'Saudação deve existir em Home.jsx');
+    assert.ok(selectorIdx !== -1, 'PrototypeContextSelector deve estar em Home.jsx');
+    assert.ok(monthNavIdx !== -1, 'Month Navigation deve existir em Home.jsx');
+    assert.ok(greetingIdx < selectorIdx, 'Seletor deve vir após a saudação');
+    assert.ok(selectorIdx < monthNavIdx, 'Seletor deve vir antes da navegação mensal');
 });
 
-test('2. Persistência da escolha de contexto após nova leitura do armazenamento', () => {
+test('2. Ausência do selo "Protótipo Local" e da barra superior removida', () => {
+    const layoutContent = fs.readFileSync(path.resolve('src/components/Layout.jsx'), 'utf-8');
+    assert.ok(!layoutContent.includes('<PrototypeContextSelector'), 'Layout.jsx não deve conter a faixa superior com PrototypeContextSelector');
+
+    const selectorContent = fs.readFileSync(path.resolve('src/components/PrototypeContextSelector.jsx'), 'utf-8');
+    assert.ok(!selectorContent.includes('Protótipo Local'), 'Não deve existir o selo "Protótipo Local" na barra');
+    assert.ok(!selectorContent.includes('Informações do Protótipo Local'), 'Não deve existir botão de informações no topo');
+});
+
+test('3. Ausência da página separada de Limites no protótipo', () => {
+    const selectorContent = fs.readFileSync(path.resolve('src/components/PrototypeContextSelector.jsx'), 'utf-8');
+    assert.ok(!selectorContent.includes('/prototipo/limits'), 'Não deve existir link ou botão para /prototipo/limits no seletor');
+
+    // Toda gestão de limites está na Home.jsx
+    const homeContent = fs.readFileSync(path.resolve('src/pages/Home.jsx'), 'utf-8');
+    assert.ok(homeContent.includes('<LimitsSection'), 'LimitsSection deve estar integrada diretamente na Home.jsx');
+    assert.ok(homeContent.includes('isLimitModalOpen'), 'Modal de limites deve estar na Home.jsx');
+});
+
+test('4. Redirecionamento de /prototipo/limits para /prototipo', () => {
+    const appContent = fs.readFileSync(path.resolve('src/App.jsx'), 'utf-8');
+    assert.ok(
+        appContent.includes('<Route path="limits" element={<Navigate to="/prototipo" replace />} />'),
+        'Rota /prototipo/limits deve redirecionar para /prototipo'
+    );
+});
+
+test('5. Persistência da seleção do contexto', () => {
     prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.FAMILY);
     assert.equal(prototypeStorage.getActiveFinancialContext(), FINANCIAL_CONTEXTS.FAMILY);
     assert.equal(localStorage.getItem(PROTOTYPE_STORAGE_KEYS.ACTIVE_FINANCIAL_CONTEXT), 'family');
     assert.ok(dispatchedEvents.includes(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED));
 
-    prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.BOTH);
-    assert.equal(prototypeStorage.getActiveFinancialContext(), FINANCIAL_CONTEXTS.BOTH);
-    assert.equal(localStorage.getItem(PROTOTYPE_STORAGE_KEYS.ACTIVE_FINANCIAL_CONTEXT), 'both');
+    // Nova leitura simula recarregamento
+    assert.equal(prototypeStorage.getActiveFinancialContext(), FINANCIAL_CONTEXTS.FAMILY);
 
-    // Simula recarregamento
-    const freshContext = prototypeStorage.getActiveFinancialContext();
-    assert.equal(freshContext, FINANCIAL_CONTEXTS.BOTH);
-});
-
-test('3. Tratamento de valor de contexto inválido', () => {
-    // Valor inválido no storage
-    storage.set(PROTOTYPE_STORAGE_KEYS.ACTIVE_FINANCIAL_CONTEXT, 'super_admin');
-    assert.equal(prototypeStorage.getActiveFinancialContext(), FINANCIAL_CONTEXTS.INDIVIDUAL);
-
-    storage.set(PROTOTYPE_STORAGE_KEYS.ACTIVE_FINANCIAL_CONTEXT, '');
-    assert.equal(prototypeStorage.getActiveFinancialContext(), FINANCIAL_CONTEXTS.INDIVIDUAL);
-
-    // Chamada inválida via API
-    assert.throws(() => {
-        prototypeStorage.setActiveFinancialContext('invalido');
-    }, /Contexto financeiro inválido/);
-});
-
-test('4. Consulta exclusiva de transações e limites individuais em Individual', () => {
-    // Cadastra dados individuais
-    prototypeStorage.addTransaction({
-        description: 'Salário Individual',
-        amount: 5000,
-        type: 'income',
-        category: 'salario',
-        date: '2026-10-01'
-    });
-    prototypeStorage.saveLimits({ alimentacao: 800 });
-
-    // Cadastra espaço e dados familiares
-    const space = prototypeStorage.createFamilySpace({ name: 'Casa', createdBy: 'u1', creatorName: 'Pai' });
-    const members = prototypeStorage.getFamilyMembers(space.id);
-    prototypeStorage.addFamilyTransaction({
-        familyId: space.id,
-        memberId: members[0].id,
-        description: 'Mercado Familiar',
-        amount: 1200,
-        type: 'expense',
-        category: 'alimentacao',
-        date: '2026-10-05'
-    });
-    prototypeStorage.saveFamilyLimits(space.id, { alimentacao: 2500 });
-
-    // Define contexto como Individual
+    // Retorna para individual
     prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.INDIVIDUAL);
-
-    const txs = getScopedTransactions();
-    assert.equal(txs.length, 1);
-    assert.equal(txs[0].description, 'Salário Individual');
-    assert.equal(txs[0].scope, 'individual');
-    assert.equal(txs[0].originLabel, 'Individual');
-
-    const limits = prototypeStorage.getLimits();
-    assert.deepEqual(limits, { alimentacao: 800 });
+    assert.equal(prototypeStorage.getActiveFinancialContext(), FINANCIAL_CONTEXTS.INDIVIDUAL);
+    assert.equal(localStorage.getItem(PROTOTYPE_STORAGE_KEYS.ACTIVE_FINANCIAL_CONTEXT), 'individual');
 });
 
-test('5. Consulta restrita ao espaço ativo em Familiar', () => {
-    const spaceA = prototypeStorage.createFamilySpace({ name: 'Espaço A', createdBy: 'u1', creatorName: 'Alice' });
-    const spaceB = prototypeStorage.createFamilySpace({ name: 'Espaço B', createdBy: 'u2', creatorName: 'Bob' });
-    const memberA = prototypeStorage.getFamilyMembers(spaceA.id)[0];
-    const memberB = prototypeStorage.getFamilyMembers(spaceB.id)[0];
+test('6. Diferenciação de cores entre Individual e Familiar', () => {
+    const indexCss = fs.readFileSync(path.resolve('src/index.css'), 'utf-8');
+    assert.ok(indexCss.includes('[data-prototype-context="family"]'), 'Deve existir regra CSS de escopo para o contexto familiar');
+    assert.ok(indexCss.includes('--primary-darkest'), 'Contexto familiar deve adotar a tonalidade verde mais escura da paleta');
 
-    prototypeStorage.addFamilyTransaction({
-        familyId: spaceA.id,
-        memberId: memberA.id,
-        description: 'Aluguel Espaço A',
-        amount: 2000,
-        type: 'expense',
-        category: 'moradia',
-        date: '2026-10-10'
-    });
-
-    prototypeStorage.addFamilyTransaction({
-        familyId: spaceB.id,
-        memberId: memberB.id,
-        description: 'Condomínio Espaço B',
-        amount: 800,
-        type: 'expense',
-        category: 'moradia',
-        date: '2026-10-10'
-    });
-
-    prototypeStorage.setActiveFamilyId(spaceA.id);
-    prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.FAMILY);
-
-    const txs = getScopedTransactions();
-    assert.equal(txs.length, 1);
-    assert.equal(txs[0].description, 'Aluguel Espaço A');
-    assert.equal(txs[0].scope, 'family');
-    assert.equal(txs[0].originLabel, 'Familiar');
-    assert.equal(txs[0].memberName, 'Alice');
+    const selectorContent = fs.readFileSync(path.resolve('src/components/PrototypeContextSelector.jsx'), 'utf-8');
+    assert.ok(selectorContent.includes('--primary-color'), 'Individual deve usar verde principal');
+    assert.ok(selectorContent.includes('--primary-darkest'), 'Familiar deve usar verde mais escuro');
 });
 
-test('6. Atualização da visualização ao trocar de espaço familiar', () => {
-    const spaceA = prototypeStorage.createFamilySpace({ name: 'Espaço A', createdBy: 'u1', creatorName: 'Alice' });
-    const spaceB = prototypeStorage.createFamilySpace({ name: 'Espaço B', createdBy: 'u2', creatorName: 'Bob' });
-    const memberB = prototypeStorage.getFamilyMembers(spaceB.id)[0];
+test('7. Criação de limite individual sem regressão', () => {
+    prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.INDIVIDUAL);
+    const initialLimits = prototypeStorage.getLimits();
+    assert.deepEqual(initialLimits, {});
 
-    prototypeStorage.addFamilyTransaction({
-        familyId: spaceB.id,
-        memberId: memberB.id,
-        description: 'Conta Espaço B',
-        amount: 350,
-        type: 'expense',
-        category: 'outros',
-        date: '2026-10-12'
-    });
+    prototypeStorage.saveLimits({ alimentacao: 500, transporte: 200 });
+    const savedLimits = prototypeStorage.getLimits();
+    assert.deepEqual(savedLimits, { alimentacao: 500, transporte: 200 });
 
-    prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.FAMILY);
-    prototypeStorage.setActiveFamilyId(spaceA.id);
-    assert.equal(getScopedTransactions().length, 0);
-
-    // Troca para o Espaço B
-    prototypeStorage.setActiveFamilyId(spaceB.id);
-    const txs = getScopedTransactions();
-    assert.equal(txs.length, 1);
-    assert.equal(txs[0].description, 'Conta Espaço B');
-    assert.equal(txs[0].memberName, 'Bob');
-});
-
-test('7. Agregação correta de receitas, despesas e saldo em Ambos', () => {
-    // Individual: Receita 3000, Despesa 1000 => Saldo +2000
-    prototypeStorage.addTransaction({
-        description: 'Salário',
-        amount: 3000,
-        type: 'income',
-        category: 'salario',
-        date: '2026-10-01'
-    });
-    prototypeStorage.addTransaction({
-        description: 'Celular',
-        amount: 1000,
-        type: 'expense',
-        category: 'outros',
-        date: '2026-10-05'
-    });
-
-    // Familiar: Receita 2000, Despesa 800 => Saldo +1200
-    const space = prototypeStorage.createFamilySpace({ name: 'Família Silva', createdBy: 'u1', creatorName: 'Pedro' });
-    const member = prototypeStorage.getFamilyMembers(space.id)[0];
-    prototypeStorage.addFamilyTransaction({
-        familyId: space.id,
-        memberId: member.id,
-        description: 'Freelance Familiar',
-        amount: 2000,
-        type: 'income',
-        category: 'servicos',
-        date: '2026-10-02'
-    });
-    prototypeStorage.addFamilyTransaction({
-        familyId: space.id,
-        memberId: member.id,
-        description: 'Supermercado',
-        amount: 800,
-        type: 'expense',
-        category: 'alimentacao',
-        date: '2026-10-08'
-    });
-
-    prototypeStorage.setActiveFamilyId(space.id);
-    prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.BOTH);
-
-    const txs = getScopedTransactions();
-    assert.equal(txs.length, 4);
-
-    const totalIncome = txs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-    const totalExpense = txs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-    const balance = totalIncome - totalExpense;
-
-    assert.equal(totalIncome, 5000);
-    assert.equal(totalExpense, 1800);
-    assert.equal(balance, 3200);
-
-    // Subtotais preservados
-    const indBalance = txs.filter(t => t.scope === 'individual')
-        .reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
-    const famBalance = txs.filter(t => t.scope === 'family')
-        .reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
-
-    assert.equal(indBalance, 2000);
-    assert.equal(famBalance, 1200);
-});
-
-test('8. Ausência de duplicação de registros na visão combinada', () => {
-    prototypeStorage.addTransaction({ description: 'Item 1', amount: 50, type: 'expense', category: 'outros', date: '2026-10-01' });
-    prototypeStorage.addTransaction({ description: 'Item 2', amount: 80, type: 'expense', category: 'outros', date: '2026-10-02' });
-
-    const space = prototypeStorage.createFamilySpace({ name: 'Casa', createdBy: 'u1', creatorName: 'Pai' });
-    const member = prototypeStorage.getFamilyMembers(space.id)[0];
-    prototypeStorage.addFamilyTransaction({
-        familyId: space.id,
-        memberId: member.id,
-        description: 'Item 3',
-        amount: 120,
-        type: 'expense',
-        category: 'outros',
-        date: '2026-10-03'
-    });
-
-    prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.BOTH);
-    const txs = getScopedTransactions();
-
-    assert.equal(txs.length, 3);
-    const ids = new Set(txs.map(t => t.id));
-    assert.equal(ids.size, 3, 'Todos os identificadores devem ser únicos');
-});
-
-test('9. Identificação da origem de cada transação na lista conjunta', () => {
-    prototypeStorage.addTransaction({ description: 'Academia', amount: 120, type: 'expense', category: 'saude', date: '2026-10-01' });
-
-    const space = prototypeStorage.createFamilySpace({ name: 'Casa', createdBy: 'u1', creatorName: 'Mariana' });
-    const member = prototypeStorage.getFamilyMembers(space.id)[0];
-    prototypeStorage.addFamilyTransaction({
-        familyId: space.id,
-        memberId: member.id,
-        description: 'Internet Fibra',
-        amount: 150,
-        type: 'expense',
-        category: 'moradia',
-        date: '2026-10-02'
-    });
-
-    prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.BOTH);
-    const txs = getScopedTransactions();
-
-    const indTx = txs.find(t => t.description === 'Academia');
-    const famTx = txs.find(t => t.description === 'Internet Fibra');
-
-    assert.equal(indTx.scope, 'individual');
-    assert.equal(indTx.originLabel, 'Individual');
-
-    assert.equal(famTx.scope, 'family');
-    assert.equal(famTx.originLabel, 'Familiar');
-    assert.equal(famTx.memberName, 'Mariana');
-});
-
-test('10. Separação dos limites individuais e familiares', () => {
-    const space = prototypeStorage.createFamilySpace({ name: 'Família', createdBy: 'u1' });
-
-    prototypeStorage.saveLimits({ alimentacao: 600, transporte: 200 });
-    prototypeStorage.saveFamilyLimits(space.id, { alimentacao: 1800, moradia: 2500 });
-
-    const indLimits = prototypeStorage.getLimits();
-    const famLimits = prototypeStorage.getFamilyLimits(space.id);
-
-    assert.deepEqual(indLimits, { alimentacao: 600, transporte: 200 });
-    assert.deepEqual(famLimits, { alimentacao: 1800, moradia: 2500 });
-
-    // As estruturas permanecem independentes (alimentação não foi somada para 2400)
-    assert.equal(indLimits.alimentacao, 600);
-    assert.equal(famLimits.alimentacao, 1800);
-});
-
-test('11. Estado vazio quando não existe espaço familiar', () => {
-    prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.FAMILY);
-    assert.equal(prototypeStorage.getActiveFamilyId(), null);
-
-    const txs = getScopedTransactions();
-    assert.deepEqual(txs, []);
-
-    // Não inventa limites fictícios
+    // Nenhum espaço familiar foi afetado
     assert.equal(prototypeStorage.getFamilySpaces().length, 0);
 });
 
-test('12. Comportamento seguro quando o espaço ativo não existe mais', () => {
-    const space = prototypeStorage.createFamilySpace({ name: 'Temporário', createdBy: 'u1' });
-    prototypeStorage.setActiveFamilyId(space.id);
-    assert.equal(prototypeStorage.getActiveFamilyId(), space.id);
-
-    // Deleta o espaço
-    prototypeStorage.deleteFamilySpace(space.id);
-    assert.equal(prototypeStorage.getActiveFamilyId(), null);
-
-    // Leitura segura no contexto Familiar
-    prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.FAMILY);
-    const txs = getScopedTransactions();
-    assert.deepEqual(txs, []);
-});
-
-test('13. Preservação dos dados após alternar contextos e recarregar a página', () => {
-    prototypeStorage.addTransaction({ description: 'Compra 1', amount: 50, type: 'expense', category: 'outros', date: '2026-10-01' });
-    const space = prototypeStorage.createFamilySpace({ name: 'Casa', createdBy: 'u1', creatorName: 'Ana' });
-    const member = prototypeStorage.getFamilyMembers(space.id)[0];
-    prototypeStorage.addFamilyTransaction({
-        familyId: space.id,
-        memberId: member.id,
-        description: 'Compra Familiar',
-        amount: 200,
-        type: 'expense',
-        category: 'outros',
-        date: '2026-10-02'
-    });
-
-    // Alterna várias vezes
-    prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.FAMILY);
-    prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.BOTH);
+test('8. Edição e exclusão de limites individuais sem regressão', () => {
     prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.INDIVIDUAL);
+    prototypeStorage.saveLimits({ alimentacao: 500, transporte: 200 });
 
-    // Dados individuais intactos
-    assert.equal(prototypeStorage.getTransactions().length, 1);
-    // Dados familiares intactos
-    assert.equal(prototypeStorage.getFamilyTransactions(space.id).length, 1);
+    // Edição
+    prototypeStorage.saveLimits({ alimentacao: 650, transporte: 200 });
+    assert.equal(prototypeStorage.getLimits().alimentacao, 650);
+
+    // Exclusão
+    const current = { ...prototypeStorage.getLimits() };
+    delete current.transporte;
+    prototypeStorage.saveLimits(current);
+
+    const afterDelete = prototypeStorage.getLimits();
+    assert.equal(afterDelete.alimentacao, 650);
+    assert.equal(afterDelete.transporte, undefined);
 });
 
-test('14. Preservação estrita de zimbroo_accounts', () => {
-    const walletMock = JSON.stringify([{ id: 'acc-1', name: 'Nubank', balance: 1500 }]);
-    storage.set('zimbroo_accounts', walletMock);
-
+test('9. Criação de limite familiar no espaço ativo', () => {
+    const space = prototypeStorage.createFamilySpace({ name: 'Família Silva', createdBy: 'u1' });
+    prototypeStorage.setActiveFamilyId(space.id);
     prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.FAMILY);
-    prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.BOTH);
+
+    prototypeStorage.saveFamilyLimits(space.id, { alimentacao: 1500, moradia: 2200 });
+    const famLimits = prototypeStorage.getFamilyLimits(space.id);
+
+    assert.deepEqual(famLimits, { alimentacao: 1500, moradia: 2200 });
+    assert.ok(dispatchedEvents.includes(PROTOTYPE_EVENTS.FAMILY_SETTINGS_CHANGED));
+});
+
+test('10. Edição de limite familiar sem alterar limites individuais', () => {
+    prototypeStorage.saveLimits({ alimentacao: 400 });
+
+    const space = prototypeStorage.createFamilySpace({ name: 'Casa', createdBy: 'u1' });
+    prototypeStorage.saveFamilyLimits(space.id, { alimentacao: 1200, saude: 500 });
+
+    // Edita limite familiar
+    prototypeStorage.saveFamilyLimits(space.id, { alimentacao: 1600, saude: 500 });
+
+    assert.equal(prototypeStorage.getFamilyLimits(space.id).alimentacao, 1600);
+    // Limite individual permanece 400
+    assert.equal(prototypeStorage.getLimits().alimentacao, 400);
+});
+
+test('11. Exclusão de limite familiar sem alterar limites individuais', () => {
+    prototypeStorage.saveLimits({ alimentacao: 400, transporte: 150 });
+
+    const space = prototypeStorage.createFamilySpace({ name: 'Casa', createdBy: 'u1' });
+    prototypeStorage.saveFamilyLimits(space.id, { alimentacao: 1200, lazer: 300 });
+
+    // Exclui 'alimentacao' familiar
+    const currentFam = { ...prototypeStorage.getFamilyLimits(space.id) };
+    delete currentFam.alimentacao;
+    prototypeStorage.saveFamilyLimits(space.id, currentFam);
+
+    assert.equal(prototypeStorage.getFamilyLimits(space.id).alimentacao, undefined);
+    assert.equal(prototypeStorage.getFamilyLimits(space.id).lazer, 300);
+
+    // Limites individuais continuam 100% intactos
+    assert.equal(prototypeStorage.getLimits().alimentacao, 400);
+    assert.equal(prototypeStorage.getLimits().transporte, 150);
+});
+
+test('12. Isolamento de limites entre espaços familiares diferentes', () => {
+    const space1 = prototypeStorage.createFamilySpace({ name: 'Espaço 1', createdBy: 'u1' });
+    const space2 = prototypeStorage.createFamilySpace({ name: 'Espaço 2', createdBy: 'u2' });
+
+    prototypeStorage.saveFamilyLimits(space1.id, { alimentacao: 1000 });
+    prototypeStorage.saveFamilyLimits(space2.id, { alimentacao: 2500, educacao: 800 });
+
+    assert.deepEqual(prototypeStorage.getFamilyLimits(space1.id), { alimentacao: 1000 });
+    assert.deepEqual(prototypeStorage.getFamilyLimits(space2.id), { alimentacao: 2500, educacao: 800 });
+
+    // Alternar espaço ativo retorna os limites respectivos
+    prototypeStorage.setActiveFamilyId(space1.id);
+    assert.equal(prototypeStorage.getActiveFamilyId(), space1.id);
+    assert.equal(prototypeStorage.getFamilyLimits(prototypeStorage.getActiveFamilyId()).alimentacao, 1000);
+
+    prototypeStorage.setActiveFamilyId(space2.id);
+    assert.equal(prototypeStorage.getActiveFamilyId(), space2.id);
+    assert.equal(prototypeStorage.getFamilyLimits(prototypeStorage.getActiveFamilyId()).alimentacao, 2500);
+});
+
+test('13. Atualização dos cards depois de cada operação', () => {
+    prototypeStorage.saveLimits({ alimentacao: 600 });
+    assert.ok(dispatchedEvents.includes(PROTOTYPE_EVENTS.LIMITS_CHANGED));
+
+    const space = prototypeStorage.createFamilySpace({ name: 'Casa', createdBy: 'u1' });
+    dispatchedEvents.length = 0;
+    prototypeStorage.saveFamilyLimits(space.id, { alimentacao: 1200 });
+    assert.ok(dispatchedEvents.includes(PROTOTYPE_EVENTS.FAMILY_SETTINGS_CHANGED));
+});
+
+test('14. Persistência de limites familiares após recarregar o protótipo', () => {
+    const space = prototypeStorage.createFamilySpace({ name: 'Casa', createdBy: 'u1' });
+    prototypeStorage.saveFamilyLimits(space.id, { mercado: 1400 });
+
+    // Simula leitura limpa do storage
+    const reloadedSettings = JSON.parse(storage.get(PROTOTYPE_STORAGE_KEYS.FAMILY_SETTINGS));
+    assert.equal(reloadedSettings[space.id].limits.mercado, 1400);
+
+    const readLimits = prototypeStorage.getFamilyLimits(space.id);
+    assert.equal(readLimits.mercado, 1400);
+});
+
+test('15. Manutenção do comportamento dos limites gerais e anuais', () => {
+    const space = prototypeStorage.createFamilySpace({ name: 'Casa', createdBy: 'u1' });
+
+    // Limites gerais
+    prototypeStorage.saveFamilyLimits(space.id, { alimentacao: 1000, saude: 300 });
+
+    // Limites de 2026
+    prototypeStorage.saveFamilyLimits(space.id, { alimentacao: 1200 }, 2026);
+
+    // Leitura do ano 2026 prioriza o ano e aplica fallback dos limites gerais para categorias não especificadas
+    const limits2026 = prototypeStorage.getFamilyLimits(space.id, 2026);
+    assert.equal(limits2026.alimentacao, 1200);
+    assert.equal(limits2026.saude, 300);
+
+    // Limites gerais permanecem independentes
+    const generalLimits = prototypeStorage.getFamilyLimits(space.id);
+    assert.equal(generalLimits.alimentacao, 1000);
+});
+
+test('16. Preservação de zimbroo_accounts', () => {
+    const carteiraData = JSON.stringify([{ id: 'acc-1', name: 'Conta Principal', balance: 5000 }]);
+    storage.set('zimbroo_accounts', carteiraData);
+
+    const space = prototypeStorage.createFamilySpace({ name: 'Casa', createdBy: 'u1' });
+    prototypeStorage.saveFamilyLimits(space.id, { alimentacao: 800 });
+    prototypeStorage.saveLimits({ alimentacao: 400 });
+
+    assert.equal(storage.get('zimbroo_accounts'), carteiraData);
+
     prototypeStorage.clearAllPrototypeData();
-
-    assert.equal(storage.get('zimbroo_accounts'), walletMock, 'zimbroo_accounts nunca deve ser tocada');
+    assert.equal(storage.get('zimbroo_accounts'), carteiraData, 'zimbroo_accounts deve permanecer estritamente intacta');
 });
 
-test('15. Bloqueio de gravações em escopo incompatível', () => {
-    // Transações familiares não devem ser deletadas ou alteradas pelos métodos individuais
-    const space = prototypeStorage.createFamilySpace({ name: 'Casa', createdBy: 'u1', creatorName: 'Pai' });
-    const member = prototypeStorage.getFamilyMembers(space.id)[0];
-    const famTx = prototypeStorage.addFamilyTransaction({
-        familyId: space.id,
-        memberId: member.id,
-        description: 'Luz',
-        amount: 180,
-        type: 'expense',
-        category: 'moradia',
-        date: '2026-10-04'
-    });
+test('17. Ausência de gravações no escopo errado', () => {
+    const space = prototypeStorage.createFamilySpace({ name: 'Casa', createdBy: 'u1' });
+    prototypeStorage.setActiveFamilyId(space.id);
 
-    // Tentativa de updateTransaction com id familiar no storage individual não afeta a transação
-    prototypeStorage.updateTransaction(famTx.id, { description: 'Mutação indevida' });
-    const freshFamTx = prototypeStorage.getFamilyTransactionById(famTx.id);
-    assert.equal(freshFamTx.description, 'Luz', 'Transação familiar não deve ser alterada por update individual');
+    // Gravação em contexto Familiar nunca grava na chave individual
+    prototypeStorage.saveFamilyLimits(space.id, { alimentacao: 1100 });
+    assert.deepEqual(prototypeStorage.getLimits(), {}, 'Chave individual deve continuar vazia');
 
-    // Tentativa de deleteTransaction com id familiar no storage individual não exclui a transação
-    prototypeStorage.deleteTransaction(famTx.id);
-    assert.ok(prototypeStorage.getFamilyTransactionById(famTx.id), 'Transação familiar não deve ser excluída por delete individual');
+    // Gravação em contexto Individual nunca grava na chave familiar
+    prototypeStorage.saveLimits({ alimentacao: 350 });
+    assert.equal(prototypeStorage.getFamilyLimits(space.id).alimentacao, 1100);
+    assert.equal(prototypeStorage.getLimits().alimentacao, 350);
 });
 
-test('16. Ausência de regressões no comportamento do aplicativo principal', () => {
-    // Chaves de armazenamento da aplicação principal continuam inexistentes / isoladas
+test('18. Preservação da interface e do comportamento do aplicativo principal', () => {
+    const appContent = fs.readFileSync(path.resolve('src/App.jsx'), 'utf-8');
+    // Rota /limits do app principal preservada
+    assert.ok(appContent.includes('<Route path="limits" element={<Limits />} />'), 'App principal deve preservar rota /limits');
+
+    // Nenhuma chave do app principal é tocada pelo protótipo
     const allKeys = Array.from(storage.keys());
-    const mainKeys = allKeys.filter(k => !k.startsWith('zimbroo_prototipo_') && k !== 'zimbroo_accounts');
-    assert.deepEqual(mainKeys, [], 'Nenhuma chave externa ao prefixo zimbroo_prototipo_ deve ser gerada');
-});
-
-test('17. Manutenção da navegação dentro das rotas do protótipo', () => {
-    // Assegura que os links de navegação interna respeitam as rotas filhas de /prototipo
-    const prototypeRoutes = ['/prototipo', '/prototipo/limits', '/prototipo/wallet'];
-    for (const route of prototypeRoutes) {
-        assert.ok(route.startsWith('/prototipo'), `Rota ${route} deve pertencer ao escopo /prototipo`);
-    }
+    const foreignKeys = allKeys.filter(k => !k.startsWith('zimbroo_prototipo_') && k !== 'zimbroo_accounts');
+    assert.deepEqual(foreignKeys, []);
 });

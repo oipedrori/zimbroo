@@ -63,7 +63,7 @@ const LimitsSection = ({
                     const isOverLimit = spent >= limitAmount;
                     const isNearLimit = rawPercent >= 90;
 
-                    let barColor = '#4BB45A'; // Green default
+                    let barColor = 'var(--primary-color, #4BB45A)';
                     if (isOverLimit) barColor = 'var(--danger-color)'; // Red 100%+
                     else if (isNearLimit) barColor = '#FBBF24'; // Yellow 90%+
 

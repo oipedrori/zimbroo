@@ -47,8 +47,8 @@ const TransactionCard = ({ transaction, onClick }) => {
                 fontSize: '0.65rem',
                 padding: '1px 6px',
                 borderRadius: '6px',
-                background: 'rgba(99, 102, 241, 0.12)',
-                color: '#6366f1',
+                background: 'rgba(45, 125, 57, 0.12)',
+                color: 'var(--primary-darkest, #2D7D39)',
                 fontWeight: '700',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -62,8 +62,8 @@ const TransactionCard = ({ transaction, onClick }) => {
                 fontSize: '0.65rem',
                 padding: '1px 6px',
                 borderRadius: '6px',
-                background: 'rgba(16, 185, 129, 0.12)',
-                color: '#10b981',
+                background: 'rgba(75, 180, 90, 0.12)',
+                color: '#4BB45A',
                 fontWeight: '700'
               }}>
                 Individual

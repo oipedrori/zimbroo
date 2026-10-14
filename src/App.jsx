@@ -73,10 +73,10 @@ const AppRoutes = () => {
       </div>
     }>
       <Routes>
-        {/* Rota Pública do Protótipo (Totalmente isolada, sem AuthProvider, sem Firebase, armazenamento local) */}
+        {/* Rota Pública do Protótipo (Totalmente isolada, sem AuthProvider, sem Firebase, gerenciamento de limites na Home) */}
         <Route path="/prototipo" element={<PrototypeProvider><PrototypeContainer /></PrototypeProvider>}>
           <Route index element={<Home />} />
-          <Route path="limits" element={<Limits />} />
+          <Route path="limits" element={<Navigate to="/prototipo" replace />} />
           <Route path="wallet" element={<Wallet />} />
         </Route>
 

@@ -100,16 +100,17 @@ export const useLimits = (year) => {
     const setLimits = async (newLimits) => {
         if (isPrototype) {
             const context = prototypeStorage.getActiveFinancialContext();
+            const resolvedLimits = typeof newLimits === 'function' ? newLimits(scopedLimits.activeLimits) : newLimits;
             if (context === FINANCIAL_CONTEXTS.INDIVIDUAL) {
-                prototypeStorage.saveLimits(newLimits, year);
+                prototypeStorage.saveLimits(resolvedLimits, year);
             } else if (context === FINANCIAL_CONTEXTS.FAMILY) {
                 const activeFamilyId = prototypeStorage.getActiveFamilyId();
                 if (!activeFamilyId) {
                     throw new Error('Nenhum espaço familiar ativo para salvar limites.');
                 }
-                prototypeStorage.saveFamilyLimits(activeFamilyId, newLimits, year);
+                prototypeStorage.saveFamilyLimits(activeFamilyId, resolvedLimits, year);
             } else {
-                throw new Error('No contexto Ambos, a gravação de limites deve especificar o escopo de destino.');
+                throw new Error('Contexto financeiro não suportado para gravação direta de limites.');
             }
             setScopedLimits(getScopedPrototypeLimits(year));
             return;

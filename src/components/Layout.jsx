@@ -12,7 +12,6 @@ import { format } from 'date-fns';
 import { generateInsightMessage } from '../services/geminiService';
 import { usePrototype } from '../contexts/PrototypeContext';
 import { usePrototypeFinancial } from '../contexts/PrototypeFinancialContext';
-import PrototypeContextSelector from './PrototypeContextSelector';
 import PrototypeScopeGuardModal from './PrototypeScopeGuardModal';
 import './Layout.css';
 
@@ -174,7 +173,6 @@ const Layout = () => {
                 ref={mainContentRef}
                 className="main-content"
             >
-                {isPrototype && <PrototypeContextSelector />}
                 <Outlet context={{ setIsAiActive, setIsBottomNavHidden: setIsBottomNavHiddenFromChild }} />
             </main>
 
