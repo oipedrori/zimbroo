@@ -250,26 +250,25 @@ const Home = () => {
 
     // Calculate yearly stats locally from allTransactions to avoid redundant fetches
     React.useEffect(() => {
-        if (allTransactions.length > 0) {
-            const currentYear = currentDate.getFullYear();
-            const monthlyBalances = [];
-            for (let m = 1; m <= 12; m++) {
-                const monthPrefix = `${currentYear}-${String(m).padStart(2, '0')}`;
-                const monthTxs = prepareMonthlyTransactions(allTransactions, monthPrefix);
-                const inc = monthTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-                const exp = monthTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+        const currentYear = currentDate.getFullYear();
+        const monthlyBalances = [];
+        const monthLabels = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+        for (let m = 1; m <= 12; m++) {
+            const monthPrefix = `${currentYear}-${String(m).padStart(2, '0')}`;
+            const monthTxs = prepareMonthlyTransactions(allTransactions || [], monthPrefix);
+            const inc = monthTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+            const exp = monthTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
 
-                monthlyBalances.push({
-                    month: m,
-                    label: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][m - 1],
-                    incomes: inc,
-                    expenses: exp,
-                    balance: inc - exp
-                });
-            }
-            setYearlyStats(monthlyBalances);
-            setLoadingYearly(false);
+            monthlyBalances.push({
+                month: m,
+                label: monthLabels[m - 1],
+                incomes: inc,
+                expenses: exp,
+                balance: inc - exp
+            });
         }
+        setYearlyStats(monthlyBalances);
+        setLoadingYearly(false);
     }, [allTransactions, currentDate]);
 
     // Excluir lógica duplicada ou redundante aqui se necessário
@@ -497,7 +496,12 @@ const Home = () => {
             {isFlipped ? (
                 <div className="page-container" style={{ paddingBottom: '120px', animation: isClosingFlipped ? 'slideDownModal 0.3s forwards' : 'slideUpModal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)' }}>{t('statistics', { defaultValue: 'Estatísticas' })}</h2>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                            {isPrototype 
+                                ? (financialContext === 'family' ? 'Estatísticas Familiares' : 'Estatísticas Individuais')
+                                : t('statistics', { defaultValue: 'Estatísticas' })
+                            }
+                        </h2>
                         <button
                             onClick={() => { haptic.light(); closeFlipped(); }}
                             style={{
@@ -520,23 +524,64 @@ const Home = () => {
                             <BudgetPieChart transactions={transactions} currentDate={currentDate} />
                         </section>
 
-                        {/* Bar Chart Section - Second */}
+                        {/* Monthly Balance Grid (3 colunas x 4 linhas) - Second */}
                         <section className="glass-panel" style={{ padding: '24px' }}>
                             <h3 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <BarChart2 size={18} color="var(--primary-color)" />
                                 {t('monthly_balance_chart', { defaultValue: 'Balanço Mensal' })}
                             </h3>
-                            <div style={{ height: '180px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px' }}>
-                                {yearlyStats.map((s, i) => {
-                                    const maxVal = Math.max(...yearlyStats.map(x => Math.max(x.incomes, x.expenses, 1)), 1);
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(3, 1fr)',
+                                gap: '10px'
+                            }}>
+                                {yearlyStats.map((s) => {
+                                    const isMonthNegative = s.balance < 0;
+                                    const miniCardGradient = isMonthNegative
+                                        ? 'linear-gradient(135deg, #ef4444 0%, #991b1b 100%)'
+                                        : 'var(--primary-gradient)';
                                     const isCurrentMonth = s.month === currentDate.getMonth() + 1;
+
                                     return (
-                                        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{ width: '16px', height: '140px', display: 'flex', alignItems: 'flex-end', gap: '2px', position: 'relative' }}>
-                                                <div style={{ width: '8px', height: `${Math.max(2, (s.incomes / maxVal) * 100)}%`, background: 'var(--success-color)', borderRadius: '2px 2px 0 0', opacity: isCurrentMonth ? 1 : 0.4 }}></div>
-                                                <div style={{ width: '8px', height: `${Math.max(2, (s.expenses / maxVal) * 100)}%`, background: 'var(--danger-color)', borderRadius: '2px 2px 0 0', opacity: isCurrentMonth ? 1 : 0.4 }}></div>
-                                            </div>
-                                            <span style={{ fontSize: '0.65rem', fontWeight: isCurrentMonth ? '800' : '500', color: isCurrentMonth ? 'var(--primary-color)' : 'var(--text-muted)' }}>{s.label}</span>
+                                        <div
+                                            key={s.month}
+                                            onClick={() => {
+                                                haptic.light();
+                                                setCurrentDate(new Date(currentDate.getFullYear(), s.month - 1, 1));
+                                            }}
+                                            style={{
+                                                background: miniCardGradient,
+                                                color: 'var(--btn-text, #ffffff)',
+                                                borderRadius: '16px',
+                                                padding: '12px 10px',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                justifyContent: 'space-between',
+                                                minHeight: '74px',
+                                                cursor: 'pointer',
+                                                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                                                border: isCurrentMonth ? '2px solid rgba(255, 255, 255, 0.75)' : '1px solid rgba(255, 255, 255, 0.15)',
+                                                boxShadow: isCurrentMonth ? '0 4px 14px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.08)'
+                                            }}
+                                        >
+                                            <span style={{
+                                                fontSize: '0.75rem',
+                                                fontWeight: '800',
+                                                letterSpacing: '0.5px',
+                                                opacity: 0.95
+                                            }}>
+                                                {s.label}
+                                            </span>
+                                            <span style={{
+                                                fontSize: '0.85rem',
+                                                fontWeight: '700',
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                marginTop: '6px'
+                                            }}>
+                                                {showValues ? formatCurrency(s.balance) : '•••••'}
+                                            </span>
                                         </div>
                                     );
                                 })}
@@ -759,39 +804,6 @@ const Home = () => {
 
 
                         </section>
-
-                        {/* Indicadores de Saldo em Caixa e Compromissos Futuros (Etapa 8) */}
-                        {isPrototype && (
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: '1fr 1fr',
-                                gap: '12px',
-                                marginTop: '12px'
-                            }}>
-                                <div className="glass-panel" style={{ padding: '12px 14px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', borderRadius: '16px' }}>
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600', display: 'block', marginBottom: '4px' }}>
-                                        Saldo em Caixa
-                                    </span>
-                                    <span style={{ fontSize: '1.05rem', fontWeight: '700', color: cashBalance < 0 ? 'var(--danger-color)' : 'var(--text-main)' }}>
-                                        {showValues ? formatCurrency(cashBalance) : '•••••'}
-                                    </span>
-                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
-                                        À vista, débito e PIX
-                                    </span>
-                                </div>
-                                <div className="glass-panel" style={{ padding: '12px 14px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', borderRadius: '16px' }}>
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600', display: 'block', marginBottom: '4px' }}>
-                                        Compromissos Futuros
-                                    </span>
-                                    <span style={{ fontSize: '1.05rem', fontWeight: '700', color: '#f59e0b' }}>
-                                        {showValues ? formatCurrency(futureCommitments) : '•••••'}
-                                    </span>
-                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
-                                        Parcelas a vencer
-                                    </span>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Seção de Limites */}
                         <div id="onboarding-limits-section">

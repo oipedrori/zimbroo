@@ -128,3 +128,17 @@ test('8. No modo individual do protótipo a saudação não contém "Avaliador"'
     assert.ok(homeContent.includes("(hour >= 3 && hour < 12) ? 'Bom dia' :"));
     assert.ok(homeContent.includes("(hour >= 12 && hour < 18) ? 'Boa tarde' : 'Boa noite'"));
 });
+
+test('9. Remoção de Saldo em Caixa e Compromissos Futuros da Home', () => {
+    const homeContent = fs.readFileSync(path.resolve('src/pages/Home.jsx'), 'utf-8');
+    assert.ok(!homeContent.includes('Saldo em Caixa'), 'Home não deve exibir o bloco Saldo em Caixa');
+    assert.ok(!homeContent.includes('Compromissos Futuros'), 'Home não deve exibir o bloco Compromissos Futuros');
+    assert.ok(!homeContent.includes('Parcelas a vencer'), 'Home não deve exibir Parcelas a vencer');
+});
+
+test('10. Estatísticas: título dinâmico e Balanço Mensal em grid 3x4', () => {
+    const homeContent = fs.readFileSync(path.resolve('src/pages/Home.jsx'), 'utf-8');
+    assert.ok(homeContent.includes("financialContext === 'family' ? 'Estatísticas Familiares' : 'Estatísticas Individuais'"), 'Título deve alternar entre Estatísticas Familiares e Estatísticas Individuais');
+    assert.ok(homeContent.includes("gridTemplateColumns: 'repeat(3, 1fr)'"), 'Balanço mensal deve usar grid de 3 colunas');
+    assert.ok(homeContent.includes("const monthLabels = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ']"), 'Deve conter os meses abreviados em caixa alta');
+});
