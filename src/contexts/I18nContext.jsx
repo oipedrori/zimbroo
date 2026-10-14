@@ -26,16 +26,12 @@ export function I18nProvider({ children }) {
             setLocale(baseLang);
             localStorage.setItem('zimbroo_locale', baseLang);
         } else {
-            setLocale('en'); // fallback
+            setLocale('pt'); // fallback
         }
 
-        if (savedCurrency) {
-            setCurrency(savedCurrency);
-        } else {
-            const defaultCur = defaultCurrencyForLanguage[baseLang] || 'USD';
-            setCurrency(defaultCur);
-            localStorage.setItem('zimbroo_currency', defaultCur);
-        }
+        // Moeda unificada para Real (R$) em todo o app
+        setCurrency('BRL');
+        localStorage.setItem('zimbroo_currency', 'BRL');
     }, []);
 
     const t = (key, params = {}) => {
@@ -81,14 +77,15 @@ export function I18nProvider({ children }) {
     };
 
     const formatCurrency = (value) => {
-        return new Intl.NumberFormat(locale, {
+        const num = typeof value === 'number' ? value : Number(value) || 0;
+        return new Intl.NumberFormat('pt-BR', {
             style: 'currency',
-            currency: currency,
-        }).format(value);
+            currency: 'BRL',
+        }).format(num);
     };
 
     const getCurrencySymbol = () => {
-        return currencySymbols[currency] || '$';
+        return 'R$';
     };
 
     const value = {

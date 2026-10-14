@@ -216,7 +216,7 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                         />
                         {repeatType === 'installment' && amount && installments > 1 && (
                             <p style={{ fontSize: '0.85rem', color: 'var(--primary-dark)', marginTop: '8px', fontWeight: '600' }}>
-                                ✨ {installments}x {t('of_value', { defaultValue: 'de' })} {getCurrencySymbol()} {(parseFloat(amount.replace(',', '.')) / installments || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / {t('month', { defaultValue: 'mês' })}
+                                ✨ {installments}x {t('of_value', { defaultValue: 'de' })} {getCurrencySymbol()} {(parseFloat(amount.replace(',', '.')) / installments || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / {t('month', { defaultValue: 'mês' })}
                             </p>
                         )}
                     </div>

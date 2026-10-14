@@ -671,8 +671,8 @@ export const translations = {
 
 export const defaultCurrencyForLanguage = {
     'pt': 'BRL',
-    'en': 'USD',
-    'es': 'EUR',
+    'en': 'BRL',
+    'es': 'BRL',
 };
 
 export const currencySymbols = {
