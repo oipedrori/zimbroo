@@ -573,11 +573,14 @@ const Home = () => {
                                             return activeFamilySpace?.name || 'Família';
                                         }
                                         const hour = new Date().getHours();
+                                        if (isPrototype) {
+                                            // No protótipo, saudação direta sem nome (displayName = isPrototype)
+                                            return (hour >= 3 && hour < 12) ? 'Bom dia' :
+                                                   (hour >= 12 && hour < 18) ? 'Boa tarde' : 'Boa noite';
+                                        }
                                         const greetingKey = (hour >= 3 && hour < 12) ? 'good_morning' :
                                              (hour >= 12 && hour < 18) ? 'good_afternoon' : 'good_night';
-                                        const displayName = isPrototype 
-                                            ? t('evaluator', { defaultValue: 'Avaliador' }) 
-                                            : (currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }));
+                                        const displayName = currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' });
                                         return t(greetingKey, { name: displayName });
                                     })()}
                                 </h1>

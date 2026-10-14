@@ -122,3 +122,9 @@ test('7. Título Limites é exibido no modo familiar', () => {
         'Heading Limites deve existir no estado vazio de familiar'
     );
 });
+
+test('8. No modo individual do protótipo a saudação não contém "Avaliador"', () => {
+    const homeContent = fs.readFileSync(path.resolve('src/pages/Home.jsx'), 'utf-8');
+    assert.ok(homeContent.includes("(hour >= 3 && hour < 12) ? 'Bom dia' :"));
+    assert.ok(homeContent.includes("(hour >= 12 && hour < 18) ? 'Boa tarde' : 'Boa noite'"));
+});
