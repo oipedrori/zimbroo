@@ -20,7 +20,10 @@ export const PROTOTYPE_STORAGE_KEYS = {
     FAMILY_SETTINGS: `${PROTOTYPE_STORAGE_PREFIX}family_settings_v${PROTOTYPE_STORAGE_VERSION}`,
     ACTIVE_FAMILY_ID: `${PROTOTYPE_STORAGE_PREFIX}active_family_id`,
     // Etapa 4: Contexto Financeiro Ativo (Individual, Familiar, Ambos)
-    ACTIVE_FINANCIAL_CONTEXT: `${PROTOTYPE_STORAGE_PREFIX}active_financial_context_v1`
+    ACTIVE_FINANCIAL_CONTEXT: `${PROTOTYPE_STORAGE_PREFIX}active_financial_context_v1`,
+    // Etapa 5: Escolha de modelo no onboarding e convites simulados
+    ONBOARDING_MODEL: `${PROTOTYPE_STORAGE_PREFIX}onboarding_model_v1`,
+    FAMILY_INVITES: `${PROTOTYPE_STORAGE_PREFIX}family_invites_v1`
 };
 const KEYS = PROTOTYPE_STORAGE_KEYS;
 
@@ -44,6 +47,13 @@ export const MEMBER_STATUS = {
     INACTIVE: 'inactive'
 };
 
+// Estados dos convites simulados (Etapa 5)
+export const INVITE_STATUS = {
+    PENDING: 'pending',
+    ACCEPTED: 'accepted',
+    REVOKED: 'revoked'
+};
+
 // Eventos customizados para atualização reativa em tempo real na mesma aba
 export const PROTOTYPE_EVENTS = {
     TXS_CHANGED: 'zimbroo-prototype-txs-changed',
@@ -52,7 +62,8 @@ export const PROTOTYPE_EVENTS = {
     FAMILY_MEMBERS_CHANGED: 'zimbroo-prototype-family-members-changed',
     FAMILY_TXS_CHANGED: 'zimbroo-prototype-family-txs-changed',
     FAMILY_SETTINGS_CHANGED: 'zimbroo-prototype-family-settings-changed',
-    FINANCIAL_CONTEXT_CHANGED: 'zimbroo-prototype-financial-context-changed'
+    FINANCIAL_CONTEXT_CHANGED: 'zimbroo-prototype-financial-context-changed',
+    FAMILY_INVITES_CHANGED: 'zimbroo-prototype-family-invites-changed'
 };
 
 const notify = (eventName) => {
@@ -198,6 +209,26 @@ export const prototypeStorage = {
         }
         localStorage.setItem(KEYS.ACTIVE_FINANCIAL_CONTEXT, target);
         notify(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED);
+    },
+
+    /**
+     * Retorna o modelo de organização escolhido no onboarding ('individual', 'family', 'both').
+     */
+    getOnboardingModel() {
+        if (typeof window === 'undefined') return null;
+        return localStorage.getItem(KEYS.ONBOARDING_MODEL) || null;
+    },
+
+    /**
+     * Define o modelo de organização do onboarding ('individual', 'family', 'both').
+     */
+    setOnboardingModel(model) {
+        if (typeof window === 'undefined') return;
+        if (model) {
+            localStorage.setItem(KEYS.ONBOARDING_MODEL, model);
+        } else {
+            localStorage.removeItem(KEYS.ONBOARDING_MODEL);
+        }
     },
 
     // ==========================================
@@ -462,6 +493,11 @@ export const prototypeStorage = {
         delete settings[id];
         safeSetJson(KEYS.FAMILY_SETTINGS, settings);
 
+        // Remove convites associados
+        const invites = this.getFamilyInvites();
+        const filteredInvites = invites.filter(i => i.familyId !== id);
+        safeSetJson(KEYS.FAMILY_INVITES, filteredInvites);
+
         // Se for o espaço ativo, seleciona outro espaço restante se houver, ou remove a seleção
         const currentActiveId = localStorage.getItem(KEYS.ACTIVE_FAMILY_ID);
         if (currentActiveId === id) {
@@ -476,6 +512,7 @@ export const prototypeStorage = {
         notify(PROTOTYPE_EVENTS.FAMILY_MEMBERS_CHANGED);
         notify(PROTOTYPE_EVENTS.FAMILY_TXS_CHANGED);
         notify(PROTOTYPE_EVENTS.FAMILY_SETTINGS_CHANGED);
+        notify(PROTOTYPE_EVENTS.FAMILY_INVITES_CHANGED);
         return true;
     },
 
@@ -670,6 +707,194 @@ export const prototypeStorage = {
         safeSetJson(KEYS.FAMILY_MEMBERS, updated);
         notify(PROTOTYPE_EVENTS.FAMILY_MEMBERS_CHANGED);
         return true;
+    },
+
+    // ==========================================
+    // 4.1 Convites Familiares Simulados (Etapa 5)
+    // ==========================================
+
+    /**
+     * Busca convites de demonstração, opcionalmente filtrados por espaço familiar
+     */
+    getFamilyInvites(familyId = null) {
+        const invites = safeGetJson(KEYS.FAMILY_INVITES, []);
+        if (!Array.isArray(invites)) return [];
+        if (familyId) {
+            return invites.filter(i => i.familyId === familyId);
+        }
+        return invites;
+    },
+
+    /**
+     * Busca um convite pelo seu ID
+     */
+    getFamilyInviteById(inviteId) {
+        if (!inviteId) return null;
+        const invites = this.getFamilyInvites();
+        return invites.find(i => i.id === inviteId) || null;
+    },
+
+    /**
+     * Cria um convite familiar simulado de demonstração para um parceiro.
+     * Mantém o membro correspondente com status PENDING até aceitação simulada.
+     */
+    createFamilyInvite({ familyId, inviteeName, inviteeEmail, role = FAMILY_ROLES.MEMBER }) {
+        if (!familyId) throw new Error('familyId é obrigatório para criar convite.');
+        const space = this.getFamilySpaceById(familyId);
+        if (!space) {
+            throw new Error(`Espaço familiar "${familyId}" não encontrado.`);
+        }
+
+        const validName = validateMemberName(inviteeName);
+        if (!inviteeEmail || typeof inviteeEmail !== 'string' || !inviteeEmail.includes('@')) {
+            throw new Error('E-mail válido é obrigatório para identificação do convite.');
+        }
+        const cleanEmail = inviteeEmail.trim().toLowerCase();
+
+        const allInvites = this.getFamilyInvites();
+        // Evita duplicar convite pendente para o mesmo e-mail no mesmo espaço
+        const existingPending = allInvites.find(
+            inv => inv.familyId === familyId && inv.inviteeEmail === cleanEmail && inv.status === INVITE_STATUS.PENDING
+        );
+        if (existingPending) {
+            return existingPending;
+        }
+
+        // Procura se já existe um membro com esse nome neste espaço
+        const existingMembers = this.getFamilyMembers(familyId);
+        let member = existingMembers.find(
+            m => m.name.toLowerCase() === validName.toLowerCase()
+        );
+
+        // Se não existir, cadastra membro com status PENDING
+        if (!member) {
+            member = this.addFamilyMember({
+                familyId,
+                name: validName,
+                role,
+                status: MEMBER_STATUS.PENDING
+            });
+        }
+
+        const now = new Date().toISOString();
+        const inviteId = `inv-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+
+        const newInvite = {
+            id: inviteId,
+            familyId,
+            memberId: member.id,
+            inviteeName: validName,
+            inviteeEmail: cleanEmail,
+            role,
+            status: INVITE_STATUS.PENDING,
+            createdAt: now,
+            updatedAt: now
+        };
+
+        const updated = [...allInvites, newInvite];
+        safeSetJson(KEYS.FAMILY_INVITES, updated);
+        notify(PROTOTYPE_EVENTS.FAMILY_INVITES_CHANGED);
+        return newInvite;
+    },
+
+    /**
+     * Aceita um convite familiar simulado (ação explícita de demonstração).
+     * Atualiza o estado do convite e ativa o membro associado de forma idempotente.
+     */
+    acceptFamilyInvite(inviteId) {
+        if (!inviteId) throw new Error('ID do convite é obrigatório.');
+        const allInvites = this.getFamilyInvites();
+        const invIndex = allInvites.findIndex(i => i.id === inviteId);
+        if (invIndex === -1) {
+            throw new Error(`Convite com ID "${inviteId}" não foi encontrado.`);
+        }
+
+        const currentInvite = allInvites[invIndex];
+        if (currentInvite.status === INVITE_STATUS.ACCEPTED) {
+            // Idempotência: não duplica operações se o convite já foi aceito
+            return currentInvite;
+        }
+        if (currentInvite.status === INVITE_STATUS.REVOKED) {
+            throw new Error('Não é possível aceitar um convite que foi cancelado ou revogado.');
+        }
+
+        const now = new Date().toISOString();
+        const updatedInvite = {
+            ...currentInvite,
+            status: INVITE_STATUS.ACCEPTED,
+            acceptedAt: now,
+            updatedAt: now
+        };
+
+        allInvites[invIndex] = updatedInvite;
+        safeSetJson(KEYS.FAMILY_INVITES, allInvites);
+
+        // Ativa o membro correspondente
+        if (currentInvite.memberId) {
+            try {
+                this.updateFamilyMember(currentInvite.memberId, { status: MEMBER_STATUS.ACTIVE });
+            } catch (err) {
+                console.warn('[PrototypeStorage] Não foi possível ativar membro pelo ID:', err);
+            }
+        } else {
+            // Fallback por nome
+            const member = this.getFamilyMembers(currentInvite.familyId).find(
+                m => m.name.toLowerCase() === currentInvite.inviteeName.toLowerCase()
+            );
+            if (member) {
+                this.updateFamilyMember(member.id, { status: MEMBER_STATUS.ACTIVE });
+            }
+        }
+
+        notify(PROTOTYPE_EVENTS.FAMILY_INVITES_CHANGED);
+        return updatedInvite;
+    },
+
+    /**
+     * Revoga ou cancela um convite pendente.
+     */
+    revokeFamilyInvite(inviteId) {
+        if (!inviteId) throw new Error('ID do convite é obrigatório.');
+        const allInvites = this.getFamilyInvites();
+        const invIndex = allInvites.findIndex(i => i.id === inviteId);
+        if (invIndex === -1) {
+            throw new Error(`Convite com ID "${inviteId}" não foi encontrado.`);
+        }
+
+        const currentInvite = allInvites[invIndex];
+        if (currentInvite.status === INVITE_STATUS.ACCEPTED) {
+            throw new Error('Não é possível revogar um convite que já foi aceito.');
+        }
+
+        const now = new Date().toISOString();
+        const updatedInvite = {
+            ...currentInvite,
+            status: INVITE_STATUS.REVOKED,
+            revokedAt: now,
+            updatedAt: now
+        };
+
+        allInvites[invIndex] = updatedInvite;
+        safeSetJson(KEYS.FAMILY_INVITES, allInvites);
+
+        // Trata o membro pendente: remove se sem histórico, ou desativa
+        if (currentInvite.memberId) {
+            try {
+                const member = this.getFamilyMemberById(currentInvite.memberId);
+                if (member && member.status === MEMBER_STATUS.PENDING) {
+                    this.removeFamilyMember(currentInvite.memberId);
+                }
+            } catch {
+                try {
+                    this.updateFamilyMember(currentInvite.memberId, { status: MEMBER_STATUS.INACTIVE });
+                } catch {
+                    // Membro já inativo ou removido
+                }
+            }
+        }
+
+        notify(PROTOTYPE_EVENTS.FAMILY_INVITES_CHANGED);
+        return updatedInvite;
     },
 
     // ==========================================
@@ -988,11 +1213,13 @@ export const prototypeStorage = {
         localStorage.removeItem(KEYS.FAMILY_TRANSACTIONS);
         localStorage.removeItem(KEYS.FAMILY_SETTINGS);
         localStorage.removeItem(KEYS.ACTIVE_FAMILY_ID);
+        localStorage.removeItem(KEYS.FAMILY_INVITES);
 
         notify(PROTOTYPE_EVENTS.FAMILY_SPACES_CHANGED);
         notify(PROTOTYPE_EVENTS.FAMILY_MEMBERS_CHANGED);
         notify(PROTOTYPE_EVENTS.FAMILY_TXS_CHANGED);
         notify(PROTOTYPE_EVENTS.FAMILY_SETTINGS_CHANGED);
+        notify(PROTOTYPE_EVENTS.FAMILY_INVITES_CHANGED);
     },
 
     /**
@@ -1013,8 +1240,10 @@ export const prototypeStorage = {
         localStorage.removeItem(KEYS.FAMILY_TRANSACTIONS);
         localStorage.removeItem(KEYS.FAMILY_SETTINGS);
         localStorage.removeItem(KEYS.ACTIVE_FAMILY_ID);
-        // Limpeza dos dados de contexto
+        localStorage.removeItem(KEYS.FAMILY_INVITES);
+        // Limpeza dos dados de contexto e modelo de onboarding
         localStorage.removeItem(KEYS.ACTIVE_FINANCIAL_CONTEXT);
+        localStorage.removeItem(KEYS.ONBOARDING_MODEL);
 
         notify(PROTOTYPE_EVENTS.TXS_CHANGED);
         notify(PROTOTYPE_EVENTS.LIMITS_CHANGED);
@@ -1023,5 +1252,6 @@ export const prototypeStorage = {
         notify(PROTOTYPE_EVENTS.FAMILY_TXS_CHANGED);
         notify(PROTOTYPE_EVENTS.FAMILY_SETTINGS_CHANGED);
         notify(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED);
+        notify(PROTOTYPE_EVENTS.FAMILY_INVITES_CHANGED);
     }
 };

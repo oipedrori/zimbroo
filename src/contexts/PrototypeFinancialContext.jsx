@@ -49,6 +49,8 @@ export const PrototypeFinancialProvider = ({ children }) => {
         return prototypeStorage.getFamilySpaces();
     });
 
+    const [membersVersion, setMembersVersion] = useState(0);
+    const [invitesVersion, setInvitesVersion] = useState(0);
     const [blockedNotice, setBlockedNotice] = useState(null);
 
     // Sincronização reativa quando storage é alterado localmente
@@ -67,13 +69,19 @@ export const PrototypeFinancialProvider = ({ children }) => {
 
         const handleContextChange = () => syncState();
         const handleSpacesChange = () => syncState();
+        const handleMembersChange = () => setMembersVersion(v => v + 1);
+        const handleInvitesChange = () => setInvitesVersion(v => v + 1);
 
         window.addEventListener(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED, handleContextChange);
         window.addEventListener(PROTOTYPE_EVENTS.FAMILY_SPACES_CHANGED, handleSpacesChange);
+        window.addEventListener(PROTOTYPE_EVENTS.FAMILY_MEMBERS_CHANGED, handleMembersChange);
+        window.addEventListener(PROTOTYPE_EVENTS.FAMILY_INVITES_CHANGED, handleInvitesChange);
 
         return () => {
             window.removeEventListener(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED, handleContextChange);
             window.removeEventListener(PROTOTYPE_EVENTS.FAMILY_SPACES_CHANGED, handleSpacesChange);
+            window.removeEventListener(PROTOTYPE_EVENTS.FAMILY_MEMBERS_CHANGED, handleMembersChange);
+            window.removeEventListener(PROTOTYPE_EVENTS.FAMILY_INVITES_CHANGED, handleInvitesChange);
         };
     }, []);
 
@@ -103,7 +111,37 @@ export const PrototypeFinancialProvider = ({ children }) => {
     const familyMembers = useMemo(() => {
         if (!activeFamilySpace?.id) return [];
         return prototypeStorage.getFamilyMembers(activeFamilySpace.id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeFamilySpace, membersVersion]);
+
+    const familyInvites = useMemo(() => {
+        if (!activeFamilySpace?.id) return [];
+        return prototypeStorage.getFamilyInvites(activeFamilySpace.id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeFamilySpace, invitesVersion]);
+
+    const updateSpaceName = useCallback((name) => {
+        if (!activeFamilySpace?.id) return;
+        return prototypeStorage.updateFamilySpace(activeFamilySpace.id, { name });
     }, [activeFamilySpace]);
+
+    const createInvite = useCallback(({ inviteeName, inviteeEmail, role }) => {
+        if (!activeFamilySpace?.id) return;
+        return prototypeStorage.createFamilyInvite({
+            familyId: activeFamilySpace.id,
+            inviteeName,
+            inviteeEmail,
+            role
+        });
+    }, [activeFamilySpace]);
+
+    const acceptInvite = useCallback((inviteId) => {
+        return prototypeStorage.acceptFamilyInvite(inviteId);
+    }, []);
+
+    const revokeInvite = useCallback((inviteId) => {
+        return prototypeStorage.revokeFamilyInvite(inviteId);
+    }, []);
 
     const value = useMemo(() => ({
         financialContext,
@@ -113,7 +151,12 @@ export const PrototypeFinancialProvider = ({ children }) => {
         activeFamilySpace,
         familySpaces,
         familyMembers,
+        familyInvites,
         hasFamilySpace: familySpaces.length > 0,
+        updateSpaceName,
+        createInvite,
+        acceptInvite,
+        revokeInvite,
         blockedNotice,
         triggerBlockedAction,
         closeBlockedNotice
@@ -124,6 +167,11 @@ export const PrototypeFinancialProvider = ({ children }) => {
         setActiveFamilyId,
         familySpaces,
         familyMembers,
+        familyInvites,
+        updateSpaceName,
+        createInvite,
+        acceptInvite,
+        revokeInvite,
         blockedNotice,
         triggerBlockedAction,
         closeBlockedNotice

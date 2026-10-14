@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
-import { User, LogOut, Trash2, Moon, Globe, DollarSign, ArrowRight, RefreshCcw, X, Sparkles, Bell, Eye } from 'lucide-react';
+import { User, Users, LogOut, Trash2, Moon, Globe, DollarSign, ArrowRight, RefreshCcw, X, Sparkles, Bell, Eye } from 'lucide-react';
 import { requestNotificationPermission } from './NotificationHandler';
 import { deleteAllUserTransactions } from '../services/transactionService';
 import { haptic } from '../utils/haptic';
@@ -11,12 +11,13 @@ import { useInstall } from '../contexts/InstallContext';
 import { useSubscription } from '../hooks/useSubscription';
 import { usePrototype } from '../contexts/PrototypeContext';
 import { prototypeStorage } from '../services/prototypeStorage';
+import { usePrototypeFinancial } from '../contexts/PrototypeFinancialContext';
 import PaywallModal from './PaywallModal';
 
-const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
+const ProfileContent = ({ onClose, theme, setTheme }) => {
     const { currentUser, logout, deleteAccount } = useAuth();
     const { isPrototype, resetPrototype } = usePrototype();
-    const { t, locale, changeLocale, currency, changeCurrency } = useI18n();
+    const { t } = useI18n();
     const { isInstallable, isStandalone, promptInstall } = useInstall();
 
     const [isDeleting, setIsDeleting] = useState(false);
@@ -24,14 +25,21 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
     const [isResettingData, setIsResettingData] = useState(false);
     const [view, setView] = useState('main'); // 'main' or 'subscription'
     const [showResetConfirm, setShowResetConfirm] = useState(false);
-    const [deleteConfirmText, setDeleteConfirmText] = useState('');
+    const [_deleteConfirmText, setDeleteConfirmText] = useState('');
     // const [theme, setTheme] = useState(localStorage.getItem('zimbroo_theme') || 'system'); // Removed, now using useTheme
     const [showVerse, setShowVerse] = useState(false);
     const [verseHiding, setVerseHiding] = useState(false);
 
-    const { isPremium, status, loading: subLoading, subscriptionStart, currentPeriodEnd } = useSubscription(); // Added subscriptionStart, currentPeriodEnd
+    const { isPremium, loading: subLoading, subscriptionStart, currentPeriodEnd } = useSubscription(); // Added subscriptionStart, currentPeriodEnd
     const [showPaywall, setShowPaywall] = useState(false);
     const [isManagingSub, setIsManagingSub] = useState(false);
+
+    // Etapa 5: Gestão de espaço familiar e convites no perfil (apenas protótipo)
+    const { activeFamilySpace, familyMembers = [], familyInvites = [], updateSpaceName, createInvite, acceptInvite, revokeInvite } = usePrototypeFinancial();
+    const [editingSpaceName, setEditingSpaceName] = useState(null);
+    const [newInviteName, setNewInviteName] = useState('');
+    const [newInviteEmail, setNewInviteEmail] = useState('');
+    const [newSpaceNameInput, setNewSpaceNameInput] = useState('');
 
     const hideVerse = () => {
         setVerseHiding(true);
@@ -60,7 +68,7 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
             haptic.success();
             setShowResetConfirm(false);
             alert(t('success_reset_all'));
-        } catch (error) {
+        } catch {
             alert('Error');
         } finally {
             setIsResettingData(false);
@@ -145,12 +153,6 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
         setDefaultShowValues(newValue);
         localStorage.setItem('zimbroo_default_show_values', newValue ? 'true' : 'false');
     };
-
-    const handleLogout = () => { // Added handleLogout function
-        logout();
-    };
-
-    const [isResetDialogOpen, setIsResetDialogOpen] = useState(false); // Added state for reset dialog
 
     return (
         <div className="animate-fade-in" style={{ paddingBottom: '40px' }}>
@@ -478,8 +480,265 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                 </div>
             )}
 
+            {/* Etapa 5: Gestão do Espaço Familiar no Protótipo */}
+            {isPrototype && (
+                <div style={{
+                    background: 'var(--surface-color)',
+                    padding: '20px',
+                    borderRadius: '20px',
+                    border: '1px solid var(--glass-border)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
+                    marginBottom: '12px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Users size={18} style={{ color: 'var(--primary-color)' }} />
+                            <span style={{ fontSize: '0.85rem', fontWeight: '800', letterSpacing: '0.5px' }}>
+                                ESPAÇO FAMILIAR
+                            </span>
+                        </div>
+                        {activeFamilySpace && (
+                            <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: '700',
+                                padding: '2px 8px',
+                                borderRadius: '10px',
+                                background: 'rgba(75, 180, 90, 0.15)',
+                                color: 'var(--primary-color)'
+                            }}>
+                                ATIVO
+                            </span>
+                        )}
+                    </div>
+
+                    {activeFamilySpace ? (
+                        <>
+                            {/* Nome do espaço com edição inline */}
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                                    NOME DO ESPAÇO
+                                </label>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <input
+                                        type="text"
+                                        value={editingSpaceName !== null ? editingSpaceName : activeFamilySpace.name}
+                                        onChange={(e) => setEditingSpaceName(e.target.value)}
+                                        style={{
+                                            flex: 1, padding: '10px 12px', background: 'var(--bg-color)',
+                                            border: '1px solid var(--glass-border)', borderRadius: '12px',
+                                            color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: '600'
+                                        }}
+                                    />
+                                    {editingSpaceName !== null && editingSpaceName !== activeFamilySpace.name && (
+                                        <button
+                                            onClick={() => {
+                                                if (editingSpaceName.trim().length >= 2) {
+                                                    updateSpaceName(editingSpaceName.trim());
+                                                    setEditingSpaceName(null);
+                                                    haptic.success();
+                                                }
+                                            }}
+                                            style={{
+                                                padding: '8px 14px', borderRadius: '12px', background: 'var(--primary-color)',
+                                                color: 'white', border: 'none', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer'
+                                            }}
+                                        >
+                                            Salvar
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Integrantes */}
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                                    INTEGRANTES ({familyMembers.length})
+                                </label>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {familyMembers.map(member => (
+                                        <div key={member.id} style={{
+                                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                            padding: '10px 12px', background: 'var(--bg-color)', borderRadius: '12px',
+                                            border: '1px solid var(--glass-border)'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <div style={{
+                                                    width: '28px', height: '28px', borderRadius: '50%',
+                                                    background: 'rgba(75, 180, 90, 0.15)', display: 'flex',
+                                                    alignItems: 'center', justifyContent: 'center',
+                                                    color: 'var(--primary-color)', fontSize: '0.8rem', fontWeight: '700'
+                                                }}>
+                                                    {member.name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <span style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--text-main)' }}>
+                                                    {member.name}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '6px', background: 'var(--surface-color)', color: 'var(--text-muted)', fontWeight: '600' }}>
+                                                    {member.role === 'owner' ? 'Responsável' : 'Integrante'}
+                                                </span>
+                                                <span style={{
+                                                    fontSize: '0.7rem', padding: '2px 6px', borderRadius: '6px', fontWeight: '700',
+                                                    background: member.status === 'active' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                                    color: member.status === 'active' ? '#16a34a' : '#d97706'
+                                                }}>
+                                                    {member.status === 'active' ? 'Ativo' : 'Pendente'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Convites de demonstração */}
+                            {familyInvites && familyInvites.length > 0 && (
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                                        CONVITES DEMONSTRATIVOS ({familyInvites.length})
+                                    </label>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        {familyInvites.map(inv => (
+                                            <div key={inv.id} style={{
+                                                display: 'flex', flexDirection: 'column', gap: '8px',
+                                                padding: '12px', background: 'var(--bg-color)', borderRadius: '12px',
+                                                border: '1px solid var(--glass-border)'
+                                            }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <div>
+                                                        <span style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-main)' }}>{inv.inviteeName}</span>
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>{inv.inviteeEmail}</span>
+                                                    </div>
+                                                    <span style={{
+                                                        fontSize: '0.7rem', padding: '2px 8px', borderRadius: '8px', fontWeight: '700',
+                                                        background: inv.status === 'accepted' ? 'rgba(34, 197, 94, 0.15)' : (inv.status === 'pending' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)'),
+                                                        color: inv.status === 'accepted' ? '#16a34a' : (inv.status === 'pending' ? '#d97706' : '#dc2626')
+                                                    }}>
+                                                        {inv.status === 'accepted' ? 'Aceito' : (inv.status === 'pending' ? 'Pendente' : 'Revogado')}
+                                                    </span>
+                                                </div>
+                                                {inv.status === 'pending' && (
+                                                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                                                        <button
+                                                            onClick={() => {
+                                                                acceptInvite(inv.id);
+                                                                haptic.success();
+                                                            }}
+                                                            style={{
+                                                                flex: 1, padding: '8px 12px', borderRadius: '10px',
+                                                                background: 'var(--primary-color)', color: 'white',
+                                                                border: 'none', fontWeight: '700', fontSize: '0.8rem',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            <Sparkles size={14} />
+                                                            <span>Simular Aceite</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                revokeInvite(inv.id);
+                                                                haptic.medium();
+                                                            }}
+                                                            style={{
+                                                                padding: '8px 12px', borderRadius: '10px',
+                                                                background: 'transparent', color: 'var(--danger-color)',
+                                                                border: '1px solid var(--glass-border)', fontWeight: '600', fontSize: '0.8rem',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            Cancelar
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Adicionar novo convite simulado */}
+                            <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '12px' }}>
+                                <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>
+                                    CONVIDAR NOVO MEMBRO (SIMULADO)
+                                </span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Nome do parceiro(a)"
+                                        value={newInviteName}
+                                        onChange={(e) => setNewInviteName(e.target.value)}
+                                        style={{ padding: '10px 12px', background: 'var(--bg-color)', border: '1px solid var(--glass-border)', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.85rem' }}
+                                    />
+                                    <input
+                                        type="email"
+                                        placeholder="E-mail de identificação"
+                                        value={newInviteEmail}
+                                        onChange={(e) => setNewInviteEmail(e.target.value)}
+                                        style={{ padding: '10px 12px', background: 'var(--bg-color)', border: '1px solid var(--glass-border)', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.85rem' }}
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            if (newInviteName.trim() && newInviteEmail.includes('@')) {
+                                                createInvite({ inviteeName: newInviteName.trim(), inviteeEmail: newInviteEmail.trim() });
+                                                setNewInviteName('');
+                                                setNewInviteEmail('');
+                                                haptic.success();
+                                            }
+                                        }}
+                                        disabled={!newInviteName.trim() || !newInviteEmail.includes('@')}
+                                        style={{
+                                            padding: '10px', borderRadius: '10px', background: 'var(--primary-color)',
+                                            color: 'white', border: 'none', fontWeight: '700', fontSize: '0.85rem',
+                                            cursor: 'pointer', opacity: (!newInviteName.trim() || !newInviteEmail.includes('@')) ? 0.6 : 1
+                                        }}
+                                    >
+                                        Adicionar Convite (Simulado)
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div style={{ textAlign: 'center', padding: '12px 0' }}>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 12px' }}>
+                                Nenhum espaço familiar ativo. Deseja criar um espaço familiar?
+                            </p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <input
+                                    type="text"
+                                    placeholder="Nome do espaço (ex: Família Silva)"
+                                    value={newSpaceNameInput}
+                                    onChange={(e) => setNewSpaceNameInput(e.target.value)}
+                                    style={{ padding: '10px 12px', background: 'var(--bg-color)', border: '1px solid var(--glass-border)', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.85rem' }}
+                                />
+                                <button
+                                    onClick={() => {
+                                        const name = newSpaceNameInput.trim() || 'Família Silva';
+                                        const newSpace = prototypeStorage.createFamilySpace({
+                                            name,
+                                            createdBy: 'prototipo',
+                                            creatorName: 'Avaliador'
+                                        });
+                                        prototypeStorage.setActiveFamilyId(newSpace.id);
+                                        setNewSpaceNameInput('');
+                                        haptic.success();
+                                    }}
+                                    style={{
+                                        padding: '12px 20px', borderRadius: '12px', background: 'var(--primary-color)',
+                                        color: 'white', border: 'none', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer'
+                                    }}
+                                >
+                                    Criar Espaço Familiar
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Destructive Actions */}
-            <div style={{ paddingTop: '32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <button
                     onClick={() => {
                         if (isPrototype) {
