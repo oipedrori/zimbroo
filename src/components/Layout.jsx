@@ -111,7 +111,6 @@ const Layout = () => {
     const NavLinks = [
         { path: '/', icon: <HomeIcon size={20} />, label: t('home', { defaultValue: 'Início' }) },
         { path: '/limits', icon: <Shield size={20} />, label: t('limits', { defaultValue: 'Limites' }) },
-        { path: '/wallet', icon: <WalletIcon size={20} />, label: t('wallet', { defaultValue: 'Carteira' }) },
     ];
 
     const isHidden = (location.pathname !== '/' && location.pathname !== '/notion-callback' && location.pathname !== '/mic' || isManualModalOpen || isAiActive || isBottomNavHiddenFromChild);
