@@ -204,7 +204,7 @@ const PrototypeEntry = ({ onStart }) => {
                             maxWidth: '340px',
                             margin: 0
                         }}>
-                            Ambiente de demonstração para organização financeira individual e familiar.
+                            Organização Financeira para você e a sua família.
                         </p>
                     </div>
                 )}
