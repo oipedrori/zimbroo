@@ -143,11 +143,41 @@ export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
 
     const addTx = async (data) => {
         if (isPrototype) {
-            const context = prototypeStorage.getActiveFinancialContext();
-            if (context !== FINANCIAL_CONTEXTS.INDIVIDUAL) {
-                throw new Error(`Gravação bloqueada: novas transações no contexto "${context}" serão integradas na Etapa 5.`);
+            const currentContext = prototypeStorage.getActiveFinancialContext();
+            const targetScope = data.scope || (currentContext === FINANCIAL_CONTEXTS.FAMILY ? 'family' : 'individual');
+
+            let added;
+            if (targetScope === 'family') {
+                const familyId = data.familyId || prototypeStorage.getActiveFamilyId();
+                if (!familyId) {
+                    throw new Error('Nenhum espaço familiar ativo para registrar a transação.');
+                }
+                const space = prototypeStorage.getFamilySpaceById(familyId);
+                if (!space) {
+                    throw new Error(`Espaço familiar "${familyId}" não encontrado.`);
+                }
+
+                let memberId = data.memberId;
+                if (!memberId) {
+                    const activeMembers = prototypeStorage.getFamilyMembers(familyId).filter(m => m.status === 'active');
+                    if (activeMembers.length === 0) {
+                        throw new Error('Nenhum membro ativo encontrado no espaço familiar.');
+                    }
+                    memberId = activeMembers[0].id;
+                }
+
+                added = prototypeStorage.addFamilyTransaction({
+                    ...data,
+                    familyId,
+                    memberId
+                });
+            } else {
+                added = prototypeStorage.addTransaction({
+                    ...data,
+                    scope: 'individual'
+                });
             }
-            const added = prototypeStorage.addTransaction(data);
+
             const current = getScopedPrototypeTransactions();
             setAllTransactions(current);
             setTransactions(prepareMonthlyTransactions(current, currentMonth));
@@ -181,10 +211,17 @@ export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
         if (isPrototype) {
             const individualList = prototypeStorage.getTransactions();
             const isIndividual = individualList.some(tx => tx.id === id);
-            if (!isIndividual) {
-                throw new Error('Transações familiares não podem ser alteradas nesta etapa.');
+            let updated;
+            if (isIndividual) {
+                updated = prototypeStorage.updateTransaction(id, data);
+            } else {
+                const familyList = prototypeStorage.getFamilyTransactions();
+                const isFamily = familyList.some(tx => tx.id === id);
+                if (!isFamily) {
+                    throw new Error(`Transação "${id}" não encontrada para atualização.`);
+                }
+                updated = prototypeStorage.updateFamilyTransaction(id, data);
             }
-            const updated = prototypeStorage.updateTransaction(id, data);
             const current = getScopedPrototypeTransactions();
             setAllTransactions(current);
             setTransactions(prepareMonthlyTransactions(current, currentMonth));
@@ -215,10 +252,16 @@ export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
         if (isPrototype) {
             const individualList = prototypeStorage.getTransactions();
             const isIndividual = individualList.some(tx => tx.id === id);
-            if (!isIndividual) {
-                throw new Error('Transações familiares não podem ser excluídas nesta etapa.');
+            if (isIndividual) {
+                prototypeStorage.deleteTransaction(id, monthToSkip);
+            } else {
+                const familyList = prototypeStorage.getFamilyTransactions();
+                const isFamily = familyList.some(tx => tx.id === id);
+                if (!isFamily) {
+                    throw new Error(`Transação "${id}" não encontrada para exclusão.`);
+                }
+                prototypeStorage.deleteFamilyTransaction(id, monthToSkip);
             }
-            prototypeStorage.deleteTransaction(id, monthToSkip);
             const current = getScopedPrototypeTransactions();
             setAllTransactions(current);
             setTransactions(prepareMonthlyTransactions(current, currentMonth));

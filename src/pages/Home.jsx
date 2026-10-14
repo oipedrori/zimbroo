@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 import { useAuth } from '../contexts/AuthContext';
 import { format, addMonths, subMonths } from 'date-fns';
@@ -345,6 +345,34 @@ const Home = () => {
     const expenses = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
     const balance = incomes - expenses;
 
+    // Desembolso Imediato vs Cartão / Parcelas (Etapa 7 & 8)
+    const immediateExpenses = transactions
+        .filter(t => t.type === 'expense' && t.paymentMethod !== 'credit')
+        .reduce((acc, t) => acc + t.amount, 0);
+
+    const cashBalance = incomes - immediateExpenses;
+
+    const futureCommitments = useMemo(() => {
+        if (!isPrototype) return 0;
+        const [curY, curM] = monthPrefix.split('-').map(Number);
+        const curDateVal = curY * 12 + curM;
+
+        let totalPending = 0;
+        for (const tx of allTransactions) {
+            if (tx.type === 'expense' && tx.repeatType === 'installment' && tx.installments > 1) {
+                const [y, m] = (tx.date || '').split('-').map(Number);
+                const txDateVal = y * 12 + m;
+                const endVal = txDateVal + tx.installments - 1;
+                if (endVal > curDateVal) {
+                    const startPending = Math.max(curDateVal + 1, txDateVal);
+                    const remainingInstallments = (endVal - startPending) + 1;
+                    totalPending += remainingInstallments * tx.amount;
+                }
+            }
+        }
+        return totalPending;
+    }, [allTransactions, isPrototype, monthPrefix]);
+
     const handleFilterClick = (filterId) => {
         haptic.light();
         if (activeFilter === filterId && filterId !== 'all') {
@@ -369,13 +397,11 @@ const Home = () => {
     });
 
     const handleOpenModal = (type) => {
-        if (isPrototype && financialContext !== 'individual') {
+        if (isPrototype && financialContext === 'family' && !activeFamilySpace) {
             haptic.light();
             triggerBlockedAction({
-                title: financialContext === 'family' ? 'Adicionar no Espaço Familiar' : 'Adicionar no Modo Ambos',
-                message: financialContext === 'family'
-                    ? 'O registro de novas transações no espaço familiar será integrado na Etapa 5. No momento, o espaço familiar está em modo de visualização.'
-                    : 'No contexto Ambos, novas transações requerem a seleção explícita do escopo de destino (Individual ou Familiar), funcionalidade prevista para a Etapa 5. Para adicionar aos seus registros individuais agora, alterne para o contexto Individual.',
+                title: 'Espaço Familiar Não Configurado',
+                message: 'Você ainda não possui um espaço familiar ativo para registrar movimentações familiares. Configure um espaço familiar no perfil ou selecione o contexto Individual.',
                 allowSwitch: true
             });
             return;
@@ -429,7 +455,7 @@ const Home = () => {
 
     // --- PIP CHART LOGIC (BENTO) ---
     const expensesByCategory = transactions
-        .filter(t => t.type === 'expense')
+        .filter(t => t.type === 'expense' && t.category !== 'pagamento_fatura' && t.paymentMethod !== 'bill_payment')
         .reduce((acc, t) => {
             const catId = getCategoryInfo(t.category, 'expense').id;
             acc[catId] = (acc[catId] || 0) + t.amount;
@@ -727,6 +753,39 @@ const Home = () => {
 
 
                         </section>
+
+                        {/* Indicadores de Saldo em Caixa e Compromissos Futuros (Etapa 8) */}
+                        {isPrototype && (
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gap: '12px',
+                                marginTop: '12px'
+                            }}>
+                                <div className="glass-panel" style={{ padding: '12px 14px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', borderRadius: '16px' }}>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600', display: 'block', marginBottom: '4px' }}>
+                                        Saldo em Caixa
+                                    </span>
+                                    <span style={{ fontSize: '1.05rem', fontWeight: '700', color: cashBalance < 0 ? 'var(--danger-color)' : 'var(--text-main)' }}>
+                                        {showValues ? formatCurrency(cashBalance) : '•••••'}
+                                    </span>
+                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                                        À vista, débito e PIX
+                                    </span>
+                                </div>
+                                <div className="glass-panel" style={{ padding: '12px 14px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', borderRadius: '16px' }}>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600', display: 'block', marginBottom: '4px' }}>
+                                        Compromissos Futuros
+                                    </span>
+                                    <span style={{ fontSize: '1.05rem', fontWeight: '700', color: '#f59e0b' }}>
+                                        {showValues ? formatCurrency(futureCommitments) : '•••••'}
+                                    </span>
+                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                                        Parcelas a vencer
+                                    </span>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Subtotais detalhados no contexto Ambos */}
                         <div id="onboarding-limits-section">

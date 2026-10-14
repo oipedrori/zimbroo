@@ -263,6 +263,10 @@ export const prototypeStorage = {
             repeatType: data.repeatType || 'none',
             installments: Number(data.installments) || 1,
             currentInstallment: Number(data.currentInstallment) || 1,
+            paymentMethod: data.paymentMethod || 'cash',
+            totalAmount: data.totalAmount !== undefined ? data.totalAmount : null,
+            originalTransactionId: data.originalTransactionId || null,
+            obligationSettled: Boolean(data.obligationSettled),
             excludedMonths: Array.isArray(data.excludedMonths) ? data.excludedMonths : [],
             createdAt: new Date().toISOString()
         };
@@ -288,6 +292,10 @@ export const prototypeStorage = {
                     amount: data.amount !== undefined 
                         ? (typeof data.amount === 'string' ? parseFloat(data.amount.replace(',', '.')) : Number(data.amount)) 
                         : tx.amount,
+                    paymentMethod: data.paymentMethod !== undefined ? data.paymentMethod : tx.paymentMethod,
+                    totalAmount: data.totalAmount !== undefined ? data.totalAmount : tx.totalAmount,
+                    originalTransactionId: data.originalTransactionId !== undefined ? data.originalTransactionId : tx.originalTransactionId,
+                    obligationSettled: data.obligationSettled !== undefined ? Boolean(data.obligationSettled) : tx.obligationSettled,
                     updatedAt: new Date().toISOString()
                 };
                 return updatedTx;
@@ -975,6 +983,10 @@ export const prototypeStorage = {
             repeatType: data.repeatType || 'none', // 'none' | 'recurring' | 'installment'
             installments: Number(data.installments) || 1,
             currentInstallment: Number(data.currentInstallment) || 1,
+            paymentMethod: data.paymentMethod || 'cash',
+            totalAmount: data.totalAmount !== undefined ? data.totalAmount : null,
+            originalTransactionId: data.originalTransactionId || null,
+            obligationSettled: Boolean(data.obligationSettled),
             excludedMonths: Array.isArray(data.excludedMonths) ? data.excludedMonths : [],
             createdAt: now,
             updatedAt: now
@@ -1031,6 +1043,22 @@ export const prototypeStorage = {
 
         if (data.date !== undefined) {
             updates.date = data.date;
+        }
+
+        if (data.paymentMethod !== undefined) {
+            updates.paymentMethod = data.paymentMethod;
+        }
+
+        if (data.totalAmount !== undefined) {
+            updates.totalAmount = data.totalAmount;
+        }
+
+        if (data.originalTransactionId !== undefined) {
+            updates.originalTransactionId = data.originalTransactionId;
+        }
+
+        if (data.obligationSettled !== undefined) {
+            updates.obligationSettled = Boolean(data.obligationSettled);
         }
 
         if (data.repeatType !== undefined) {

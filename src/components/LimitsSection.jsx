@@ -17,7 +17,7 @@ const LimitsSection = ({
     // Calcular o gasto por categoria para o mês atual
     const getSpentForCategory = (catId) => {
         return transactions
-            .filter(t => t.type === 'expense' && getCategoryInfo(t.category, 'expense').id === catId)
+            .filter(t => t.type === 'expense' && getCategoryInfo(t.category, 'expense').id === catId && t.paymentMethod !== 'bill_payment' && t.category !== 'pagamento_fatura')
             .reduce((acc, t) => acc + t.amount, 0);
     };
 

@@ -13,6 +13,9 @@ import ConfirmDialog from './ConfirmDialog';
 import LoadingDots from './LoadingDots';
 import PaywallModal from './PaywallModal';
 import TransactionCard from './TransactionCard';
+import { usePrototypeFinancial } from '../contexts/PrototypeFinancialContext';
+import { parseFinancialText } from '../services/localNlpParser';
+import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA } from '../utils/categories';
 
 const AI_SUGGESTIONS = [
     "Gastei 50 reais no mercado",
@@ -104,6 +107,8 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
     const transcriptRef = useRef(''); // To keep latest state for timeout
 
     const { isPrototype } = usePrototype();
+    const { financialContext, activeFamilySpace, familyMembers } = usePrototypeFinancial();
+    const [reviewDraft, setReviewDraft] = useState(null);
     const { transactions, allTransactions, addTx, deleteTx } = useTransactions(format(new Date(), 'yyyy-MM'));
     const { limits, setLimits } = useLimits(new Date().getFullYear());
     const subscription = useSubscription();
@@ -179,6 +184,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
             setManualText('');
             setConversationContext(null);
             setSuccessTx(null);
+            setReviewDraft(null);
 
             // Se for modo texto, foca o input
             if (isTextMode) {
@@ -289,9 +295,22 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
             setAiMessage(''); 
 
             if (isPrototype) {
+                const parsed = parseFinancialText(textToProcess, {
+                    context: financialContext,
+                    activeFamilySpace,
+                    familyMembers
+                });
+
                 setIsProcessing(false);
+
+                if (!parsed) {
+                    haptic.error();
+                    setAiMessage("Não entendi a movimentação. Tente dizer algo como: 'Gastei 50 reais no mercado' ou 'Recebi 200 de freela'.");
+                    return;
+                }
+
                 haptic.medium();
-                setAiMessage("No modo protótipo com armazenamento local, os recursos de IA integrados ao servidor exigem autenticação com o backend. Utilize o registro manual (+), que funciona 100% de forma local!");
+                setReviewDraft(parsed);
                 return;
             }
 
@@ -395,7 +414,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                 transcriptRef.current = '';
             }
         };
-    }, [isProcessing, addTx, onClose, transactions, allTransactions, subscription.isPremium, limits]);
+    }, [isProcessing, addTx, onClose, transactions, allTransactions, subscription.isPremium, limits, isPrototype, financialContext, activeFamilySpace, familyMembers]);
 
     const handleProcessManualClick = () => {
         if (transcriptRef.current.trim().length > 0 && !isProcessing) {
@@ -410,7 +429,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
     };
 
     const toggleTextMode = () => {
-        if (!subscription.isPremium) {
+        if (!subscription.isPremium && !isPrototype) {
             setPaywallReason('feature');
             setShowPaywall(true);
             return;
@@ -428,6 +447,56 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
         }, 100);
     };
 
+    const handleCancelReview = () => {
+        setReviewDraft(null);
+        setTranscript('');
+        transcriptRef.current = '';
+        setManualText('');
+    };
+
+    const handleConfirmReview = async () => {
+        if (!reviewDraft) return;
+        setIsProcessing(true);
+        try {
+            const rawAmount = parseFloat(reviewDraft.amount);
+            const numInstallments = (reviewDraft.paymentMethod === 'credit' && parseInt(reviewDraft.installments, 10) > 1)
+                ? parseInt(reviewDraft.installments, 10)
+                : 1;
+            const isInstallment = numInstallments > 1;
+
+            await addTx({
+                type: reviewDraft.type,
+                amount: isInstallment ? (rawAmount / numInstallments) : rawAmount,
+                totalAmount: isInstallment ? rawAmount : null,
+                description: (reviewDraft.description || '').trim() || (reviewDraft.type === 'income' ? 'Receita' : 'Despesa'),
+                category: reviewDraft.category,
+                date: reviewDraft.date || format(new Date(), 'yyyy-MM-dd'),
+                paymentMethod: reviewDraft.paymentMethod || 'cash',
+                installments: numInstallments,
+                repeatType: isInstallment ? 'installment' : (reviewDraft.repeatType || 'none'),
+                scope: reviewDraft.scope || 'individual',
+                familyId: reviewDraft.familyId || null,
+                memberId: reviewDraft.memberId || null
+            });
+
+            haptic.success();
+            setSuccessTx({
+                desc: reviewDraft.description,
+                val: parseFloat(reviewDraft.amount),
+                cat: reviewDraft.category,
+                tipo: reviewDraft.type === 'income' ? 'receita' : 'despesa',
+                date: reviewDraft.date
+            });
+            setReviewDraft(null);
+        } catch (err) {
+            console.error(err);
+            haptic.error();
+            setAiMessage(err.message || 'Erro ao registrar movimentação.');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
     // Auto-close success feedback
     useEffect(() => {
         if (successTx) {
@@ -441,10 +510,16 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
 
     return (
         <div className={`ai-overlay ${isActive ? 'active' : ''} ${viewportOffset > 0 ? 'keyboard-active' : ''}`}>
-            {/* Close Button - Only in TEXT mode */}
-            {isManualTextMode && (
+            {/* Close Button - Only in TEXT mode or when reviewing draft */}
+            {(isManualTextMode || reviewDraft) && (
                 <button 
-                    onClick={onClose}
+                    onClick={() => {
+                        if (reviewDraft) {
+                            handleCancelReview();
+                        } else {
+                            onClose();
+                        }
+                    }}
                     aria-label="Close"
                     className="ai-close-btn"
                     style={{
@@ -463,7 +538,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
             )}
 
             {/* Mic Toggle (Center) - In voice mode, this BECOMES the close button if not listening? Or just as requested: X replaces mic button when open. */}
-            {!isManualTextMode && (
+            {!isManualTextMode && !reviewDraft && (
                 <div style={{ position: 'fixed', bottom: '60px', left: '0', right: '0', zIndex: 3001, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     {isListening ? (
                         <button
@@ -516,7 +591,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                 <div className="ai-status-text" style={{ 
                     opacity: isActive ? 1 : 0, 
                     transition: 'opacity 0.2s',
-                    paddingTop: isManualTextMode ? '20px' : '0' 
+                    paddingTop: (isManualTextMode || reviewDraft) ? '20px' : '0' 
                 }}>
 
 
@@ -524,7 +599,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                        <div style={{ marginBottom: '20px', marginTop: '10px' }}><LoadingDots style={{ color: 'white' }} /></div>
                     )}
                     
-                    {aiMessage && !successTx && (
+                    {aiMessage && !successTx && !reviewDraft && (
                         <div style={{
                             position: 'relative',
                             maxHeight: '55vh',
@@ -561,7 +636,398 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
                         </div>
                     )}
 
-                    {(!aiMessage && !successTx && !conversationContext && !isProcessing) ? (
+                    {reviewDraft && !successTx && (
+                        <div className="animate-fade-in" style={{ width: '100%', maxWidth: '420px', margin: '0 auto', textAlign: 'left', zIndex: 10 }}>
+                            <div style={{
+                                background: 'rgba(20, 30, 20, 0.92)',
+                                backdropFilter: 'blur(20px)',
+                                WebkitBackdropFilter: 'blur(20px)',
+                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                borderRadius: '24px',
+                                padding: '20px',
+                                color: 'white',
+                                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                                maxHeight: '72vh',
+                                overflowY: 'auto'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '700', color: 'white' }}>
+                                        Revisar Movimentação
+                                    </h3>
+                                    <span style={{
+                                        fontSize: '0.7rem',
+                                        fontWeight: '700',
+                                        padding: '4px 8px',
+                                        borderRadius: '999px',
+                                        background: 'rgba(255,255,255,0.12)',
+                                        color: 'rgba(255,255,255,0.85)',
+                                        letterSpacing: '0.5px'
+                                    }}>
+                                        PROCESSAMENTO LOCAL
+                                    </span>
+                                </div>
+
+                                {/* Tipo: Despesa / Receita */}
+                                <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setReviewDraft(prev => ({
+                                            ...prev,
+                                            type: 'expense',
+                                            category: CATEGORIAS_DESPESA[0].id
+                                        }))}
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px',
+                                            borderRadius: '12px',
+                                            fontWeight: '700',
+                                            fontSize: '0.9rem',
+                                            cursor: 'pointer',
+                                            border: '1px solid',
+                                            transition: 'all 0.2s',
+                                            background: reviewDraft.type === 'expense' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255,255,255,0.06)',
+                                            borderColor: reviewDraft.type === 'expense' ? '#ef4444' : 'rgba(255,255,255,0.15)',
+                                            color: reviewDraft.type === 'expense' ? '#fca5a5' : 'rgba(255,255,255,0.7)'
+                                        }}
+                                    >
+                                        Despesa
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setReviewDraft(prev => ({
+                                            ...prev,
+                                            type: 'income',
+                                            category: CATEGORIAS_RECEITA[0].id
+                                        }))}
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px',
+                                            borderRadius: '12px',
+                                            fontWeight: '700',
+                                            fontSize: '0.9rem',
+                                            cursor: 'pointer',
+                                            border: '1px solid',
+                                            transition: 'all 0.2s',
+                                            background: reviewDraft.type === 'income' ? 'rgba(34, 197, 94, 0.25)' : 'rgba(255,255,255,0.06)',
+                                            borderColor: reviewDraft.type === 'income' ? '#22c55e' : 'rgba(255,255,255,0.15)',
+                                            color: reviewDraft.type === 'income' ? '#86efac' : 'rgba(255,255,255,0.7)'
+                                        }}
+                                    >
+                                        Receita
+                                    </button>
+                                </div>
+
+                                {/* Valor */}
+                                <div style={{ marginBottom: '12px' }}>
+                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'rgba(255,255,255,0.75)', marginBottom: '4px' }}>
+                                        Valor (R$)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0.01"
+                                        value={reviewDraft.amount}
+                                        onChange={(e) => setReviewDraft(prev => ({ ...prev, amount: e.target.value }))}
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 12px',
+                                            borderRadius: '12px',
+                                            border: '1px solid rgba(255,255,255,0.2)',
+                                            background: 'rgba(0,0,0,0.3)',
+                                            color: 'white',
+                                            fontSize: '1.05rem',
+                                            fontWeight: '700',
+                                            outline: 'none',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Descrição */}
+                                <div style={{ marginBottom: '12px' }}>
+                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'rgba(255,255,255,0.75)', marginBottom: '4px' }}>
+                                        Descrição
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={reviewDraft.description}
+                                        onChange={(e) => setReviewDraft(prev => ({ ...prev, description: e.target.value }))}
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 12px',
+                                            borderRadius: '12px',
+                                            border: '1px solid rgba(255,255,255,0.2)',
+                                            background: 'rgba(0,0,0,0.3)',
+                                            color: 'white',
+                                            fontSize: '0.9rem',
+                                            outline: 'none',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Categoria */}
+                                <div style={{ marginBottom: '12px' }}>
+                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'rgba(255,255,255,0.75)', marginBottom: '4px' }}>
+                                        Categoria
+                                    </label>
+                                    <select
+                                        value={reviewDraft.category}
+                                        onChange={(e) => setReviewDraft(prev => ({ ...prev, category: e.target.value }))}
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 12px',
+                                            borderRadius: '12px',
+                                            border: '1px solid rgba(255,255,255,0.2)',
+                                            background: '#1a2e1d',
+                                            color: 'white',
+                                            fontSize: '0.9rem',
+                                            outline: 'none',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    >
+                                        {(reviewDraft.type === 'income' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA).map(cat => (
+                                            <option key={cat.id} value={cat.id} style={{ background: '#1a2e1d', color: 'white' }}>
+                                                {cat.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Data */}
+                                <div style={{ marginBottom: '12px' }}>
+                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'rgba(255,255,255,0.75)', marginBottom: '4px' }}>
+                                        Data
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={reviewDraft.date}
+                                        onChange={(e) => setReviewDraft(prev => ({ ...prev, date: e.target.value }))}
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 12px',
+                                            borderRadius: '12px',
+                                            border: '1px solid rgba(255,255,255,0.2)',
+                                            background: 'rgba(0,0,0,0.3)',
+                                            color: 'white',
+                                            fontSize: '0.9rem',
+                                            outline: 'none',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Forma de Pagamento (somente para despesas) */}
+                                {reviewDraft.type === 'expense' && (
+                                    <div style={{ marginBottom: '12px' }}>
+                                        <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'rgba(255,255,255,0.75)', marginBottom: '4px' }}>
+                                            Forma de Pagamento
+                                        </label>
+                                        <div style={{ display: 'flex', gap: '8px', marginBottom: reviewDraft.paymentMethod === 'credit' ? '8px' : '0' }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setReviewDraft(prev => ({ ...prev, paymentMethod: 'cash', installments: 1, repeatType: 'none' }))}
+                                                style={{
+                                                    flex: 1,
+                                                    padding: '8px',
+                                                    borderRadius: '10px',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: '600',
+                                                    cursor: 'pointer',
+                                                    border: '1px solid',
+                                                    background: reviewDraft.paymentMethod === 'cash' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.05)',
+                                                    borderColor: reviewDraft.paymentMethod === 'cash' ? 'white' : 'rgba(255,255,255,0.15)',
+                                                    color: 'white'
+                                                }}
+                                            >
+                                                À vista / PIX
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setReviewDraft(prev => ({ ...prev, paymentMethod: 'credit', repeatType: (prev.installments > 1 ? 'installment' : 'none') }))}
+                                                style={{
+                                                    flex: 1,
+                                                    padding: '8px',
+                                                    borderRadius: '10px',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: '600',
+                                                    cursor: 'pointer',
+                                                    border: '1px solid',
+                                                    background: reviewDraft.paymentMethod === 'credit' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.05)',
+                                                    borderColor: reviewDraft.paymentMethod === 'credit' ? 'white' : 'rgba(255,255,255,0.15)',
+                                                    color: 'white'
+                                                }}
+                                            >
+                                                Cartão de Crédito
+                                            </button>
+                                        </div>
+
+                                        {reviewDraft.paymentMethod === 'credit' && (
+                                            <div style={{ marginTop: '8px' }}>
+                                                <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', marginBottom: '4px' }}>
+                                                    Parcelamento
+                                                </label>
+                                                <select
+                                                    value={reviewDraft.installments || 1}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value, 10);
+                                                        setReviewDraft(prev => ({
+                                                            ...prev,
+                                                            installments: val,
+                                                            repeatType: val > 1 ? 'installment' : 'none'
+                                                        }));
+                                                    }}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px',
+                                                        borderRadius: '10px',
+                                                        border: '1px solid rgba(255,255,255,0.2)',
+                                                        background: '#1a2e1d',
+                                                        color: 'white',
+                                                        fontSize: '0.85rem',
+                                                        outline: 'none',
+                                                        boxSizing: 'border-box'
+                                                    }}
+                                                >
+                                                    <option value={1} style={{ background: '#1a2e1d' }}>1x (à vista no crédito)</option>
+                                                    {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
+                                                        <option key={n} value={n} style={{ background: '#1a2e1d' }}>
+                                                            {n}x de R$ {(parseFloat(reviewDraft.amount || 0) / n).toFixed(2).replace('.', ',')}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Destino (Individual vs Familiar) */}
+                                {activeFamilySpace && (
+                                    <div style={{ marginBottom: '12px' }}>
+                                        <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'rgba(255,255,255,0.75)', marginBottom: '4px' }}>
+                                            Destino da Movimentação
+                                        </label>
+                                        <div style={{ display: 'flex', gap: '8px', marginBottom: reviewDraft.scope === 'family' ? '8px' : '0' }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setReviewDraft(prev => ({ ...prev, scope: 'individual', familyId: null, memberId: null }))}
+                                                style={{
+                                                    flex: 1,
+                                                    padding: '8px',
+                                                    borderRadius: '10px',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: '600',
+                                                    cursor: 'pointer',
+                                                    border: '1px solid',
+                                                    background: reviewDraft.scope === 'individual' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.05)',
+                                                    borderColor: reviewDraft.scope === 'individual' ? 'white' : 'rgba(255,255,255,0.15)',
+                                                    color: 'white'
+                                                }}
+                                            >
+                                                Individual
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setReviewDraft(prev => ({
+                                                    ...prev,
+                                                    scope: 'family',
+                                                    familyId: activeFamilySpace.id,
+                                                    memberId: prev.memberId || familyMembers[0]?.id || null
+                                                }))}
+                                                style={{
+                                                    flex: 1,
+                                                    padding: '8px',
+                                                    borderRadius: '10px',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: '600',
+                                                    cursor: 'pointer',
+                                                    border: '1px solid',
+                                                    background: reviewDraft.scope === 'family' ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255,255,255,0.05)',
+                                                    borderColor: reviewDraft.scope === 'family' ? '#38bdf8' : 'rgba(255,255,255,0.15)',
+                                                    color: reviewDraft.scope === 'family' ? '#bae6fd' : 'white'
+                                                }}
+                                            >
+                                                Familiar ({activeFamilySpace.name})
+                                            </button>
+                                        </div>
+
+                                        {reviewDraft.scope === 'family' && familyMembers.length > 0 && (
+                                            <div style={{ marginTop: '8px' }}>
+                                                <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', marginBottom: '4px' }}>
+                                                    Membro Responsável
+                                                </label>
+                                                <select
+                                                    value={reviewDraft.memberId || ''}
+                                                    onChange={(e) => setReviewDraft(prev => ({ ...prev, memberId: e.target.value }))}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px',
+                                                        borderRadius: '10px',
+                                                        border: '1px solid rgba(255,255,255,0.2)',
+                                                        background: '#1a2e1d',
+                                                        color: 'white',
+                                                        fontSize: '0.85rem',
+                                                        outline: 'none',
+                                                        boxSizing: 'border-box'
+                                                    }}
+                                                >
+                                                    {familyMembers.map(m => (
+                                                        <option key={m.id} value={m.id} style={{ background: '#1a2e1d' }}>
+                                                            {m.name} {m.isPrimary ? '(Você)' : ''}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Botões Cancelar e Confirmar */}
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                                    <button
+                                        type="button"
+                                        onClick={handleCancelReview}
+                                        disabled={isProcessing}
+                                        style={{
+                                            flex: 1,
+                                            padding: '12px',
+                                            borderRadius: '12px',
+                                            border: '1px solid rgba(255,255,255,0.2)',
+                                            background: 'rgba(255,255,255,0.08)',
+                                            color: 'white',
+                                            fontWeight: '600',
+                                            fontSize: '0.9rem',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleConfirmReview}
+                                        disabled={isProcessing || !reviewDraft.amount || parseFloat(reviewDraft.amount) <= 0}
+                                        style={{
+                                            flex: 1.5,
+                                            padding: '12px',
+                                            borderRadius: '12px',
+                                            border: 'none',
+                                            background: 'var(--primary-gradient)',
+                                            color: 'var(--btn-text)',
+                                            fontWeight: '700',
+                                            fontSize: '0.9rem',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+                                            opacity: (!reviewDraft.amount || parseFloat(reviewDraft.amount) <= 0) ? 0.5 : 1
+                                        }}
+                                    >
+                                        {isProcessing ? 'Salvando...' : 'Confirmar e Salvar'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {!reviewDraft && (!aiMessage && !successTx && !conversationContext && !isProcessing) ? (
                         (isTextMode || isManualTextMode) ? (
                             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'center' }}>
                                 <div style={{ textAlign: 'center', marginTop: '10px', flexShrink: 0 }}>

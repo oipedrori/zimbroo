@@ -1,5 +1,8 @@
-import { collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, query, where, orderBy, writeBatch } from 'firebase/firestore';
+import { collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, query, where, writeBatch } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { prepareMonthlyTransactions } from '../utils/transactionUtils.js';
+
+export { prepareMonthlyTransactions };
 
 const TRANSACTIONS_COLLECTION = 'transactions';
 
@@ -142,65 +145,6 @@ export const getTransactionsByMonth = async (userId, monthPrefix) => {
     }
 };
 
-/**
- * Lógica do Motor de Planejamento (Recorrentes e Parceladas)
- * Ele analisa todas as transacoes do usuario e calcula quais valem para o `targetMonth` ('YYYY-MM').
- */
-export const prepareMonthlyTransactions = (allTxs, targetMonth) => {
-    const [targetY, targetM] = targetMonth.split('-').map(Number);
-    const targetDateValue = targetY * 12 + targetM; // Facilita comparacao de meses
-
-    return allTxs.filter(tx => {
-        const txDate = tx.date; // Ex: '2026-03-01'
-        const [y, m] = txDate.split('-').map(Number);
-        const txDateValue = y * 12 + m;
-
-        // Verificar se este mês específico foi excluído da recorrência
-        if (tx.excludedMonths && tx.excludedMonths.includes(targetMonth)) {
-            return false;
-        }
-
-        if (tx.repeatType === 'none') {
-            return txDate.startsWith(targetMonth);
-        }
-
-        if (tx.repeatType === 'recurring') {
-            // Recorrente aparece do mês inicial para a frente, mas apenas dentro do mesmo ano
-            return targetDateValue >= txDateValue && targetY === y;
-        }
-
-        if (tx.repeatType === 'installment') {
-            // Comeca no mes txDateValue e vai ate txDateValue + installments - 1
-            return targetDateValue >= txDateValue && targetDateValue < (txDateValue + tx.installments);
-        }
-
-        return false;
-    }).map(tx => {
-        const txCopy = { ...tx };
-        
-        // CORREÇÃO: Normalizar datas inválidas ou em formato ISO string (de adições antigas da IA)
-        if (txCopy.date && txCopy.date.includes('T')) {
-            txCopy.date = txCopy.date.split('T')[0];
-        }
-        
-        // Pós-processamento na cópia para evitar mutação do original
-        if (txCopy.repeatType === 'installment') {
-            const txDate = txCopy.date;
-            const [y, m] = txDate.split('-').map(Number);
-            const txDateValue = y * 12 + m;
-            const currentParcelAmount = (targetDateValue - txDateValue) + 1;
-            txCopy.description = `${txCopy.description} (${currentParcelAmount}/${txCopy.installments})`;
-        }
-
-        if (txCopy.repeatType === 'recurring' || txCopy.repeatType === 'installment') {
-            const originalDay = txCopy.date.split('-')[2];
-            txCopy.virtualDate = `${targetMonth}-${originalDay}`;
-        } else {
-            txCopy.virtualDate = txCopy.date;
-        }
-        return txCopy;
-    }).sort((a, b) => new Date(b.virtualDate) - new Date(a.virtualDate));
-};
 
 export const getYearlyStats = async (userId, year) => {
     try {
