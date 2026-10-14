@@ -243,10 +243,10 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                 </div>
                 <div style={{ flex: 1, overflow: 'hidden' }}>
                     <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                        {isPrototype ? 'Avaliador (Protótipo)' : (currentUser?.displayName || 'Perfil')}
+                        {isPrototype ? 'Avaliador (Protótipo)' : (currentUser?.displayName || (currentUser?.isAnonymous ? 'Usuário Anônimo' : 'Perfil'))}
                     </h3>
                     <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {isPrototype ? 'Armazenamento local neste dispositivo' : currentUser?.email}
+                        {isPrototype ? 'Armazenamento local neste dispositivo' : (currentUser?.email || (currentUser?.isAnonymous ? 'Sessão anônima ativa' : ''))}
                     </p>
                 </div>
             </div>

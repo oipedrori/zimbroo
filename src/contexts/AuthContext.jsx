@@ -3,6 +3,7 @@ import { auth, googleProvider } from '../config/firebase';
 import { 
     signInWithPopup, 
     signInWithRedirect,
+    signInAnonymously,
     getRedirectResult,
     signOut, 
     onAuthStateChanged, 
@@ -37,6 +38,28 @@ export const AuthProvider = ({ children }) => {
                 console.error("Erro no login com Google:", error);
                 throw error;
             }
+        }
+    };
+
+    // Login Anônimo: Inicia ou reutiliza uma sessão anônima no Firebase Auth
+    const loginAnonymously = async () => {
+        if (!auth) throw new Error("Firebase auth não inicializado.");
+
+        // Se já existe uma sessão ativa (seja anônima ou Google), reutiliza
+        if (auth.currentUser) {
+            console.log("ℹ️ Reutilizando sessão Firebase existente:", auth.currentUser.uid);
+            setCurrentUser(auth.currentUser);
+            return auth.currentUser;
+        }
+
+        try {
+            const result = await signInAnonymously(auth);
+            console.log("✅ Sessão anônima iniciada com sucesso:", result.user.uid);
+            setCurrentUser(result.user);
+            return result.user;
+        } catch (error) {
+            console.error("❌ Erro ao autenticar anonimamente:", error);
+            throw error;
         }
     };
 
@@ -107,7 +130,14 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const effectiveUser = currentUser || (isPrototipoRoute ? { uid: 'prototipo', displayName: 'Avaliador', email: 'avaliador@prototipo.local' } : null);
-    const value = { currentUser: effectiveUser, loginWithGoogle, logout, deleteAccount, loading: isPrototipoRoute ? false : loading };
+    const value = { 
+        currentUser: effectiveUser, 
+        loginWithGoogle, 
+        loginAnonymously, 
+        logout, 
+        deleteAccount, 
+        loading: isPrototipoRoute ? false : loading 
+    };
 
     if (loading && !isPrototipoRoute) {
         return (
