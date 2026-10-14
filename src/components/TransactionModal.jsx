@@ -10,6 +10,7 @@ import { usePrototypeFinancial } from '../contexts/PrototypeFinancialContext';
 import { haptic } from '../utils/haptic';
 import LoadingDots from './LoadingDots';
 import ConfirmDialog from './ConfirmDialog';
+import { prototypeStorage } from '../services/prototypeStorage';
 
 const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialData = null, onSuccess }) => {
     const { addTx, updateTx, deleteTx } = useTransactions(format(new Date(), 'yyyy-MM'));
@@ -124,7 +125,14 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
             return;
         }
 
-        if (isPrototype && scope === 'family' && !activeFamilySpace) {
+        const isFamilyScope = isPrototype && (scope === 'family' || financialContext === 'family');
+        let effectiveFamilySpace = activeFamilySpace;
+        if (isFamilyScope && !effectiveFamilySpace) {
+            const familyId = prototypeStorage.ensureActiveFamilySpace();
+            effectiveFamilySpace = familyId ? prototypeStorage.getFamilySpaceById(familyId) : null;
+        }
+
+        if (isFamilyScope && !effectiveFamilySpace) {
             alert('Nenhum espaço familiar ativo. Configure um espaço familiar antes de registrar transações familiares.');
             return;
         }
@@ -143,10 +151,10 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
             paymentMethod: isPrototype ? paymentMethod : 'cash',
             repeatType: isInstallment ? 'installment' : (isCredit ? 'none' : repeatType),
             installments: numInstallments,
-            ...(isPrototype && scope === 'family' && activeFamilySpace ? {
+            ...(isFamilyScope && effectiveFamilySpace ? {
                 scope: 'family',
-                familyId: activeFamilySpace.id,
-                memberId: memberId || familyMembers[0]?.id
+                familyId: effectiveFamilySpace.id,
+                memberId: memberId || familyMembers[0]?.id || prototypeStorage.getFamilyMembers(effectiveFamilySpace.id)?.[0]?.id
             } : {
                 scope: 'individual'
             })
@@ -174,7 +182,15 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
         <div className={`modal-overlay ${isAnimating ? 'visible' : ''}`} onClick={onClose}>
             <div className={`modal-content ${isAnimating ? 'slide-up' : 'slide-down'}`} onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: '700' }}>{initialData ? t('edit_transaction') : t('add_transaction')}</h2>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: '700' }}>
+                        {isPrototype ? (
+                            (scope === 'family' || financialContext === 'family')
+                                ? (initialData ? 'Editar Movimentação Familiar' : 'Adicionar Movimentação Familiar')
+                                : (initialData ? 'Editar Movimentação Individual' : 'Adicionar Movimentação Individual')
+                        ) : (
+                            initialData ? t('edit_transaction') : t('add_transaction')
+                        )}
+                    </h2>
                     <button 
                         onClick={onClose} 
                         style={{ 
@@ -196,62 +212,22 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
                     </button>
                 </div>
 
-                {/* Destino da Movimentação (Etapa 6 - Modo Protótipo) */}
-                {isPrototype && (
+                {/* Integrante Responsável (no modo familiar do protótipo) */}
+                {isPrototype && (scope === 'family' || financialContext === 'family') && familyMembers.length > 0 && (
                     <div style={{ marginBottom: '20px' }}>
                         <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700' }}>
-                            DESTINO DA MOVIMENTAÇÃO
+                            INTEGRANTE RESPONSÁVEL
                         </label>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button
-                                type="button"
-                                onClick={() => setScope('individual')}
-                                style={{
-                                    flex: 1, padding: '10px', borderRadius: 'var(--btn-radius)',
-                                    background: scope === 'individual' ? 'var(--primary-color)' : 'var(--bg-color)',
-                                    color: scope === 'individual' ? 'white' : 'var(--text-muted)',
-                                    border: '1px solid var(--glass-border)', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer'
-                                }}
-                            >
-                                👤 Individual
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    if (!hasFamilySpace) {
-                                        alert('Nenhum espaço familiar ativo. Configure um espaço familiar antes de registrar transações familiares.');
-                                        return;
-                                    }
-                                    setScope('family');
-                                }}
-                                style={{
-                                    flex: 1, padding: '10px', borderRadius: 'var(--btn-radius)',
-                                    background: scope === 'family' ? 'var(--primary-darkest)' : 'var(--bg-color)',
-                                    color: scope === 'family' ? 'white' : 'var(--text-muted)',
-                                    border: '1px solid var(--glass-border)', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer',
-                                    opacity: hasFamilySpace ? 1 : 0.6
-                                }}
-                            >
-                                👥 Familiar {activeFamilySpace ? `(${activeFamilySpace.name})` : ''}
-                            </button>
-                        </div>
-                        {scope === 'family' && familyMembers.length > 0 && (
-                            <div style={{ marginTop: '10px' }}>
-                                <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>
-                                    INTEGRANTE RESPONSÁVEL
-                                </label>
-                                <select
-                                    value={memberId}
-                                    onChange={(e) => setMemberId(e.target.value)}
-                                    className="form-input"
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--border-radius-md)', background: 'var(--bg-color)', color: 'var(--text-main)', fontSize: '0.85rem' }}
-                                >
-                                    {familyMembers.map(m => (
-                                        <option key={m.id} value={m.id}>{m.name} ({m.role === 'owner' ? 'Responsável' : 'Integrante'})</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
+                        <select
+                            value={memberId}
+                            onChange={(e) => setMemberId(e.target.value)}
+                            className="form-input"
+                            style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--border-radius-md)', background: 'var(--bg-color)', color: 'var(--text-main)', fontSize: '0.85rem' }}
+                        >
+                            {familyMembers.map(m => (
+                                <option key={m.id} value={m.id}>{m.name} ({m.role === 'owner' ? 'Responsável' : 'Integrante'})</option>
+                            ))}
+                        </select>
                     </div>
                 )}
 

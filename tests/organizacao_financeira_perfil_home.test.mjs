@@ -186,4 +186,24 @@ test('12. Balanço Mensal com seletor (card/gráfico), gráfico de linha e valor
     assert.ok(homeContent.includes("endsWith(',0') ? num.slice(0, -2) : num"), 'Deve formatar 1100 como 1,1K');
 });
 
+test('13. FAB com botão + no meio (fundo verde), avisos de IA e modal sem DESTINO DA MOVIMENTAÇÃO', () => {
+    const layoutContent = fs.readFileSync(path.resolve('src/components/Layout.jsx'), 'utf-8');
+    const modalContent = fs.readFileSync(path.resolve('src/components/TransactionModal.jsx'), 'utf-8');
+
+    // FAB layout: voz à esquerda, + no centro, teclado à direita
+    assert.ok(layoutContent.includes('handleVoiceClick'), 'Deve chamar handleVoiceClick à esquerda');
+    assert.ok(layoutContent.includes('handleTextClick'), 'Deve chamar handleTextClick à direita');
+    assert.ok(layoutContent.includes('handleAddClick'), 'Deve chamar handleAddClick no centro');
+
+    // Mensagens de indisponibilidade de IA
+    assert.ok(layoutContent.includes('Essa funcionalidade seria uma adição de movimentação por voz com IA. Recurso indisponível nesse protótipo de alta fidelidade.'), 'Deve conter aviso de voz');
+    assert.ok(layoutContent.includes('Essa funcionalidade seria uma adição de movimentação por texto com IA. Recurso indisponível nesse protótipo de alta fidelidade.'), 'Deve conter aviso de texto');
+
+    // TransactionModal títulos e ausência de DESTINO DA MOVIMENTAÇÃO
+    assert.ok(!modalContent.includes('DESTINO DA MOVIMENTAÇÃO'), 'Não deve conter o rótulo DESTINO DA MOVIMENTAÇÃO');
+    assert.ok(modalContent.includes('Adicionar Movimentação Individual'), 'Deve conter título Adicionar Movimentação Individual');
+    assert.ok(modalContent.includes('Adicionar Movimentação Familiar'), 'Deve conter título Adicionar Movimentação Familiar');
+});
+
+
 

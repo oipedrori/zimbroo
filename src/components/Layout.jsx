@@ -31,27 +31,17 @@ const Layout = () => {
     const lastScrollY = useRef(0);
 
     const handleAddClick = () => {
-        if (isPrototype && financialContext !== 'individual') {
-            haptic.light();
-            triggerBlockedAction({
-                title: financialContext === 'family' ? 'Adicionar no Espaço Familiar' : 'Adicionar no Modo Ambos',
-                message: financialContext === 'family'
-                    ? 'O registro de novas transações no espaço familiar será integrado na Etapa 5. No momento, o espaço familiar está em modo de visualização.'
-                    : 'No contexto Ambos, novas transações requerem a seleção explícita do escopo de destino (Individual ou Familiar), funcionalidade prevista para a Etapa 5. Para adicionar aos seus registros individuais agora, alterne para o contexto Individual.',
-                allowSwitch: true
-            });
-            return;
-        }
+        haptic.light();
         setIsManualModalOpen(true);
     };
 
     const handleVoiceClick = () => {
-        if (isPrototype && financialContext !== 'individual') {
-            haptic.light();
+        haptic.light();
+        if (isPrototype) {
             triggerBlockedAction({
-                title: 'Comando de Voz Indisponível',
-                message: `O assistente de voz no contexto ${financialContext === 'family' ? 'Familiar' : 'Ambos'} será integrado na Etapa 5. Para usar o assistente de voz com seus registros individuais, alterne para o contexto Individual.`,
-                allowSwitch: true
+                title: 'Comando de Voz com IA',
+                message: 'Essa funcionalidade seria uma adição de movimentação por voz com IA. Recurso indisponível nesse protótipo de alta fidelidade.',
+                allowSwitch: false
             });
             return;
         }
@@ -59,12 +49,12 @@ const Layout = () => {
     };
 
     const handleTextClick = () => {
-        if (isPrototype && financialContext !== 'individual') {
-            haptic.light();
+        haptic.light();
+        if (isPrototype) {
             triggerBlockedAction({
-                title: 'Entrada por Texto Indisponível',
-                message: `A entrada por texto no contexto ${financialContext === 'family' ? 'Familiar' : 'Ambos'} será integrada na Etapa 5. Para registrar movimentações individuais via texto, alterne para o contexto Individual.`,
-                allowSwitch: true
+                title: 'Adição por Texto com IA',
+                message: 'Essa funcionalidade seria uma adição de movimentação por texto com IA. Recurso indisponível nesse protótipo de alta fidelidade.',
+                allowSwitch: false
             });
             return;
         }
@@ -200,31 +190,71 @@ const Layout = () => {
 
             <nav className={`bottom-nav ${isHidden ? 'hidden-state' : ''}`}>
                 <div className={`nav-items-wrapper ${isFabShrunk ? 'shrunk' : ''}`}>
-                    <button 
-                        className="nav-side-btn" 
-                        onClick={handleAddClick}
-                        aria-label={t('add_transaction')}
-                    >
-                        <Plus size={24} />
-                    </button>
+                    {isPrototype ? (
+                        <>
+                            {/* À esquerda: botão de voz */}
+                            <button 
+                                className="nav-side-btn" 
+                                onClick={handleVoiceClick}
+                                aria-label="Comando de voz com IA"
+                            >
+                                <Mic size={24} />
+                            </button>
 
-                    <div id="onboarding-ai-fab" className="nav-center-item">
-                        <button
-                            className={`ai-mic-btn ${isListening ? 'active' : ''}`}
-                            onClick={handleVoiceClick}
-                            aria-label={t('ai_mic_label')}
-                        >
-                            <Mic size={32} color="white" strokeWidth={2.5} />
-                        </button>
-                    </div>
+                            {/* No meio (com fundo verde): botão de +, adição manual da movimentação */}
+                            <div id="onboarding-ai-fab" className="nav-center-item">
+                                <button
+                                    className="ai-mic-btn"
+                                    onClick={handleAddClick}
+                                    aria-label="Adicionar movimentação"
+                                    style={{
+                                        background: 'var(--primary-gradient)',
+                                        color: '#ffffff',
+                                        boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35)'
+                                    }}
+                                >
+                                    <Plus size={32} color="white" strokeWidth={2.5} />
+                                </button>
+                            </div>
 
-                    <button 
-                        className="nav-side-btn" 
-                        onClick={handleTextClick}
-                        aria-label={t('type_text')}
-                    >
-                        <Keyboard size={24} />
-                    </button>
+                            {/* À direita: botão de teclado */}
+                            <button 
+                                className="nav-side-btn" 
+                                onClick={handleTextClick}
+                                aria-label="Digitar texto com IA"
+                            >
+                                <Keyboard size={24} />
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button 
+                                className="nav-side-btn" 
+                                onClick={handleAddClick}
+                                aria-label={t('add_transaction')}
+                            >
+                                <Plus size={24} />
+                            </button>
+
+                            <div id="onboarding-ai-fab" className="nav-center-item">
+                                <button
+                                    className={`ai-mic-btn ${isListening ? 'active' : ''}`}
+                                    onClick={handleVoiceClick}
+                                    aria-label={t('ai_mic_label')}
+                                >
+                                    <Mic size={32} color="white" strokeWidth={2.5} />
+                                </button>
+                            </div>
+
+                            <button 
+                                className="nav-side-btn" 
+                                onClick={handleTextClick}
+                                aria-label={t('type_text')}
+                            >
+                                <Keyboard size={24} />
+                            </button>
+                        </>
+                    )}
                 </div>
             </nav>
 
