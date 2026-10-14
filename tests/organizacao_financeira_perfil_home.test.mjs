@@ -164,3 +164,26 @@ test('11. Onboarding demonstrativo na Home com passo do seletor em modo Ambos', 
     assert.equal(localStorage.getItem(PROTOTYPE_STORAGE_KEYS.HAS_COMPLETED_TOUR), null);
 });
 
+test('12. Balanço Mensal com seletor (card/gráfico), gráfico de linha e valores reduzidos', () => {
+    const homeContent = fs.readFileSync(path.resolve('src/pages/Home.jsx'), 'utf-8');
+
+    // Estado com padrão 'cards'
+    assert.ok(homeContent.includes("useState('cards')"), "Padrão deve ser 'cards'");
+
+    // Botões do seletor com ícones no canto superior direito
+    assert.ok(homeContent.includes('LayoutGrid'), 'Deve renderizar ícone de cards LayoutGrid');
+    assert.ok(homeContent.includes('LineChart'), 'Deve renderizar ícone de gráfico LineChart');
+    assert.ok(homeContent.includes("setBalanceViewMode('cards')"), 'Deve alternar para modo cards');
+    assert.ok(homeContent.includes("setBalanceViewMode('line')"), 'Deve alternar para modo line');
+
+    // Gráfico de linha SVG
+    assert.ok(homeContent.includes('<svg'), 'Deve conter SVG para o gráfico');
+    assert.ok(homeContent.includes('stroke="var(--primary-color, #10b981)"'), 'Linha deve usar cor primária');
+    assert.ok(homeContent.includes('strokeDasharray="4 4"'), 'Linha de zero tracejada deve estar presente para balanços negativos');
+    assert.ok(homeContent.includes('formatCompactNumber'), 'Deve usar formatador de valores compactados');
+
+    // Formatação reduzida
+    assert.ok(homeContent.includes("endsWith(',0') ? num.slice(0, -2) : num"), 'Deve formatar 1100 como 1,1K');
+});
+
+

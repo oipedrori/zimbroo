@@ -10,7 +10,7 @@ import SwipeableItem from '../components/SwipeableItem';
 import LoadingDots from '../components/LoadingDots';
 import ProfileContent from '../components/ProfileContent';
 import NotionImportContent from '../components/NotionImportContent';
-import { Plus, ChevronLeft, ChevronRight, User, Users, Pointer, X, Trash2, PieChart, BarChart2, Shield, Mic, Keyboard, Moon, Globe, DollarSign, LogOut, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, User, Users, Pointer, X, Trash2, PieChart, BarChart2, Shield, Mic, Keyboard, Moon, Globe, DollarSign, LogOut, ArrowUp, ArrowDown, Eye, EyeOff, LayoutGrid, LineChart } from 'lucide-react';
 import { Link, useOutletContext, useNavigate } from 'react-router-dom';
 import TransactionCard from '../components/TransactionCard';
 import { createPortal } from 'react-dom';
@@ -102,8 +102,24 @@ const Home = () => {
     const currentYear = currentDate.getFullYear();
     const { limits, setLimits } = useLimits(currentYear);
     const [chartType, setChartType] = useState('bar'); // 'bar' or 'line'
+    const [balanceViewMode, setBalanceViewMode] = useState('cards'); // 'cards' | 'line'
     const [isFlipped, setIsFlipped] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
+
+    const formatCompactNumber = (val) => {
+        if (!val || Math.abs(val) < 0.01) return '0';
+        const abs = Math.abs(val);
+        const sign = val < 0 ? '-' : '';
+        if (abs >= 1_000_000) {
+            const num = (abs / 1_000_000).toFixed(1).replace('.', ',');
+            return `${sign}${num.endsWith(',0') ? num.slice(0, -2) : num}M`;
+        }
+        if (abs >= 1_000) {
+            const num = (abs / 1_000).toFixed(1).replace('.', ',');
+            return `${sign}${num.endsWith(',0') ? num.slice(0, -2) : num}K`;
+        }
+        return `${sign}${Math.round(abs)}`;
+    };
 
     // Freemium
     const { isPremium, loading: subLoading } = useSubscription();
@@ -523,68 +539,285 @@ const Home = () => {
                             <BudgetPieChart transactions={transactions} currentDate={currentDate} />
                         </section>
 
-                        {/* Monthly Balance Grid (3 colunas x 4 linhas) - Second */}
+                        {/* Monthly Balance (Cards ou Gráfico de Linha) - Second */}
                         <section className="glass-panel" style={{ padding: '24px' }}>
-                            <h3 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <BarChart2 size={18} color="var(--primary-color)" />
-                                {t('monthly_balance_chart', { defaultValue: 'Balanço Mensal' })}
-                            </h3>
                             <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(3, 1fr)',
-                                gap: '10px'
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                marginBottom: '20px'
                             }}>
-                                {yearlyStats.map((s) => {
-                                    const isMonthNegative = s.balance < 0;
-                                    const miniCardGradient = isMonthNegative
-                                        ? 'linear-gradient(135deg, #ef4444 0%, #991b1b 100%)'
-                                        : 'var(--primary-gradient)';
-                                    const isCurrentMonth = s.month === currentDate.getMonth() + 1;
+                                <h3 style={{
+                                    fontSize: '1rem',
+                                    fontWeight: '700',
+                                    color: 'var(--text-main)',
+                                    margin: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}>
+                                    <BarChart2 size={18} color="var(--primary-color)" />
+                                    {t('monthly_balance_chart', { defaultValue: 'Balanço Mensal' })}
+                                </h3>
 
-                                    return (
-                                        <div
-                                            key={s.month}
-                                            onClick={() => {
-                                                haptic.light();
-                                                setCurrentDate(new Date(currentDate.getFullYear(), s.month - 1, 1));
-                                            }}
-                                            style={{
-                                                background: miniCardGradient,
-                                                color: 'var(--btn-text, #ffffff)',
-                                                borderRadius: '16px',
-                                                padding: '12px 10px',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                justifyContent: 'space-between',
-                                                minHeight: '74px',
-                                                cursor: 'pointer',
-                                                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                                                border: isCurrentMonth ? '2px solid rgba(255, 255, 255, 0.75)' : '1px solid rgba(255, 255, 255, 0.15)',
-                                                boxShadow: isCurrentMonth ? '0 4px 14px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.08)'
-                                            }}
-                                        >
-                                            <span style={{
-                                                fontSize: '0.75rem',
-                                                fontWeight: '800',
-                                                letterSpacing: '0.5px',
-                                                opacity: 0.95
-                                            }}>
-                                                {s.label}
-                                            </span>
-                                            <span style={{
-                                                fontSize: '0.85rem',
-                                                fontWeight: '700',
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                marginTop: '6px'
-                                            }}>
-                                                {showValues ? formatCurrency(s.balance) : '•••••'}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
+                                {/* Seletor Cards / Gráfico no canto superior direito */}
+                                <div
+                                    role="group"
+                                    aria-label="Modo de visualização do balanço mensal"
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        background: 'var(--bg-color)',
+                                        border: '1px solid var(--glass-border)',
+                                        borderRadius: '12px',
+                                        padding: '3px',
+                                        gap: '3px'
+                                    }}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => { haptic.light(); setBalanceViewMode('cards'); }}
+                                        title="Visualização em cards"
+                                        aria-pressed={balanceViewMode === 'cards'}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            width: '32px',
+                                            height: '30px',
+                                            borderRadius: '8px',
+                                            border: 'none',
+                                            background: balanceViewMode === 'cards' ? 'var(--primary-color)' : 'transparent',
+                                            color: balanceViewMode === 'cards' ? '#ffffff' : 'var(--text-muted)',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s ease'
+                                        }}
+                                    >
+                                        <LayoutGrid size={16} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { haptic.light(); setBalanceViewMode('line'); }}
+                                        title="Visualização em gráfico de linha"
+                                        aria-pressed={balanceViewMode === 'line'}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            width: '32px',
+                                            height: '30px',
+                                            borderRadius: '8px',
+                                            border: 'none',
+                                            background: balanceViewMode === 'line' ? 'var(--primary-color)' : 'transparent',
+                                            color: balanceViewMode === 'line' ? '#ffffff' : 'var(--text-muted)',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s ease'
+                                        }}
+                                    >
+                                        <LineChart size={16} />
+                                    </button>
+                                </div>
                             </div>
+
+                            {balanceViewMode === 'cards' ? (
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(3, 1fr)',
+                                    gap: '10px'
+                                }}>
+                                    {yearlyStats.map((s) => {
+                                        const isMonthNegative = s.balance < 0;
+                                        const miniCardGradient = isMonthNegative
+                                            ? 'linear-gradient(135deg, #ef4444 0%, #991b1b 100%)'
+                                            : 'var(--primary-gradient)';
+                                        const isCurrentMonth = s.month === currentDate.getMonth() + 1;
+
+                                        return (
+                                            <div
+                                                key={s.month}
+                                                onClick={() => {
+                                                    haptic.light();
+                                                    setCurrentDate(new Date(currentDate.getFullYear(), s.month - 1, 1));
+                                                }}
+                                                style={{
+                                                    background: miniCardGradient,
+                                                    color: 'var(--btn-text, #ffffff)',
+                                                    borderRadius: '16px',
+                                                    padding: '12px 10px',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    justifyContent: 'space-between',
+                                                    minHeight: '74px',
+                                                    cursor: 'pointer',
+                                                    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                                                    border: isCurrentMonth ? '2px solid rgba(255, 255, 255, 0.75)' : '1px solid rgba(255, 255, 255, 0.15)',
+                                                    boxShadow: isCurrentMonth ? '0 4px 14px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.08)'
+                                                }}
+                                            >
+                                                <span style={{
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '800',
+                                                    letterSpacing: '0.5px',
+                                                    opacity: 0.95
+                                                }}>
+                                                    {s.label}
+                                                </span>
+                                                <span style={{
+                                                    fontSize: '0.85rem',
+                                                    fontWeight: '700',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    marginTop: '6px'
+                                                }}>
+                                                    {showValues ? formatCurrency(s.balance) : '•••••'}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                /* Gráfico de Linha do Balanço Mensal */
+                                <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '4px' }}>
+                                    <div style={{ minWidth: '460px' }}>
+                                        {(() => {
+                                            const balances = yearlyStats.map(s => s.balance || 0);
+                                            const rawMin = Math.min(0, ...balances);
+                                            const rawMax = Math.max(0, ...balances);
+                                            const absMax = Math.max(Math.abs(rawMin), Math.abs(rawMax), 100);
+                                            const paddingFactor = 0.25;
+                                            const effectiveMin = rawMin < 0 ? rawMin - Math.abs(rawMin) * paddingFactor - 50 : -absMax * 0.2;
+                                            const effectiveMax = rawMax > 0 ? rawMax + Math.abs(rawMax) * paddingFactor + 50 : absMax * 0.2;
+                                            const effectiveRange = (effectiveMax - effectiveMin) || 1;
+
+                                            const svgWidth = 540;
+                                            const svgHeight = 220;
+                                            const paddingX = 32;
+                                            const paddingTop = 36;
+                                            const paddingBottom = 38;
+                                            const chartHeight = svgHeight - paddingTop - paddingBottom;
+                                            const chartWidth = svgWidth - paddingX * 2;
+
+                                            const points = yearlyStats.map((s, i) => {
+                                                const x = paddingX + i * (chartWidth / 11);
+                                                const y = paddingTop + chartHeight - (((s.balance || 0) - effectiveMin) / effectiveRange) * chartHeight;
+                                                return { ...s, x, y };
+                                            });
+
+                                            const zeroY = paddingTop + chartHeight - ((0 - effectiveMin) / effectiveRange) * chartHeight;
+                                            const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+
+                                            return (
+                                                <svg
+                                                    viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+                                                    style={{ width: '100%', height: 'auto', display: 'block' }}
+                                                >
+                                                    {/* Linha de referência do zero */}
+                                                    <line
+                                                        x1={paddingX - 10}
+                                                        y1={zeroY}
+                                                        x2={svgWidth - paddingX + 10}
+                                                        y2={zeroY}
+                                                        stroke="var(--glass-border, rgba(128,128,128,0.25))"
+                                                        strokeDasharray="4 4"
+                                                        strokeWidth="1.2"
+                                                    />
+                                                    <text
+                                                        x={paddingX - 14}
+                                                        y={zeroY + 3}
+                                                        textAnchor="end"
+                                                        fontSize="9"
+                                                        fontWeight="600"
+                                                        fill="var(--text-muted)"
+                                                        opacity="0.8"
+                                                    >
+                                                        0
+                                                    </text>
+
+                                                    {/* Linha contínua do saldo */}
+                                                    <path
+                                                        d={linePath}
+                                                        fill="none"
+                                                        stroke="var(--primary-color, #10b981)"
+                                                        strokeWidth="3"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                    />
+
+                                                    {/* Pontos de cada mês */}
+                                                    {points.map((p) => {
+                                                        const isCurrentMonth = p.month === currentDate.getMonth() + 1;
+                                                        const isNegative = (p.balance || 0) < 0;
+                                                        const dotColor = isNegative ? '#ef4444' : 'var(--primary-color, #10b981)';
+                                                        const compactVal = showValues ? formatCompactNumber(p.balance || 0) : '••••';
+                                                        const labelY = (isNegative || p.y < paddingTop + 18) ? p.y + 16 : p.y - 10;
+
+                                                        return (
+                                                            <g
+                                                                key={p.month}
+                                                                onClick={() => {
+                                                                    haptic.light();
+                                                                    setCurrentDate(new Date(currentDate.getFullYear(), p.month - 1, 1));
+                                                                }}
+                                                                style={{ cursor: 'pointer' }}
+                                                            >
+                                                                {/* Valor reduzido da bolinha */}
+                                                                <text
+                                                                    x={p.x}
+                                                                    y={labelY}
+                                                                    textAnchor="middle"
+                                                                    fontSize="10"
+                                                                    fontWeight="700"
+                                                                    fill={isNegative ? '#ef4444' : (isCurrentMonth ? 'var(--primary-color)' : 'var(--text-main)')}
+                                                                    style={{ userSelect: 'none' }}
+                                                                >
+                                                                    {compactVal}
+                                                                </text>
+
+                                                                {/* Destaque do mês selecionado */}
+                                                                {isCurrentMonth && (
+                                                                    <circle
+                                                                        cx={p.x}
+                                                                        cy={p.y}
+                                                                        r={9}
+                                                                        fill="none"
+                                                                        stroke={dotColor}
+                                                                        strokeWidth="1.5"
+                                                                        opacity="0.45"
+                                                                    />
+                                                                )}
+
+                                                                {/* Bolinha do mês */}
+                                                                <circle
+                                                                    cx={p.x}
+                                                                    cy={p.y}
+                                                                    r={isCurrentMonth ? 5.5 : 4}
+                                                                    fill={dotColor}
+                                                                    stroke="var(--surface-color, #ffffff)"
+                                                                    strokeWidth="2"
+                                                                />
+
+                                                                {/* Nome do mês */}
+                                                                <text
+                                                                    x={p.x}
+                                                                    y={svgHeight - 12}
+                                                                    textAnchor="middle"
+                                                                    fontSize="11"
+                                                                    fontWeight={isCurrentMonth ? '800' : '600'}
+                                                                    fill={isCurrentMonth ? 'var(--primary-color)' : 'var(--text-muted)'}
+                                                                    style={{ userSelect: 'none' }}
+                                                                >
+                                                                    {p.label}
+                                                                </text>
+                                                            </g>
+                                                        );
+                                                    })}
+                                                </svg>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+                            )}
                         </section>
                     </div>
                 </div>
