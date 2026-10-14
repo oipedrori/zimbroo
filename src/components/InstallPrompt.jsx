@@ -31,7 +31,7 @@ const InstallPrompt = () => {
                 onClick={(e) => e.stopPropagation()}
                 style={{
                     width: '100%',
-                    maxWidth: '500px',
+                    maxWidth: '480px',
                     backgroundColor: 'var(--bg-color)',
                     borderTopLeftRadius: '32px',
                     borderTopRightRadius: '32px',

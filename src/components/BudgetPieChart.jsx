@@ -8,13 +8,7 @@ import { haptic } from '../utils/haptic';
 const BudgetPieChart = ({ transactions = [], currentDate = new Date() }) => {
     const { t, formatCurrency, locale } = useI18n();
     const [selectedSlice, setSelectedSlice] = useState(null);
-    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
 
-    useEffect(() => {
-        const handleResize = () => setIsDesktop(window.innerWidth >= 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     const dateLocales = { pt: ptBR, en: enUS, es: es, fr: fr };
 
@@ -93,17 +87,17 @@ const BudgetPieChart = ({ transactions = [], currentDate = new Date() }) => {
     return (
         <div className="budget-pie-chart" style={{
             display: 'flex',
-            flexDirection: isDesktop ? 'row' : 'column',
-            alignItems: isDesktop ? 'center' : 'center',
+            flexDirection: 'column',
+            alignItems: 'center',
             justifyContent: 'center',
-            gap: isDesktop ? '40px' : '32px',
+            gap: '32px',
             width: '100%'
         }}>
             {/* SVG Pie Chart */}
             <div className="pie-chart-svg-wrapper" style={{ 
                 position: 'relative', 
-                width: isDesktop ? '320px' : '220px', 
-                height: isDesktop ? '320px' : '220px', 
+                width: '220px', 
+                height: '220px', 
                 flexShrink: 0 
             }}>
                 <svg viewBox="0 0 200 200" width="100%" height="100%" style={{ overflow: 'visible' }}>
@@ -139,13 +133,13 @@ const BudgetPieChart = ({ transactions = [], currentDate = new Date() }) => {
                     {/* Donut Hole */}
                     <circle cx="100" cy="100" r="58" fill="var(--bg-color)" />
                     {/* Central Text */}
-                    <text x="100" y="95" textAnchor="middle" style={{ fontSize: isDesktop ? '10px' : '8px', fill: 'var(--text-muted)', fontWeight: '600' }}>
+                    <text x="100" y="95" textAnchor="middle" style={{ fontSize: '8px', fill: 'var(--text-muted)', fontWeight: '600' }}>
                         {selectedSlice
                             ? segments.find(s => s.catId === selectedSlice)?.pct.toFixed(0) + '%'
                             : t('total_spent', { defaultValue: 'Total Gasto' })
                         }
                     </text>
-                    <text x="100" y="112" textAnchor="middle" style={{ fontSize: isDesktop ? '14px' : '12px', fontWeight: '800', fill: 'var(--text-main)' }}>
+                    <text x="100" y="112" textAnchor="middle" style={{ fontSize: '12px', fontWeight: '800', fill: 'var(--text-main)' }}>
                         {selectedSlice
                             ? formatCurrency(segments.find(s => s.catId === selectedSlice)?.amount || 0)
                             : formatCurrency(totalExpenses)
@@ -159,8 +153,8 @@ const BudgetPieChart = ({ transactions = [], currentDate = new Date() }) => {
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: '8px',
-                justifyContent: isDesktop ? 'flex-start' : 'center',
-                maxWidth: isDesktop ? '500px' : '100%',
+                justifyContent: 'center',
+                maxWidth: '100%',
                 flex: 1
             }}>
                 {segments.map(seg => {

@@ -319,6 +319,7 @@ const Onboarding = () => {
             {showDocs && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    maxWidth: '480px', margin: '0 auto', width: '100%',
                     background: 'var(--bg-color)', zIndex: 100, display: 'flex',
                     flexDirection: 'column', padding: '24px'
                 }}>
@@ -427,6 +428,9 @@ const Onboarding = () => {
                 .farewell-overlay {
                     position: fixed;
                     inset: 0;
+                    max-width: 480px;
+                    margin: 0 auto;
+                    width: 100%;
                     background: var(--bg-color);
                     z-index: 20000;
                     display: flex;

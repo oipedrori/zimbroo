@@ -745,6 +745,8 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
         
         .ai-minimal-content {
           width: 100%; height: 100%;
+          max-width: 480px;
+          margin: 0 auto;
           display: flex; flex-direction: column;
           justify-content: flex-start;
           align-items: center;
@@ -756,17 +758,6 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
 
         .ai-overlay.keyboard-active .ai-minimal-content {
           padding-top: 5vh;
-        }
-        @media (min-width: 1024px) {
-            .ai-minimal-content {
-                padding: 40px;
-                max-width: 800px;
-                height: auto;
-                background: rgba(255, 255, 255, 0.05);
-                border-radius: 32px;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                box-shadow: 0 40px 100px rgba(0,0,0,0.4);
-            }
         }
 
         .ai-status-text {

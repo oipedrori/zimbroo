@@ -9,8 +9,7 @@ const LimitsSection = ({
     formatCurrency, 
     t, 
     setIsLimitModalOpen, 
-    setTempLimit,
-    isDesktop 
+    setTempLimit
 }) => {
     // Calcular o gasto por categoria para o mês atual
     const getSpentForCategory = (catId) => {
@@ -71,7 +70,7 @@ const LimitsSection = ({
                             className="glass-panel"
                             style={{
                                 flexShrink: 0,
-                                width: isDesktop ? '220px' : '180px',
+                                width: '180px',
                                 minHeight: '140px',
                                 padding: '16px',
                                 display: 'flex',
@@ -155,7 +154,7 @@ const LimitsSection = ({
                     className="glass-panel"
                     style={{
                         flexShrink: 0,
-                        width: isDesktop ? '220px' : '180px',
+                        width: '180px',
                         minHeight: '140px',
                         padding: '16px',
                         display: 'flex',

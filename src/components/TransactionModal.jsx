@@ -376,7 +376,7 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
         
         .modal-content {
           width: 100%;
-          max-width: none;
+          max-width: 480px;
           background: var(--bg-color);
           border-radius: 32px 32px 0 0;
           padding: 32px 24px 48px;
@@ -397,33 +397,6 @@ const TransactionModal = ({ isOpen, onClose, defaultType = 'expense', initialDat
 
         .modal-content.slide-down {
           transform: translateY(100%);
-        }
-
-        @media (min-width: 1024px) {
-            .modal-overlay {
-                align-items: center;
-                justify-content: center;
-                padding: 24px;
-            }
-            .modal-content {
-                max-width: 620px;
-                border-radius: 32px;
-                transform: scale(0.9) translateY(20px);
-                opacity: 0;
-                padding: 32px 24px;
-                transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            }
-            .modal-content.slide-up {
-                transform: scale(1) translateY(0);
-                opacity: 1;
-            }
-            .modal-content.slide-down {
-                transform: scale(0.9) translateY(20px);
-                opacity: 0;
-            }
-            .modal-content::before {
-                display: none;
-            }
         }
 
         .form-input {

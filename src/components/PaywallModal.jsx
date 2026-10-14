@@ -58,6 +58,7 @@ const PaywallModal = ({ isOpen, onClose, reason = 'feature' }) => {
     return (
         <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            maxWidth: '480px', margin: '0 auto', width: '100%',
             background: 'var(--bg-color)', zIndex: 9999,
             display: 'flex', flexDirection: 'column',
             transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1)',

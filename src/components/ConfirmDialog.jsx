@@ -256,7 +256,7 @@ const ConfirmDialog = ({
                 }
                 .confirm-content {
                     width: 100%;
-                    max-width: none;
+                    max-width: 480px;
                     background: var(--bg-color);
                     border-radius: 32px 32px 0 0;
                     padding: 32px 24px;
@@ -284,33 +284,6 @@ const ConfirmDialog = ({
                 .confirm-content.slide-down {
                     transform: translateY(100%);
                     opacity: 1;
-                }
-
-                @media (min-width: 1024px) {
-                    .confirm-overlay {
-                        align-items: center;
-                        padding: 24px;
-                    }
-                    .confirm-content {
-                        max-width: 380px;
-                        border-radius: 28px;
-                        transform: scale(0.9) translateY(20px);
-                        opacity: 0;
-                    }
-                    .confirm-content.wide {
-                        max-width: 600px;
-                    }
-                    .confirm-content::before {
-                        display: none;
-                    }
-                    .confirm-content.slide-up {
-                        transform: scale(1) translateY(0);
-                        opacity: 1;
-                    }
-                    .confirm-content.slide-down {
-                        transform: scale(0.9) translateY(20px);
-                        opacity: 0;
-                    }
                 }
 
                 .confirm-icon-box {

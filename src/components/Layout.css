@@ -7,12 +7,6 @@
     background-color: var(--bg-color);
 }
 
-@media (min-width: 1024px) {
-    .app-container {
-        flex-direction: column;
-        overflow-y: auto;
-    }
-}
 
 .main-content {
     flex: 1;
@@ -87,11 +81,6 @@ body.hide-ai-btn .bottom-nav,
     pointer-events: none;
 }
 
-@media (min-width: 1024px) {
-    .bottom-blur-layer {
-        display: none !important;
-    }
-}
 
 .nav-items-wrapper {
     display: flex;
