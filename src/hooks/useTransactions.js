@@ -3,10 +3,17 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { prepareMonthlyTransactions, addTransaction, deleteTransaction, updateTransaction } from '../services/transactionService';
 import { useAuth } from '../contexts/AuthContext';
+import { usePrototype } from '../contexts/PrototypeContext';
+import { prototypeStorage, PROTOTYPE_EVENTS } from '../services/prototypeStorage';
 
 export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
     const { currentUser } = useAuth();
+    const { isPrototype } = usePrototype();
+
     const [allTransactions, setAllTransactions] = useState(() => {
+        if (isPrototype) {
+            return prototypeStorage.getTransactions();
+        }
         if (!currentUser) return [];
         const cached = localStorage.getItem(`zimbroo_txs_${currentUser.uid}`);
         return cached ? JSON.parse(cached) : [];
@@ -15,8 +22,25 @@ export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
         if (!allTransactions.length) return [];
         return prepareMonthlyTransactions(allTransactions, currentMonth);
     });
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!isPrototype);
     const [error, setError] = useState(null);
+
+    // Efeito para sincronização em modo Protótipo
+    useEffect(() => {
+        if (!isPrototype) return;
+
+        const syncFromStorage = () => {
+            const current = prototypeStorage.getTransactions();
+            setAllTransactions(current);
+            setTransactions(prepareMonthlyTransactions(current, currentMonth));
+            setLoading(false);
+            setError(null);
+        };
+
+        syncFromStorage();
+        window.addEventListener(PROTOTYPE_EVENTS.TXS_CHANGED, syncFromStorage);
+        return () => window.removeEventListener(PROTOTYPE_EVENTS.TXS_CHANGED, syncFromStorage);
+    }, [isPrototype, currentMonth]);
 
     useEffect(() => {
         if (!currentUser) {
@@ -57,6 +81,14 @@ export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
     }, [currentUser, currentMonth]);
 
     const addTx = async (data) => {
+        if (isPrototype) {
+            const added = prototypeStorage.addTransaction(data);
+            const current = prototypeStorage.getTransactions();
+            setAllTransactions(current);
+            setTransactions(prepareMonthlyTransactions(current, currentMonth));
+            return added;
+        }
+
         if (!currentUser) return;
         
         // Optimistic Update
@@ -81,6 +113,14 @@ export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
     };
 
     const updateTx = async (id, data) => {
+        if (isPrototype) {
+            const updated = prototypeStorage.updateTransaction(id, data);
+            const current = prototypeStorage.getTransactions();
+            setAllTransactions(current);
+            setTransactions(prepareMonthlyTransactions(current, currentMonth));
+            return updated;
+        }
+
         if (!currentUser) return;
 
         // Optimistic Update
@@ -102,6 +142,14 @@ export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
     };
 
     const deleteTx = async (id, monthToSkip = null) => {
+        if (isPrototype) {
+            prototypeStorage.deleteTransaction(id, monthToSkip);
+            const current = prototypeStorage.getTransactions();
+            setAllTransactions(current);
+            setTransactions(prepareMonthlyTransactions(current, currentMonth));
+            return;
+        }
+
         if (!currentUser) return;
 
         // Optimistic Update
@@ -134,5 +182,13 @@ export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
         }
     };
 
-    return { transactions, allTransactions, loading, error, addTx, updateTx, deleteTx, refetch: () => {} };
+    const refetch = () => {
+        if (isPrototype) {
+            const current = prototypeStorage.getTransactions();
+            setAllTransactions(current);
+            setTransactions(prepareMonthlyTransactions(current, currentMonth));
+        }
+    };
+
+    return { transactions, allTransactions, loading, error, addTx, updateTx, deleteTx, refetch };
 };

@@ -2,17 +2,38 @@ import { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { usePrototype } from '../contexts/PrototypeContext';
 import { saveUserLimits } from '../services/limitService';
+import { prototypeStorage, PROTOTYPE_EVENTS } from '../services/prototypeStorage';
 
 export const useLimits = (year) => {
     const { currentUser } = useAuth();
+    const { isPrototype } = usePrototype();
+
     const [limits, setLimitsState] = useState(() => {
+        if (isPrototype) {
+            return prototypeStorage.getLimits(year);
+        }
         if (!currentUser) return {};
         const fieldKey = year ? `zimbroo_limits_${year}_${currentUser.uid}` : `zimbroo_limits_${currentUser.uid}`;
         const saved = localStorage.getItem(fieldKey);
         return saved ? JSON.parse(saved) : {};
     });
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!isPrototype);
+
+    // Efeito de sincronização para o modo Protótipo
+    useEffect(() => {
+        if (!isPrototype) return;
+
+        const syncLimits = () => {
+            setLimitsState(prototypeStorage.getLimits(year));
+            setLoading(false);
+        };
+
+        syncLimits();
+        window.addEventListener(PROTOTYPE_EVENTS.LIMITS_CHANGED, syncLimits);
+        return () => window.removeEventListener(PROTOTYPE_EVENTS.LIMITS_CHANGED, syncLimits);
+    }, [isPrototype, year]);
 
     useEffect(() => {
         if (!currentUser) {
@@ -42,6 +63,12 @@ export const useLimits = (year) => {
     }, [currentUser, year]);
 
     const setLimits = async (newLimits) => {
+        if (isPrototype) {
+            prototypeStorage.saveLimits(newLimits, year);
+            setLimitsState(newLimits);
+            return;
+        }
+
         if (!currentUser) return;
         
         // Optimistic Update

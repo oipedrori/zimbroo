@@ -2,16 +2,24 @@ import { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { usePrototype } from '../contexts/PrototypeContext';
 
 export const useSubscription = () => {
     const { currentUser } = useAuth();
+    const { isPrototype } = usePrototype();
+
     const [subscription, setSubscription] = useState({
-        status: 'free',
-        isPremium: false,
-        loading: true
+        status: isPrototype ? 'active' : 'free',
+        isPremium: isPrototype,
+        loading: !isPrototype
     });
 
     useEffect(() => {
+        if (isPrototype) {
+            setSubscription({ status: 'active', isPremium: true, loading: false });
+            return;
+        }
+
         if (!currentUser?.uid) {
             setSubscription({ status: 'free', isPremium: false, loading: false });
             return;

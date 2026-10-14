@@ -113,7 +113,12 @@ const Layout = () => {
         { path: '/limits', icon: <Shield size={20} />, label: t('limits', { defaultValue: 'Limites' }) },
     ];
 
-    const isHidden = (location.pathname !== '/' && location.pathname !== '/notion-callback' && location.pathname !== '/mic' || isManualModalOpen || isAiActive || isBottomNavHiddenFromChild);
+    const isHidden = (
+        (location.pathname !== '/' && location.pathname !== '/prototipo' && location.pathname !== '/notion-callback' && location.pathname !== '/mic')
+        || isManualModalOpen 
+        || isAiActive 
+        || isBottomNavHiddenFromChild
+    );
 
     return (
         <div className="app-container">

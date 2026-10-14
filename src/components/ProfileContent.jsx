@@ -9,10 +9,13 @@ import ConfirmDialog from './ConfirmDialog';
 import LoadingDots from './LoadingDots';
 import { useInstall } from '../contexts/InstallContext';
 import { useSubscription } from '../hooks/useSubscription';
+import { usePrototype } from '../contexts/PrototypeContext';
+import { prototypeStorage } from '../services/prototypeStorage';
 import PaywallModal from './PaywallModal';
 
 const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
     const { currentUser, logout, deleteAccount } = useAuth();
+    const { isPrototype, resetPrototype } = usePrototype();
     const { t, locale, changeLocale, currency, changeCurrency } = useI18n();
     const { isInstallable, isStandalone, promptInstall } = useInstall();
 
@@ -43,24 +46,16 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
         }
     }, [showVerse]);
 
-    // Removed theme useEffect, now handled by useTheme hook
-    // useEffect(() => {
-    //     const root = document.documentElement;
-    //     if (theme === 'dark') {
-    //         root.classList.add('theme-dark');
-    //         root.classList.remove('theme-light');
-    //     } else if (theme === 'light') {
-    //         root.classList.add('theme-light');
-    //         root.classList.remove('theme-dark');
-    //     } else {
-    //         root.classList.remove('theme-dark', 'theme-light');
-    //     }
-    //     localStorage.setItem('zimbroo_theme', theme);
-    // }, [theme]);
-
     const handleResetData = async () => {
         setIsResettingData(true);
         try {
+            if (isPrototype) {
+                prototypeStorage.clearAllPrototypeData();
+                haptic.success();
+                setShowResetConfirm(false);
+                alert('Registros locais do protótipo apagados com sucesso!');
+                return;
+            }
             await deleteAllUserTransactions(currentUser.uid);
             haptic.success();
             setShowResetConfirm(false);
@@ -238,17 +233,21 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                     {/* Status Badge */}
                     {!subLoading && (
                         <div style={{
-                            position: 'absolute', bottom: '-8px', background: isPremium ? 'var(--primary-color)' : 'var(--text-muted)',
+                            position: 'absolute', bottom: '-8px', background: isPrototype ? 'var(--primary-color)' : (isPremium ? 'var(--primary-color)' : 'var(--text-muted)'),
                             color: 'white', fontSize: '0.6rem', fontWeight: '800', padding: '2px 6px', borderRadius: '10px',
                             border: '2px solid var(--surface-color)', textTransform: 'uppercase', letterSpacing: '0.5px'
                         }}>
-                            {isPremium ? 'PRO' : 'FREE'}
+                            {isPrototype ? 'PROTÓTIPO' : (isPremium ? 'PRO' : 'FREE')}
                         </div>
                     )}
                 </div>
                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                    <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)' }}>{currentUser?.displayName || 'Perfil'}</h3>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentUser?.email}</p>
+                    <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                        {isPrototype ? 'Avaliador (Protótipo)' : (currentUser?.displayName || 'Perfil')}
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {isPrototype ? 'Armazenamento local neste dispositivo' : currentUser?.email}
+                    </p>
                 </div>
             </div>
 
@@ -478,7 +477,14 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
             {/* Destructive Actions */}
             <div style={{ paddingTop: '32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <button
-                    onClick={() => logout()}
+                    onClick={() => {
+                        if (isPrototype) {
+                            resetPrototype();
+                            onClose?.();
+                            return;
+                        }
+                        logout();
+                    }}
                     style={{
                         width: '100%', padding: '16px', borderRadius: 'var(--btn-radius)',
                         background: 'rgba(34, 197, 94, 0.1)', color: 'var(--primary-color)',
@@ -486,7 +492,7 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
                     }}
                 >
-                    <LogOut size={18} /> <span style={{ fontSize: '1rem' }}>{t('logout')}</span>
+                    <LogOut size={18} /> <span style={{ fontSize: '1rem' }}>{isPrototype ? 'Sair do Protótipo' : t('logout')}</span>
                 </button>
                 <button
                     onClick={() => setShowResetConfirm(true)}
@@ -497,19 +503,21 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
                     }}
                 >
-                    <RefreshCcw size={18} /> <span style={{ fontSize: '1rem' }}>{t('reset_data')}</span>
+                    <RefreshCcw size={18} /> <span style={{ fontSize: '1rem' }}>{isPrototype ? 'Limpar Registros Locais' : t('reset_data')}</span>
                 </button>
-                <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    style={{
-                        width: '100%', padding: '16px', borderRadius: 'var(--btn-radius)',
-                        background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger-color)',
-                        border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: '700',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
-                    }}
-                >
-                    <Trash2 size={18} /> <span style={{ fontSize: '1rem' }}>{t('delete_account')}</span>
-                </button>
+                {!isPrototype && (
+                    <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        style={{
+                            width: '100%', padding: '16px', borderRadius: 'var(--btn-radius)',
+                            background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger-color)',
+                            border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: '700',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
+                        }}
+                    >
+                        <Trash2 size={18} /> <span style={{ fontSize: '1rem' }}>{t('delete_account')}</span>
+                    </button>
+                )}
             </div>
 
             {/* App Version, Easter Egg e Feito no Brasil */}

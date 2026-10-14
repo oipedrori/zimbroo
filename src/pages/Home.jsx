@@ -25,9 +25,12 @@ import { useLimits } from '../hooks/useLimits';
 import Onboarding from '../components/Onboarding';
 import { useSubscription } from '../hooks/useSubscription';
 import PaywallModal from '../components/PaywallModal';
+import { usePrototype } from '../contexts/PrototypeContext';
+import PrototypeBadge from '../components/PrototypeBadge';
 
 const Home = () => {
     const { currentUser, logout, deleteAccount } = useAuth();
+    const { isPrototype } = usePrototype();
     const { setIsAiActive, setIsBottomNavHidden } = useOutletContext();
     const { t, formatCurrency, locale, changeLocale, currency, changeCurrency } = useI18n();
     const navigate = useNavigate();
@@ -525,7 +528,10 @@ const Home = () => {
                                         const hour = new Date().getHours();
                                         const greetingKey = (hour >= 3 && hour < 12) ? 'good_morning' :
                                              (hour >= 12 && hour < 18) ? 'good_afternoon' : 'good_night';
-                                        return t(greetingKey, { name: currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }) });
+                                        const displayName = isPrototype 
+                                            ? t('evaluator', { defaultValue: 'Avaliador' }) 
+                                            : (currentUser?.displayName?.split(' ')[0] || t('user', { defaultValue: 'Usuário' }));
+                                        return t(greetingKey, { name: displayName });
                                     })()}
                                 </h1>
                             </div>
@@ -566,6 +572,13 @@ const Home = () => {
                             </button>
                         </div>
                     </header>
+
+                    {/* Indicação discreta do Modo Protótipo */}
+                    {isPrototype && (
+                        <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '6px' }}>
+                            <PrototypeBadge />
+                        </div>
+                    )}
 
                     <section
                         id="onboarding-balance-card"

@@ -18,8 +18,9 @@ export const useAuth = () => useContext(AuthContext);
 const isAndroid = () => /Android/i.test(navigator.userAgent);
 
 export const AuthProvider = ({ children }) => {
+    const isPrototipoRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/prototipo');
     const [currentUser, setCurrentUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(() => !isPrototipoRoute);
 
     // Login com Google: Redirect no mobile, Popup no desktop
     const loginWithGoogle = async () => {
@@ -105,9 +106,10 @@ export const AuthProvider = ({ children }) => {
         };
     }, []);
 
-    const value = { currentUser, loginWithGoogle, logout, deleteAccount, loading };
+    const effectiveUser = currentUser || (isPrototipoRoute ? { uid: 'prototipo', displayName: 'Avaliador', email: 'avaliador@prototipo.local' } : null);
+    const value = { currentUser: effectiveUser, loginWithGoogle, logout, deleteAccount, loading: isPrototipoRoute ? false : loading };
 
-    if (loading) {
+    if (loading && !isPrototipoRoute) {
         return (
             <div style={{ 
                 position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 

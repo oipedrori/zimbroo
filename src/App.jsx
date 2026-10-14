@@ -7,6 +7,9 @@ import LoadingDots from './components/LoadingDots';
 import InstallPrompt from './components/InstallPrompt';
 import CookieNotice from './components/CookieNotice';
 import NotificationHandler from './components/NotificationHandler';
+import { InstallProvider } from './contexts/InstallContext';
+import { PrototypeProvider } from './contexts/PrototypeContext';
+import PrototypeContainer from './components/PrototypeContainer';
 import './index.css';
 
 // Helper for lazy loading with retry logic
@@ -57,6 +60,14 @@ const AppRoutes = () => {
     }>
       <Routes>
         <Route path="/onboarding" element={currentUser ? <Navigate to="/" /> : <Onboarding />} />
+
+        {/* Rota Pública do Protótipo (Isolada, sem login, armazenamento local) */}
+        <Route path="/prototipo" element={<PrototypeProvider><PrototypeContainer /></PrototypeProvider>}>
+          <Route index element={<Home />} />
+          <Route path="limits" element={<Limits />} />
+          <Route path="wallet" element={<Wallet />} />
+        </Route>
+
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<Home />} />
           <Route path="limits" element={<Limits />} />
@@ -68,8 +79,6 @@ const AppRoutes = () => {
     </React.Suspense>
   );
 };
-
-import { InstallProvider } from './contexts/InstallContext';
 
 function App() {
   return (

@@ -7,6 +7,7 @@ import { useSubscription } from '../hooks/useSubscription';
 import { format } from 'date-fns';
 import { useI18n } from '../contexts/I18nContext';
 import { useAuth } from '../contexts/AuthContext';
+import { usePrototype } from '../contexts/PrototypeContext';
 import { haptic } from '../utils/haptic';
 import ConfirmDialog from './ConfirmDialog';
 import LoadingDots from './LoadingDots';
@@ -102,6 +103,7 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
     const silenceTimeoutRef = useRef(null);
     const transcriptRef = useRef(''); // To keep latest state for timeout
 
+    const { isPrototype } = usePrototype();
     const { transactions, allTransactions, addTx, deleteTx } = useTransactions(format(new Date(), 'yyyy-MM'));
     const { limits, setLimits } = useLimits(new Date().getFullYear());
     const subscription = useSubscription();
@@ -285,6 +287,13 @@ const AiPanel = ({ isActive, isTextMode = false, onClose, onOpenManualModal, onL
             if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
 
             setAiMessage(''); 
+
+            if (isPrototype) {
+                setIsProcessing(false);
+                haptic.medium();
+                setAiMessage("No modo protótipo com armazenamento local, os recursos de IA integrados ao servidor exigem autenticação com o backend. Utilize o registro manual (+), que funciona 100% de forma local!");
+                return;
+            }
 
             try {
                 // Passa o contexto pendente para a IA (Pro)
