@@ -4,35 +4,73 @@ import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { usePrototype } from '../contexts/PrototypeContext';
 import { saveUserLimits } from '../services/limitService';
-import { prototypeStorage, PROTOTYPE_EVENTS } from '../services/prototypeStorage';
+import { prototypeStorage, PROTOTYPE_EVENTS, FINANCIAL_CONTEXTS } from '../services/prototypeStorage';
+
+// Função utilitária para extrair limites individuais e familiares locais
+const getScopedPrototypeLimits = (year) => {
+    const context = prototypeStorage.getActiveFinancialContext();
+    const individualLimits = prototypeStorage.getLimits(year);
+    const activeFamilyId = prototypeStorage.getActiveFamilyId();
+
+    let familyLimits = {};
+    if (activeFamilyId) {
+        familyLimits = prototypeStorage.getFamilyLimits(activeFamilyId, year);
+    }
+
+    let activeLimits = individualLimits;
+    if (context === FINANCIAL_CONTEXTS.FAMILY) {
+        activeLimits = familyLimits;
+    } else if (context === FINANCIAL_CONTEXTS.BOTH) {
+        activeLimits = individualLimits;
+    }
+
+    return {
+        activeLimits,
+        individualLimits,
+        familyLimits,
+        hasFamilySpace: Boolean(activeFamilyId)
+    };
+};
 
 export const useLimits = (year) => {
     const { currentUser } = useAuth();
     const { isPrototype } = usePrototype();
 
-    const [limits, setLimitsState] = useState(() => {
+    const [scopedLimits, setScopedLimits] = useState(() => {
         if (isPrototype) {
-            return prototypeStorage.getLimits(year);
+            return getScopedPrototypeLimits(year);
         }
-        if (!currentUser) return {};
+        if (!currentUser) return { activeLimits: {}, individualLimits: {}, familyLimits: {}, hasFamilySpace: false };
         const fieldKey = year ? `zimbroo_limits_${year}_${currentUser.uid}` : `zimbroo_limits_${currentUser.uid}`;
         const saved = localStorage.getItem(fieldKey);
-        return saved ? JSON.parse(saved) : {};
+        const data = saved ? JSON.parse(saved) : {};
+        return { activeLimits: data, individualLimits: data, familyLimits: {}, hasFamilySpace: false };
     });
+
     const [loading, setLoading] = useState(!isPrototype);
 
-    // Efeito de sincronização para o modo Protótipo
+    // Efeito de sincronização para o modo Protótipo respeitando contextos
     useEffect(() => {
         if (!isPrototype) return;
 
         const syncLimits = () => {
-            setLimitsState(prototypeStorage.getLimits(year));
+            setScopedLimits(getScopedPrototypeLimits(year));
             setLoading(false);
         };
 
         syncLimits();
+
         window.addEventListener(PROTOTYPE_EVENTS.LIMITS_CHANGED, syncLimits);
-        return () => window.removeEventListener(PROTOTYPE_EVENTS.LIMITS_CHANGED, syncLimits);
+        window.addEventListener(PROTOTYPE_EVENTS.FAMILY_SETTINGS_CHANGED, syncLimits);
+        window.addEventListener(PROTOTYPE_EVENTS.FAMILY_SPACES_CHANGED, syncLimits);
+        window.addEventListener(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED, syncLimits);
+
+        return () => {
+            window.removeEventListener(PROTOTYPE_EVENTS.LIMITS_CHANGED, syncLimits);
+            window.removeEventListener(PROTOTYPE_EVENTS.FAMILY_SETTINGS_CHANGED, syncLimits);
+            window.removeEventListener(PROTOTYPE_EVENTS.FAMILY_SPACES_CHANGED, syncLimits);
+            window.removeEventListener(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED, syncLimits);
+        };
     }, [isPrototype, year]);
 
     useEffect(() => {
@@ -45,10 +83,10 @@ export const useLimits = (year) => {
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data()[fieldName] || {};
-                setLimitsState(data);
+                setScopedLimits({ activeLimits: data, individualLimits: data, familyLimits: {}, hasFamilySpace: false });
                 localStorage.setItem(fieldKey, JSON.stringify(data));
             } else {
-                setLimitsState({});
+                setScopedLimits({ activeLimits: {}, individualLimits: {}, familyLimits: {}, hasFamilySpace: false });
             }
             setLoading(false);
         }, (error) => {
@@ -57,12 +95,23 @@ export const useLimits = (year) => {
         });
 
         return () => unsubscribe();
-    }, [currentUser, year]);
+    }, [currentUser, year, isPrototype]);
 
     const setLimits = async (newLimits) => {
         if (isPrototype) {
-            prototypeStorage.saveLimits(newLimits, year);
-            setLimitsState(newLimits);
+            const context = prototypeStorage.getActiveFinancialContext();
+            if (context === FINANCIAL_CONTEXTS.INDIVIDUAL) {
+                prototypeStorage.saveLimits(newLimits, year);
+            } else if (context === FINANCIAL_CONTEXTS.FAMILY) {
+                const activeFamilyId = prototypeStorage.getActiveFamilyId();
+                if (!activeFamilyId) {
+                    throw new Error('Nenhum espaço familiar ativo para salvar limites.');
+                }
+                prototypeStorage.saveFamilyLimits(activeFamilyId, newLimits, year);
+            } else {
+                throw new Error('No contexto Ambos, a gravação de limites deve especificar o escopo de destino.');
+            }
+            setScopedLimits(getScopedPrototypeLimits(year));
             return;
         }
 
@@ -70,19 +119,26 @@ export const useLimits = (year) => {
         
         // Optimistic Update
         const fieldKey = year ? `zimbroo_limits_${year}_${currentUser.uid}` : `zimbroo_limits_${currentUser.uid}`;
-        const previousLimits = { ...limits };
-        setLimitsState(newLimits);
+        const previousLimits = { ...scopedLimits.activeLimits };
+        setScopedLimits(prev => ({ ...prev, activeLimits: newLimits, individualLimits: newLimits }));
         localStorage.setItem(fieldKey, JSON.stringify(newLimits));
 
         try {
             await saveUserLimits(currentUser.uid, newLimits, year);
         } catch (error) {
             // Rollback on failure
-            setLimitsState(previousLimits);
+            setScopedLimits(prev => ({ ...prev, activeLimits: previousLimits, individualLimits: previousLimits }));
             localStorage.setItem(fieldKey, JSON.stringify(previousLimits));
             throw error;
         }
     };
 
-    return { limits, setLimits, loading };
+    return {
+        limits: scopedLimits.activeLimits,
+        individualLimits: scopedLimits.individualLimits,
+        familyLimits: scopedLimits.familyLimits,
+        hasFamilySpace: scopedLimits.hasFamilySpace,
+        setLimits,
+        loading
+    };
 };

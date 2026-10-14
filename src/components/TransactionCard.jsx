@@ -38,10 +38,37 @@ const TransactionCard = ({ transaction, onClick }) => {
           <p style={{ fontWeight: '500', margin: 0, color: 'var(--text-main)' }}>
             {tx.dynamicDescription || tx.description || tx.desc}
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
               {(tx.virtualDate || tx.date || '').split('-').slice(1).reverse().join('/')}
             </p>
+            {tx.scope === 'family' && (
+              <span style={{
+                fontSize: '0.65rem',
+                padding: '1px 6px',
+                borderRadius: '6px',
+                background: 'rgba(99, 102, 241, 0.12)',
+                color: '#6366f1',
+                fontWeight: '700',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px'
+              }}>
+                Familiar{tx.memberName ? ` • ${tx.memberName}` : ''}
+              </span>
+            )}
+            {tx.scope === 'individual' && tx.originLabel && (
+              <span style={{
+                fontSize: '0.65rem',
+                padding: '1px 6px',
+                borderRadius: '6px',
+                background: 'rgba(16, 185, 129, 0.12)',
+                color: '#10b981',
+                fontWeight: '700'
+              }}>
+                Individual
+              </span>
+            )}
             {(tx.repeatType || tx.tipo_recorrencia) && (tx.repeatType !== 'none' && tx.tipo_recorrencia !== 'none') && (
               <span style={{
                 fontSize: '0.65rem',

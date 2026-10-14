@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Mic, X, Keyboard, Home as HomeIcon, BarChart2, Shield, Wallet as WalletIcon } from 'lucide-react';
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import AiPanel from './AiPanel';
 import DynamicIslandHint from './DynamicIslandHint';
 import TransactionModal from './TransactionModal';
@@ -10,14 +10,19 @@ import { haptic } from '../utils/haptic';
 import { useTransactions } from '../hooks/useTransactions';
 import { format } from 'date-fns';
 import { generateInsightMessage } from '../services/geminiService';
+import { usePrototype } from '../contexts/PrototypeContext';
+import { usePrototypeFinancial } from '../contexts/PrototypeFinancialContext';
+import PrototypeContextSelector from './PrototypeContextSelector';
+import PrototypeScopeGuardModal from './PrototypeScopeGuardModal';
 import './Layout.css';
 
 const Layout = () => {
+    const { isPrototype } = usePrototype();
+    const { financialContext, triggerBlockedAction } = usePrototypeFinancial();
     const [isAiActive, setIsAiActive] = useState(false);
     const [isTextMode, setIsTextMode] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
-    const [showAiInsight, setShowAiInsight] = useState(true);
     const [insightMessage, setInsightMessage] = useState('');
     const location = useLocation();
     const { t } = useI18n();
@@ -25,6 +30,47 @@ const Layout = () => {
     const [isFabShrunk, setIsFabShrunk] = useState(false);
     const mainContentRef = useRef(null);
     const lastScrollY = useRef(0);
+
+    const handleAddClick = () => {
+        if (isPrototype && financialContext !== 'individual') {
+            haptic.light();
+            triggerBlockedAction({
+                title: financialContext === 'family' ? 'Adicionar no Espaço Familiar' : 'Adicionar no Modo Ambos',
+                message: financialContext === 'family'
+                    ? 'O registro de novas transações no espaço familiar será integrado na Etapa 5. No momento, o espaço familiar está em modo de visualização.'
+                    : 'No contexto Ambos, novas transações requerem a seleção explícita do escopo de destino (Individual ou Familiar), funcionalidade prevista para a Etapa 5. Para adicionar aos seus registros individuais agora, alterne para o contexto Individual.',
+                allowSwitch: true
+            });
+            return;
+        }
+        setIsManualModalOpen(true);
+    };
+
+    const handleVoiceClick = () => {
+        if (isPrototype && financialContext !== 'individual') {
+            haptic.light();
+            triggerBlockedAction({
+                title: 'Comando de Voz Indisponível',
+                message: `O assistente de voz no contexto ${financialContext === 'family' ? 'Familiar' : 'Ambos'} será integrado na Etapa 5. Para usar o assistente de voz com seus registros individuais, alterne para o contexto Individual.`,
+                allowSwitch: true
+            });
+            return;
+        }
+        handleAiClick('voice');
+    };
+
+    const handleTextClick = () => {
+        if (isPrototype && financialContext !== 'individual') {
+            haptic.light();
+            triggerBlockedAction({
+                title: 'Entrada por Texto Indisponível',
+                message: `A entrada por texto no contexto ${financialContext === 'family' ? 'Familiar' : 'Ambos'} será integrada na Etapa 5. Para registrar movimentações individuais via texto, alterne para o contexto Individual.`,
+                allowSwitch: true
+            });
+            return;
+        }
+        handleAiClick('text');
+    };
 
     // Pegamos a data atual para o hook de transactions, mas de forma simplificada apenas para passar pro balão
     const currentDate = new Date();
@@ -128,8 +174,12 @@ const Layout = () => {
                 ref={mainContentRef}
                 className="main-content"
             >
+                {isPrototype && <PrototypeContextSelector />}
                 <Outlet context={{ setIsAiActive, setIsBottomNavHidden: setIsBottomNavHiddenFromChild }} />
             </main>
+
+            {/* Modal de bloqueio de escopo para contextos Familiar e Ambos */}
+            {isPrototype && <PrototypeScopeGuardModal />}
 
             {/* Camada do Painel de IA */}
             <AiPanel
@@ -154,7 +204,7 @@ const Layout = () => {
                 <div className={`nav-items-wrapper ${isFabShrunk ? 'shrunk' : ''}`}>
                     <button 
                         className="nav-side-btn" 
-                        onClick={() => setIsManualModalOpen(true)}
+                        onClick={handleAddClick}
                         aria-label={t('add_transaction')}
                     >
                         <Plus size={24} />
@@ -163,7 +213,7 @@ const Layout = () => {
                     <div id="onboarding-ai-fab" className="nav-center-item">
                         <button
                             className={`ai-mic-btn ${isListening ? 'active' : ''}`}
-                            onClick={() => handleAiClick('voice')}
+                            onClick={handleVoiceClick}
                             aria-label={t('ai_mic_label')}
                         >
                             <Mic size={32} color="white" strokeWidth={2.5} />
@@ -172,7 +222,7 @@ const Layout = () => {
 
                     <button 
                         className="nav-side-btn" 
-                        onClick={() => handleAiClick('text')}
+                        onClick={handleTextClick}
                         aria-label={t('type_text')}
                     >
                         <Keyboard size={24} />

@@ -18,9 +18,18 @@ export const PROTOTYPE_STORAGE_KEYS = {
     FAMILY_MEMBERS: `${PROTOTYPE_STORAGE_PREFIX}family_members_v${PROTOTYPE_STORAGE_VERSION}`,
     FAMILY_TRANSACTIONS: `${PROTOTYPE_STORAGE_PREFIX}family_transactions_v${PROTOTYPE_STORAGE_VERSION}`,
     FAMILY_SETTINGS: `${PROTOTYPE_STORAGE_PREFIX}family_settings_v${PROTOTYPE_STORAGE_VERSION}`,
-    ACTIVE_FAMILY_ID: `${PROTOTYPE_STORAGE_PREFIX}active_family_id`
+    ACTIVE_FAMILY_ID: `${PROTOTYPE_STORAGE_PREFIX}active_family_id`,
+    // Etapa 4: Contexto Financeiro Ativo (Individual, Familiar, Ambos)
+    ACTIVE_FINANCIAL_CONTEXT: `${PROTOTYPE_STORAGE_PREFIX}active_financial_context_v1`
 };
 const KEYS = PROTOTYPE_STORAGE_KEYS;
+
+// Contextos financeiros do Protótipo (Etapa 4)
+export const FINANCIAL_CONTEXTS = {
+    INDIVIDUAL: 'individual',
+    FAMILY: 'family',
+    BOTH: 'both'
+};
 
 // Papéis e estados dos membros familiares
 export const FAMILY_ROLES = {
@@ -42,7 +51,8 @@ export const PROTOTYPE_EVENTS = {
     FAMILY_SPACES_CHANGED: 'zimbroo-prototype-family-spaces-changed',
     FAMILY_MEMBERS_CHANGED: 'zimbroo-prototype-family-members-changed',
     FAMILY_TXS_CHANGED: 'zimbroo-prototype-family-txs-changed',
-    FAMILY_SETTINGS_CHANGED: 'zimbroo-prototype-family-settings-changed'
+    FAMILY_SETTINGS_CHANGED: 'zimbroo-prototype-family-settings-changed',
+    FINANCIAL_CONTEXT_CHANGED: 'zimbroo-prototype-financial-context-changed'
 };
 
 const notify = (eventName) => {
@@ -152,6 +162,33 @@ export const prototypeStorage = {
         } else {
             localStorage.removeItem(KEYS.ACTIVE);
         }
+    },
+
+    /**
+     * Retorna o contexto financeiro ativo no protótipo ('individual', 'family', 'both').
+     * Fallback seguro para 'individual' caso não haja preferência salva ou o valor seja inválido.
+     */
+    getActiveFinancialContext() {
+        if (typeof window === 'undefined') return FINANCIAL_CONTEXTS.INDIVIDUAL;
+        const saved = localStorage.getItem(KEYS.ACTIVE_FINANCIAL_CONTEXT);
+        if (saved === FINANCIAL_CONTEXTS.INDIVIDUAL || saved === FINANCIAL_CONTEXTS.FAMILY || saved === FINANCIAL_CONTEXTS.BOTH) {
+            return saved;
+        }
+        return FINANCIAL_CONTEXTS.INDIVIDUAL;
+    },
+
+    /**
+     * Define o contexto financeiro ativo no protótipo ('individual', 'family', 'both').
+     * Valida os valores permitidos e emite evento reativo PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED.
+     */
+    setActiveFinancialContext(context) {
+        if (typeof window === 'undefined') return;
+        const validValues = Object.values(FINANCIAL_CONTEXTS);
+        if (!validValues.includes(context)) {
+            throw new Error(`Contexto financeiro inválido: "${context}". Valores válidos: ${validValues.join(', ')}.`);
+        }
+        localStorage.setItem(KEYS.ACTIVE_FINANCIAL_CONTEXT, context);
+        notify(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED);
     },
 
     // ==========================================
@@ -936,6 +973,8 @@ export const prototypeStorage = {
         localStorage.removeItem(KEYS.FAMILY_TRANSACTIONS);
         localStorage.removeItem(KEYS.FAMILY_SETTINGS);
         localStorage.removeItem(KEYS.ACTIVE_FAMILY_ID);
+        // Limpeza dos dados de contexto
+        localStorage.removeItem(KEYS.ACTIVE_FINANCIAL_CONTEXT);
 
         notify(PROTOTYPE_EVENTS.TXS_CHANGED);
         notify(PROTOTYPE_EVENTS.LIMITS_CHANGED);
@@ -943,5 +982,6 @@ export const prototypeStorage = {
         notify(PROTOTYPE_EVENTS.FAMILY_MEMBERS_CHANGED);
         notify(PROTOTYPE_EVENTS.FAMILY_TXS_CHANGED);
         notify(PROTOTYPE_EVENTS.FAMILY_SETTINGS_CHANGED);
+        notify(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED);
     }
 };

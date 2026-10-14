@@ -4,12 +4,15 @@ import { getCategoryInfo } from '../utils/categories';
 import { haptic } from '../utils/haptic';
 
 const LimitsSection = ({ 
-    limits, 
-    transactions, 
+    title,
+    limits = {}, 
+    transactions = [], 
     formatCurrency, 
     t, 
     setIsLimitModalOpen, 
-    setTempLimit
+    setTempLimit,
+    readOnly = false,
+    onReadOnlyClick
 }) => {
     // Calcular o gasto por categoria para o mês atual
     const getSpentForCategory = (catId) => {
@@ -35,7 +38,7 @@ const LimitsSection = ({
                 color: 'var(--text-main)',
                 padding: '0'
             }}>
-                {t('limits', { defaultValue: 'Limites' })}
+                {title || t('limits', { defaultValue: 'Limites' })}
             </h3>
 
             <div className="limits-carousel" style={{
@@ -83,6 +86,10 @@ const LimitsSection = ({
                             }}
                             onClick={() => {
                                 haptic.light();
+                                if (readOnly) {
+                                    if (onReadOnlyClick) onReadOnlyClick(catId, limitAmount);
+                                    return;
+                                }
                                 setIsLimitModalOpen(true, catId, limitAmount);
                             }}
                         >
@@ -150,54 +157,56 @@ const LimitsSection = ({
                 })}
 
                 {/* Ghost Card: Adicionar limite */}
-                <div 
-                    className="glass-panel"
-                    style={{
-                        flexShrink: 0,
-                        width: '180px',
-                        minHeight: '140px',
-                        padding: '16px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        background: 'transparent',
-                        border: '2px dashed var(--glass-border)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        color: 'var(--text-muted)'
-                    }}
-                    onClick={() => {
-                        haptic.medium();
-                        setTempLimit({ categoryId: '', amount: '' });
-                        setIsLimitModalOpen(true);
-                    }}
-                    onMouseEnter={e => {
-                        e.currentTarget.style.borderColor = 'var(--primary-color)';
-                        e.currentTarget.style.color = 'var(--primary-color)';
-                    }}
-                    onMouseLeave={e => {
-                        e.currentTarget.style.borderColor = 'var(--glass-border)';
-                        e.currentTarget.style.color = 'var(--text-muted)';
-                    }}
-                >
-                    <div style={{ 
-                        width: '40px', 
-                        height: '40px', 
-                        borderRadius: '12px', 
-                        background: 'var(--surface-color)', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        border: '1px solid var(--glass-border)'
-                    }}>
-                        <Plus size={20} />
+                {!readOnly && (
+                    <div 
+                        className="glass-panel"
+                        style={{
+                            flexShrink: 0,
+                            width: '180px',
+                            minHeight: '140px',
+                            padding: '16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            background: 'transparent',
+                            border: '2px dashed var(--glass-border)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            color: 'var(--text-muted)'
+                        }}
+                        onClick={() => {
+                            haptic.medium();
+                            setTempLimit({ categoryId: '', amount: '' });
+                            setIsLimitModalOpen(true);
+                        }}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.borderColor = 'var(--primary-color)';
+                            e.currentTarget.style.color = 'var(--primary-color)';
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.borderColor = 'var(--glass-border)';
+                            e.currentTarget.style.color = 'var(--text-muted)';
+                        }}
+                    >
+                        <div style={{ 
+                            width: '40px', 
+                            height: '40px', 
+                            borderRadius: '12px', 
+                            background: 'var(--surface-color)', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            border: '1px solid var(--glass-border)'
+                        }}>
+                            <Plus size={20} />
+                        </div>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>
+                            {t('add_limit', { defaultValue: 'Adicionar limite' })}
+                        </span>
                     </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>
-                        {t('add_limit', { defaultValue: 'Adicionar limite' })}
-                    </span>
-                </div>
+                )}
             </div>
         </section>
     );

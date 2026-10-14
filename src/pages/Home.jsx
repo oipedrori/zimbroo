@@ -26,10 +26,14 @@ import Onboarding from '../components/Onboarding';
 import { useSubscription } from '../hooks/useSubscription';
 import PaywallModal from '../components/PaywallModal';
 import { usePrototype } from '../contexts/PrototypeContext';
+import { usePrototypeFinancial } from '../contexts/PrototypeFinancialContext';
 
 const Home = () => {
     const { currentUser, logout, deleteAccount } = useAuth();
     const { isPrototype } = usePrototype();
+    const { financialContext, activeFamilySpace, triggerBlockedAction } = usePrototypeFinancial();
+    const [familyTxNotice, setFamilyTxNotice] = useState(null);
+    const [familyLimitsNotice, setFamilyLimitsNotice] = useState(false);
     const { setIsAiActive, setIsBottomNavHidden } = useOutletContext();
     const { t, formatCurrency, locale, changeLocale, currency, changeCurrency } = useI18n();
     const navigate = useNavigate();
@@ -95,7 +99,7 @@ const Home = () => {
     const [selectedLimitCat, setSelectedLimitCat] = useState(null);
     const [tempLimit, setTempLimit] = useState({ categoryId: '', amount: '' });
     const currentYear = currentDate.getFullYear();
-    const { limits, setLimits } = useLimits(currentYear);
+    const { limits, individualLimits, familyLimits, hasFamilySpace, setLimits } = useLimits(currentYear);
     const [chartType, setChartType] = useState('bar'); // 'bar' or 'line'
     const [isFlipped, setIsFlipped] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
@@ -337,6 +341,15 @@ const Home = () => {
     const expenses = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
     const balance = incomes - expenses;
 
+    // Subtotais por escopo (usados na visão detalhada do contexto Ambos no Protótipo)
+    const indIncomes = transactions.filter(t => t.scope === 'individual' && t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+    const indExpenses = transactions.filter(t => t.scope === 'individual' && t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+    const indBalance = indIncomes - indExpenses;
+
+    const famIncomes = transactions.filter(t => t.scope === 'family' && t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+    const famExpenses = transactions.filter(t => t.scope === 'family' && t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+    const famBalance = famIncomes - famExpenses;
+
     const handleFilterClick = (filterId) => {
         haptic.light();
         if (activeFilter === filterId && filterId !== 'all') {
@@ -361,6 +374,17 @@ const Home = () => {
     });
 
     const handleOpenModal = (type) => {
+        if (isPrototype && financialContext !== 'individual') {
+            haptic.light();
+            triggerBlockedAction({
+                title: financialContext === 'family' ? 'Adicionar no Espaço Familiar' : 'Adicionar no Modo Ambos',
+                message: financialContext === 'family'
+                    ? 'O registro de novas transações no espaço familiar será integrado na Etapa 5. No momento, o espaço familiar está em modo de visualização.'
+                    : 'No contexto Ambos, novas transações requerem a seleção explícita do escopo de destino (Individual ou Familiar), funcionalidade prevista para a Etapa 5. Para adicionar aos seus registros individuais agora, alterne para o contexto Individual.',
+                allowSwitch: true
+            });
+            return;
+        }
         setEditingTx(null); // Ensure we are in "new" mode
         setModalType(type);
         setIsModalOpen(true);
@@ -702,23 +726,112 @@ const Home = () => {
 
                         </section>
 
+                        {/* Subtotais detalhados no contexto Ambos */}
+                        {isPrototype && financialContext === 'both' && (
+                            <div style={{
+                                marginTop: '12px',
+                                padding: '14px 16px',
+                                background: 'var(--surface-color)',
+                                borderRadius: '16px',
+                                border: '1px solid var(--glass-border)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                                    <span style={{ fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
+                                        Individual:
+                                    </span>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <span style={{ fontWeight: '700', color: indBalance >= 0 ? 'var(--success-color)' : 'var(--danger-color)', display: 'block' }}>
+                                            {showValues ? formatCurrency(indBalance) : '•••••'}
+                                        </span>
+                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                            +{showValues ? formatCurrency(indIncomes) : '••'} / -{showValues ? formatCurrency(indExpenses) : '••'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', borderTop: '1px solid var(--glass-border)', paddingTop: '8px' }}>
+                                    <span style={{ fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6366f1' }} />
+                                        Familiar ({activeFamilySpace?.name || 'Sem espaço ativo'}):
+                                    </span>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <span style={{ fontWeight: '700', color: famBalance >= 0 ? 'var(--success-color)' : 'var(--danger-color)', display: 'block' }}>
+                                            {showValues ? formatCurrency(famBalance) : '•••••'}
+                                        </span>
+                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                            +{showValues ? formatCurrency(famIncomes) : '••'} / -{showValues ? formatCurrency(famExpenses) : '••'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div id="onboarding-limits-section">
-                            <LimitsSection
-                                limits={limits}
-                                transactions={transactions}
-                                formatCurrency={formatCurrency}
-                                t={t}
-                                setIsLimitModalOpen={(val, catId, amount) => {
-                                    if (val && catId) {
-                                        setTempLimit({ categoryId: catId, amount: amount ? amount.toString() : '' });
-                                        setIsLimitModalOpen(true);
-                                    } else {
-                                        setTempLimit({ categoryId: '', amount: '' });
-                                        setIsLimitModalOpen(val);
-                                    }
-                                }}
-                                setTempLimit={setTempLimit}
-                            />
+                            {isPrototype && financialContext === 'both' ? (
+                                <>
+                                    <LimitsSection
+                                        title="Limites Individuais"
+                                        limits={individualLimits}
+                                        transactions={transactions.filter(t => t.scope === 'individual')}
+                                        formatCurrency={formatCurrency}
+                                        t={t}
+                                        setIsLimitModalOpen={(val, catId, amount) => {
+                                            if (val && catId) {
+                                                setTempLimit({ categoryId: catId, amount: amount ? amount.toString() : '' });
+                                                setIsLimitModalOpen(true);
+                                            } else {
+                                                setTempLimit({ categoryId: '', amount: '' });
+                                                setIsLimitModalOpen(val);
+                                            }
+                                        }}
+                                        setTempLimit={setTempLimit}
+                                    />
+                                    {hasFamilySpace && activeFamilySpace && (
+                                        <LimitsSection
+                                            title={`Limites Familiares (${activeFamilySpace.name})`}
+                                            limits={familyLimits}
+                                            transactions={transactions.filter(t => t.scope === 'family')}
+                                            formatCurrency={formatCurrency}
+                                            t={t}
+                                            readOnly={true}
+                                            onReadOnlyClick={() => setFamilyLimitsNotice(true)}
+                                        />
+                                    )}
+                                </>
+                            ) : isPrototype && financialContext === 'family' ? (
+                                activeFamilySpace ? (
+                                    <LimitsSection
+                                        title={`Limites Familiares (${activeFamilySpace.name})`}
+                                        limits={familyLimits}
+                                        transactions={transactions}
+                                        formatCurrency={formatCurrency}
+                                        t={t}
+                                        readOnly={true}
+                                        onReadOnlyClick={() => setFamilyLimitsNotice(true)}
+                                    />
+                                ) : null
+                            ) : (
+                                <LimitsSection
+                                    limits={limits}
+                                    transactions={transactions}
+                                    formatCurrency={formatCurrency}
+                                    t={t}
+                                    setIsLimitModalOpen={(val, catId, amount) => {
+                                        if (val && catId) {
+                                            setTempLimit({ categoryId: catId, amount: amount ? amount.toString() : '' });
+                                            setIsLimitModalOpen(true);
+                                        } else {
+                                            setTempLimit({ categoryId: '', amount: '' });
+                                            setIsLimitModalOpen(val);
+                                        }
+                                    }}
+                                    setTempLimit={setTempLimit}
+                                />
+                            )}
                         </div>
 
                         <section id="onboarding-transactions-list" style={{ marginTop: '24px' }}>
@@ -843,17 +956,44 @@ const Home = () => {
                                 <div className="glass-panel" style={{ display: 'flex', justifyContent: 'center', padding: '30px' }}>
                                     <LoadingDots />
                                 </div>
+                            ) : isPrototype && financialContext === 'family' && !activeFamilySpace ? (
+                                <div className="glass-panel" style={{ padding: '36px 20px', textAlign: 'center' }}>
+                                    <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: 'rgba(234, 179, 8, 0.12)', color: '#ca8a04', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px auto' }}>
+                                        <User size={26} />
+                                    </div>
+                                    <h4 style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px' }}>
+                                        Nenhum espaço familiar configurado
+                                    </h4>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', maxWidth: '320px', margin: '0 auto', lineHeight: '1.5' }}>
+                                        Para visualizar movimentações familiares, é necessário ter um espaço familiar ativo. A criação de espaços pela interface será disponibilizada na Etapa 5.
+                                    </p>
+                                </div>
                             ) : filteredTransactions.length === 0 ? (
                                 <div className="glass-panel" style={{ padding: '30px', textAlign: 'center' }}>
                                     <p style={{ color: 'var(--text-muted)' }}>{t('no_transactions')}</p>
                                 </div>
                             ) : (
                                 <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
-                                    {filteredTransactions.map((tx, i) => (
-                                        <SwipeableItem key={tx.id} onDelete={() => handleConfirmDelete(tx)} onEdit={() => handleEditTx(tx)}>
-                                            <TransactionCard transaction={tx} />
-                                        </SwipeableItem>
-                                    ))}
+                                    {filteredTransactions.map((tx) => {
+                                        const isFamilyTx = tx.scope === 'family';
+                                        return isFamilyTx ? (
+                                            <div 
+                                                key={tx.id} 
+                                                onClick={() => {
+                                                    haptic.light();
+                                                    setFamilyTxNotice(tx);
+                                                }}
+                                                style={{ cursor: 'pointer' }}
+                                                title="Transação familiar (somente leitura nesta etapa)"
+                                            >
+                                                <TransactionCard transaction={tx} />
+                                            </div>
+                                        ) : (
+                                            <SwipeableItem key={tx.id} onDelete={() => handleConfirmDelete(tx)} onEdit={() => handleEditTx(tx)}>
+                                                <TransactionCard transaction={tx} />
+                                            </SwipeableItem>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </section>
@@ -868,6 +1008,30 @@ const Home = () => {
                         isOpen={isConfirmOpen}
                         onClose={() => setIsConfirmOpen(false)}
                         {...confirmConfig}
+                    />
+
+                    {/* Modal explicativo de Transação Familiar (somente leitura) */}
+                    <ConfirmDialog
+                        isOpen={Boolean(familyTxNotice)}
+                        onClose={() => setFamilyTxNotice(null)}
+                        title="Transação Familiar"
+                        message={`Esta movimentação pertence ao espaço familiar "${activeFamilySpace?.name || 'Familiar'}"${familyTxNotice?.memberName ? ` (membro: ${familyTxNotice.memberName})` : ''}. As operações de edição e exclusão de movimentações familiares serão implementadas na Etapa 5.`}
+                        showIcon={true}
+                        showCancel={false}
+                        confirmLabel="Entendi"
+                        onConfirm={() => setFamilyTxNotice(null)}
+                    />
+
+                    {/* Modal explicativo de Limites Familiares (somente leitura) */}
+                    <ConfirmDialog
+                        isOpen={familyLimitsNotice}
+                        onClose={() => setFamilyLimitsNotice(false)}
+                        title="Limites Familiares"
+                        message={`Os limites do espaço familiar "${activeFamilySpace?.name || 'Familiar'}" estão em modo de visualização nesta etapa. O formulário de edição de limites familiares será integrado na Etapa 5.`}
+                        showIcon={true}
+                        showCancel={false}
+                        confirmLabel="Entendi"
+                        onConfirm={() => setFamilyLimitsNotice(false)}
                     />
 
 
