@@ -26,7 +26,6 @@ import Onboarding from '../components/Onboarding';
 import { useSubscription } from '../hooks/useSubscription';
 import PaywallModal from '../components/PaywallModal';
 import { usePrototype } from '../contexts/PrototypeContext';
-import PrototypeBadge from '../components/PrototypeBadge';
 
 const Home = () => {
     const { currentUser, logout, deleteAccount } = useAuth();
@@ -572,13 +571,6 @@ const Home = () => {
                             </button>
                         </div>
                     </header>
-
-                    {/* Indicação discreta do Modo Protótipo */}
-                    {isPrototype && (
-                        <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '6px' }}>
-                            <PrototypeBadge />
-                        </div>
-                    )}
 
                     <section
                         id="onboarding-balance-card"
