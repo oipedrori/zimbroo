@@ -5,6 +5,8 @@ import { prototypeStorage, FINANCIAL_CONTEXTS, PROTOTYPE_EVENTS } from '../servi
 const PrototypeFinancialContext = createContext({
     financialContext: FINANCIAL_CONTEXTS.INDIVIDUAL,
     setFinancialContext: () => {},
+    onboardingModel: 'both',
+    setOnboardingModel: () => {},
     activeFamilyId: null,
     setActiveFamilyId: () => {},
     activeFamilySpace: null,
@@ -22,6 +24,8 @@ export const usePrototypeFinancial = () => {
         return {
             financialContext: prototypeStorage.getActiveFinancialContext(),
             setFinancialContext: () => {},
+            onboardingModel: prototypeStorage.getOnboardingModel() || 'both',
+            setOnboardingModel: () => {},
             activeFamilyId: prototypeStorage.getActiveFamilyId(),
             setActiveFamilyId: () => {},
             activeFamilySpace: null,
@@ -41,6 +45,10 @@ export const PrototypeFinancialProvider = ({ children }) => {
         return prototypeStorage.getActiveFinancialContext();
     });
 
+    const [onboardingModel, setOnboardingModelState] = useState(() => {
+        return prototypeStorage.getOnboardingModel() || 'both';
+    });
+
     const [activeFamilyId, setActiveFamilyIdState] = useState(() => {
         return prototypeStorage.getActiveFamilyId();
     });
@@ -57,10 +65,12 @@ export const PrototypeFinancialProvider = ({ children }) => {
     useEffect(() => {
         const syncState = () => {
             const currentContext = prototypeStorage.getActiveFinancialContext();
+            const currentModel = prototypeStorage.getOnboardingModel() || 'both';
             const currentSpaces = prototypeStorage.getFamilySpaces();
             const currentFamilyId = prototypeStorage.getActiveFamilyId();
 
             setFinancialContextState(currentContext);
+            setOnboardingModelState(currentModel);
             setFamilySpaces(currentSpaces);
             setActiveFamilyIdState(currentFamilyId);
         };
@@ -68,17 +78,20 @@ export const PrototypeFinancialProvider = ({ children }) => {
         syncState();
 
         const handleContextChange = () => syncState();
+        const handleModelChange = () => syncState();
         const handleSpacesChange = () => syncState();
         const handleMembersChange = () => setMembersVersion(v => v + 1);
         const handleInvitesChange = () => setInvitesVersion(v => v + 1);
 
         window.addEventListener(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED, handleContextChange);
+        window.addEventListener(PROTOTYPE_EVENTS.ONBOARDING_MODEL_CHANGED, handleModelChange);
         window.addEventListener(PROTOTYPE_EVENTS.FAMILY_SPACES_CHANGED, handleSpacesChange);
         window.addEventListener(PROTOTYPE_EVENTS.FAMILY_MEMBERS_CHANGED, handleMembersChange);
         window.addEventListener(PROTOTYPE_EVENTS.FAMILY_INVITES_CHANGED, handleInvitesChange);
 
         return () => {
             window.removeEventListener(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED, handleContextChange);
+            window.removeEventListener(PROTOTYPE_EVENTS.ONBOARDING_MODEL_CHANGED, handleModelChange);
             window.removeEventListener(PROTOTYPE_EVENTS.FAMILY_SPACES_CHANGED, handleSpacesChange);
             window.removeEventListener(PROTOTYPE_EVENTS.FAMILY_MEMBERS_CHANGED, handleMembersChange);
             window.removeEventListener(PROTOTYPE_EVENTS.FAMILY_INVITES_CHANGED, handleInvitesChange);
@@ -88,6 +101,21 @@ export const PrototypeFinancialProvider = ({ children }) => {
     const setFinancialContext = useCallback((newContext) => {
         prototypeStorage.setActiveFinancialContext(newContext);
         setFinancialContextState(prototypeStorage.getActiveFinancialContext());
+    }, []);
+
+    const setOnboardingModel = useCallback((model) => {
+        prototypeStorage.setOnboardingModel(model);
+        setOnboardingModelState(model);
+        if (model === 'individual') {
+            prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.INDIVIDUAL);
+            setFinancialContextState(FINANCIAL_CONTEXTS.INDIVIDUAL);
+        } else if (model === 'family') {
+            prototypeStorage.ensureActiveFamilySpace();
+            prototypeStorage.setActiveFinancialContext(FINANCIAL_CONTEXTS.FAMILY);
+            setFinancialContextState(FINANCIAL_CONTEXTS.FAMILY);
+        } else if (model === 'both') {
+            prototypeStorage.ensureActiveFamilySpace();
+        }
     }, []);
 
     const setActiveFamilyId = useCallback((id) => {
@@ -146,6 +174,8 @@ export const PrototypeFinancialProvider = ({ children }) => {
     const value = useMemo(() => ({
         financialContext,
         setFinancialContext,
+        onboardingModel,
+        setOnboardingModel,
         activeFamilyId: activeFamilySpace?.id || null,
         setActiveFamilyId,
         activeFamilySpace,
@@ -163,6 +193,8 @@ export const PrototypeFinancialProvider = ({ children }) => {
     }), [
         financialContext,
         setFinancialContext,
+        onboardingModel,
+        setOnboardingModel,
         activeFamilySpace,
         setActiveFamilyId,
         familySpaces,

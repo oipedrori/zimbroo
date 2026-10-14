@@ -63,6 +63,8 @@ export const translations = {
         credit: "Crédito",
 
         // Limits
+        limits: "Limites",
+        limits_caps: "LIMITES",
         limits_title: "Categorias",
         limits_subtitle: "Acompanhe o ritmo dos seus gastos.",
         set_new_limit: "Definir Novo Limite",
@@ -286,6 +288,8 @@ export const translations = {
         investment: "Investment",
         credit: "Credit",
 
+        limits: "Limits",
+        limits_caps: "LIMITS",
         limits_title: "Categories",
         limits_subtitle: "Track the rhythm of your spending.",
         set_new_limit: "Set New Limit",
@@ -504,6 +508,8 @@ export const translations = {
         investment: "Inversión",
         credit: "Crédito",
 
+        limits: "Límites",
+        limits_caps: "LÍMITES",
         limits_title: "Categorías",
         limits_subtitle: "Sigue el ritmo de tus gastos.",
         set_new_limit: "Establecer Nuevo Límite",

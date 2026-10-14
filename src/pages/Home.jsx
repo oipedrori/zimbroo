@@ -10,7 +10,7 @@ import SwipeableItem from '../components/SwipeableItem';
 import LoadingDots from '../components/LoadingDots';
 import ProfileContent from '../components/ProfileContent';
 import NotionImportContent from '../components/NotionImportContent';
-import { Plus, ChevronLeft, ChevronRight, User, Pointer, X, Trash2, PieChart, BarChart2, Shield, Mic, Keyboard, Moon, Globe, DollarSign, LogOut, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, User, Users, Pointer, X, Trash2, PieChart, BarChart2, Shield, Mic, Keyboard, Moon, Globe, DollarSign, LogOut, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
 import { Link, useOutletContext, useNavigate } from 'react-router-dom';
 import TransactionCard from '../components/TransactionCard';
 import { createPortal } from 'react-dom';
@@ -32,7 +32,7 @@ import PrototypeContextSelector from '../components/PrototypeContextSelector';
 const Home = () => {
     const { currentUser, logout, deleteAccount } = useAuth();
     const { isPrototype } = usePrototype();
-    const { financialContext, activeFamilySpace, triggerBlockedAction } = usePrototypeFinancial();
+    const { financialContext, activeFamilySpace, triggerBlockedAction, onboardingModel } = usePrototypeFinancial();
     const [familyTxNotice, setFamilyTxNotice] = useState(null);
     const { setIsAiActive, setIsBottomNavHidden } = useOutletContext();
     const { t, formatCurrency, locale, changeLocale, currency, changeCurrency } = useI18n();
@@ -564,11 +564,14 @@ const Home = () => {
                             style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
                         >
                             <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'var(--surface-color)', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--primary-color)' }}>
-                                <User size={22} />
+                                {isPrototype && financialContext === 'family' ? <Users size={22} /> : <User size={22} />}
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                                 <h1 style={{ fontSize: '1.2rem', color: 'var(--text-main)', fontWeight: '700', margin: 0 }}>
                                     {(() => {
+                                        if (isPrototype && financialContext === 'family') {
+                                            return activeFamilySpace?.name || 'Família';
+                                        }
                                         const hour = new Date().getHours();
                                         const greetingKey = (hour >= 3 && hour < 12) ? 'good_morning' :
                                              (hour >= 12 && hour < 18) ? 'good_afternoon' : 'good_night';
@@ -581,8 +584,8 @@ const Home = () => {
                             </div>
                         </div>
 
-                        {/* 2. Seletor Individual / Familiar (exclusivo do protótipo) */}
-                        {isPrototype && (
+                        {/* 2. Seletor Individual / Familiar (exclusivo do protótipo e apenas se o modelo for 'both') */}
+                        {isPrototype && (onboardingModel || 'both') === 'both' && (
                             <div style={{ width: '100%' }}>
                                 <PrototypeContextSelector />
                             </div>
@@ -787,23 +790,35 @@ const Home = () => {
                             </div>
                         )}
 
-                        {/* Subtotais detalhados no contexto Ambos */}
+                        {/* Seção de Limites */}
                         <div id="onboarding-limits-section">
                             {isPrototype && financialContext === 'family' && !activeFamilySpace ? (
-                                <div style={{
-                                    padding: '20px 16px',
-                                    borderRadius: '16px',
-                                    background: 'var(--surface-color)',
-                                    border: '1px dashed var(--glass-border)',
-                                    marginTop: '20px',
-                                    textAlign: 'center'
-                                }}>
-                                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                        Nenhum espaço familiar configurado. Para gerenciar limites familiares, configure um espaço familiar ou selecione o contexto <strong>Individual</strong>.
-                                    </p>
+                                <div>
+                                    <h3 style={{ 
+                                        fontSize: '1.2rem', 
+                                        fontWeight: '600', 
+                                        marginBottom: '16px',
+                                        marginTop: '24px',
+                                        color: 'var(--text-main)',
+                                        padding: '0'
+                                    }}>
+                                        Limites
+                                    </h3>
+                                    <div style={{
+                                        padding: '20px 16px',
+                                        borderRadius: '16px',
+                                        background: 'var(--surface-color)',
+                                        border: '1px dashed var(--glass-border)',
+                                        textAlign: 'center'
+                                    }}>
+                                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                            Nenhum espaço familiar configurado. Para gerenciar limites familiares, configure um espaço familiar ou selecione o contexto <strong>Individual</strong>.
+                                        </p>
+                                    </div>
                                 </div>
                             ) : (
                                 <LimitsSection
+                                    title="Limites"
                                     limits={limits}
                                     transactions={transactions}
                                     formatCurrency={formatCurrency}

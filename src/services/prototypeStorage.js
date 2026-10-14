@@ -63,7 +63,8 @@ export const PROTOTYPE_EVENTS = {
     FAMILY_TXS_CHANGED: 'zimbroo-prototype-family-txs-changed',
     FAMILY_SETTINGS_CHANGED: 'zimbroo-prototype-family-settings-changed',
     FINANCIAL_CONTEXT_CHANGED: 'zimbroo-prototype-financial-context-changed',
-    FAMILY_INVITES_CHANGED: 'zimbroo-prototype-family-invites-changed'
+    FAMILY_INVITES_CHANGED: 'zimbroo-prototype-family-invites-changed',
+    ONBOARDING_MODEL_CHANGED: 'zimbroo-prototype-onboarding-model-changed'
 };
 
 const notify = (eventName) => {
@@ -229,6 +230,7 @@ export const prototypeStorage = {
         } else {
             localStorage.removeItem(KEYS.ONBOARDING_MODEL);
         }
+        notify(PROTOTYPE_EVENTS.ONBOARDING_MODEL_CHANGED);
     },
 
     // ==========================================
@@ -563,6 +565,26 @@ export const prototypeStorage = {
 
         localStorage.setItem(KEYS.ACTIVE_FAMILY_ID, id);
         notify(PROTOTYPE_EVENTS.FAMILY_SPACES_CHANGED);
+    },
+
+    /**
+     * Garante que haja um espaço familiar ativo configurado.
+     * Se houver espaços existentes, ativa o primeiro caso nenhum esteja ativo.
+     * Se nenhum existir, cria um espaço familiar inicial "Família" com criador "Avaliador".
+     */
+    ensureActiveFamilySpace() {
+        if (typeof window === 'undefined') return null;
+        const spaces = this.getFamilySpaces();
+        if (spaces.length > 0) {
+            return this.getActiveFamilyId();
+        }
+        const defaultSpace = this.createFamilySpace({
+            name: 'Família',
+            createdBy: 'prototipo',
+            creatorName: 'Avaliador'
+        });
+        this.setActiveFamilyId(defaultSpace.id);
+        return defaultSpace.id;
     },
 
     // ==========================================
@@ -1281,5 +1303,6 @@ export const prototypeStorage = {
         notify(PROTOTYPE_EVENTS.FAMILY_SETTINGS_CHANGED);
         notify(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED);
         notify(PROTOTYPE_EVENTS.FAMILY_INVITES_CHANGED);
+        notify(PROTOTYPE_EVENTS.ONBOARDING_MODEL_CHANGED);
     }
 };

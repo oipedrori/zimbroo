@@ -2,18 +2,14 @@ import React from 'react';
 import { usePrototypeFinancial } from '../contexts/PrototypeFinancialContext';
 import { usePrototype } from '../contexts/PrototypeContext';
 import { FINANCIAL_CONTEXTS } from '../services/prototypeStorage';
-import { User, Users, ChevronDown } from 'lucide-react';
+import { User, Users } from 'lucide-react';
 import { haptic } from '../utils/haptic';
 
 const PrototypeContextSelector = () => {
     const { isPrototype } = usePrototype();
     const {
         financialContext,
-        setFinancialContext,
-        familySpaces,
-        activeFamilySpace,
-        setActiveFamilyId,
-        hasFamilySpace
+        setFinancialContext
     } = usePrototypeFinancial();
 
     if (!isPrototype) return null;
@@ -22,12 +18,6 @@ const PrototypeContextSelector = () => {
         if (ctx === financialContext) return;
         haptic.light();
         setFinancialContext(ctx);
-    };
-
-    const handleSpaceChange = (e) => {
-        const newSpaceId = e.target.value;
-        haptic.light();
-        setActiveFamilyId(newSpaceId);
     };
 
     const isIndividual = financialContext === FINANCIAL_CONTEXTS.INDIVIDUAL;
@@ -120,68 +110,6 @@ const PrototypeContextSelector = () => {
                     <span>Familiar</span>
                 </button>
             </div>
-
-            {/* Espaço Familiar Ativo (apenas no modo Familiar) */}
-            {isFamily && (
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '2px 6px',
-                    fontSize: '0.75rem',
-                    color: 'var(--text-muted)'
-                }}>
-                    <span style={{ fontWeight: '600' }}>Espaço:</span>
-                    {hasFamilySpace ? (
-                        familySpaces.length > 1 ? (
-                            <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                                <select
-                                    aria-label="Selecionar espaço familiar ativo"
-                                    value={activeFamilySpace?.id || ''}
-                                    onChange={handleSpaceChange}
-                                    style={{
-                                        appearance: 'none',
-                                        background: 'var(--surface-color)',
-                                        border: '1px solid var(--glass-border)',
-                                        borderRadius: '8px',
-                                        padding: '3px 22px 3px 8px',
-                                        fontSize: '0.75rem',
-                                        fontWeight: '700',
-                                        color: 'var(--text-main)',
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    {familySpaces.map(space => (
-                                        <option key={space.id} value={space.id}>
-                                            {space.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <ChevronDown size={12} style={{ position: 'absolute', right: '6px', pointerEvents: 'none', color: 'var(--text-muted)' }} />
-                            </div>
-                        ) : (
-                            <span style={{
-                                fontWeight: '700',
-                                color: 'var(--text-main)',
-                                background: 'var(--surface-color)',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                border: '1px solid var(--glass-border)'
-                            }}>
-                                {activeFamilySpace?.name || 'Família'}
-                            </span>
-                        )
-                    ) : (
-                        <span style={{
-                            fontStyle: 'italic',
-                            color: 'var(--text-muted)',
-                            fontSize: '0.72rem'
-                        }}>
-                            Nenhum espaço configurado
-                        </span>
-                    )}
-                </div>
-            )}
         </div>
     );
 };

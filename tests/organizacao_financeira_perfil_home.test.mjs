@@ -1,0 +1,124 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+
+// Mock do ambiente do navegador
+const storage = new Map();
+globalThis.localStorage = {
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, val) => storage.set(key, String(val)),
+    removeItem: (key) => storage.delete(key),
+    clear: () => storage.clear()
+};
+
+const dispatchedEvents = [];
+globalThis.window = {
+    location: { pathname: '/prototipo' },
+    dispatchEvent: (evt) => dispatchedEvents.push(evt.type)
+};
+globalThis.CustomEvent = class CustomEvent {
+    constructor(type) {
+        this.type = type;
+    }
+};
+
+const {
+    prototypeStorage,
+    FINANCIAL_CONTEXTS,
+    PROTOTYPE_STORAGE_KEYS,
+    PROTOTYPE_EVENTS
+} = await import('../src/services/prototypeStorage.js');
+
+test.beforeEach(() => {
+    storage.clear();
+    dispatchedEvents.length = 0;
+});
+
+test('1. Emissão de evento e persistência ao alterar onboardingModel', () => {
+    assert.equal(prototypeStorage.getOnboardingModel(), null);
+
+    prototypeStorage.setOnboardingModel('individual');
+    assert.equal(prototypeStorage.getOnboardingModel(), 'individual');
+    assert.ok(dispatchedEvents.includes(PROTOTYPE_EVENTS.ONBOARDING_MODEL_CHANGED));
+
+    prototypeStorage.setOnboardingModel('family');
+    assert.equal(prototypeStorage.getOnboardingModel(), 'family');
+
+    prototypeStorage.setOnboardingModel('both');
+    assert.equal(prototypeStorage.getOnboardingModel(), 'both');
+});
+
+test('2. ensureActiveFamilySpace garante espaço familiar ativo', () => {
+    // Sem espaços, cria o espaço padrão "Família" com criador "Avaliador"
+    const familyId = prototypeStorage.ensureActiveFamilySpace();
+    assert.ok(familyId, 'Deve retornar o ID do espaço familiar');
+
+    const space = prototypeStorage.getFamilySpaceById(familyId);
+    assert.equal(space.name, 'Família');
+    assert.equal(prototypeStorage.getActiveFamilyId(), familyId);
+
+    // Se chamado novamente, reutiliza o espaço existente
+    const sameId = prototypeStorage.ensureActiveFamilySpace();
+    assert.equal(sameId, familyId);
+});
+
+test('3. ProfileContent possui menu de ORGANIZAÇÃO FINANCEIRA no estilo do tema', () => {
+    const profileContent = fs.readFileSync(path.resolve('src/components/ProfileContent.jsx'), 'utf-8');
+
+    // Menu exclusivo do protótipo
+    assert.ok(profileContent.includes('ORGANIZAÇÃO FINANCEIRA'), 'Deve conter o rótulo ORGANIZAÇÃO FINANCEIRA');
+    assert.ok(profileContent.includes("key: 'individual', label: 'Individual'"), 'Opção Individual deve existir');
+    assert.ok(profileContent.includes("key: 'family', label: 'Familiar'"), 'Opção Familiar deve existir');
+    assert.ok(profileContent.includes("key: 'both', label: 'Ambos'"), 'Opção Ambos deve existir');
+    assert.ok(profileContent.includes('setOnboardingModel'), 'Deve invocar setOnboardingModel');
+});
+
+test('4. Home renderiza seletor apenas quando o modelo for Ambos', () => {
+    const homeContent = fs.readFileSync(path.resolve('src/pages/Home.jsx'), 'utf-8');
+
+    // Condição para renderizar o seletor
+    assert.ok(
+        homeContent.includes("(onboardingModel || 'both') === 'both' && (") ||
+        homeContent.includes("onboardingModel === 'both' && ("),
+        'Seletor deve ser condicionado ao modelo ambos'
+    );
+});
+
+test('5. Home exibe nome da família e ícone Users no modo familiar', () => {
+    const homeContent = fs.readFileSync(path.resolve('src/pages/Home.jsx'), 'utf-8');
+
+    // Ícone de perfil no header
+    assert.ok(
+        homeContent.includes("financialContext === 'family' ? <Users size={22} /> : <User size={22} />"),
+        'Ícone de perfil deve ser Users no modo familiar e User no individual'
+    );
+
+    // Saudação no header
+    assert.ok(
+        homeContent.includes("financialContext === 'family'") &&
+        homeContent.includes("activeFamilySpace?.name || 'Família'"),
+        'Header deve exibir o nome da família no modo familiar'
+    );
+});
+
+test('6. PrototypeContextSelector não contém a linha "Espaço:"', () => {
+    const selectorContent = fs.readFileSync(path.resolve('src/components/PrototypeContextSelector.jsx'), 'utf-8');
+
+    assert.ok(!selectorContent.includes('Espaço:'), 'PrototypeContextSelector não deve conter o texto "Espaço:"');
+    assert.ok(!selectorContent.includes('ChevronDown'), 'PrototypeContextSelector não deve importar ChevronDown');
+});
+
+test('7. Título Limites é exibido no modo familiar', () => {
+    const homeContent = fs.readFileSync(path.resolve('src/pages/Home.jsx'), 'utf-8');
+
+    // Deve conter título Limites na seção mesmo se não houver espaço ativo
+    assert.ok(
+        homeContent.includes('<LimitsSection') && homeContent.includes('title="Limites"'),
+        'LimitsSection deve receber title="Limites"'
+    );
+    assert.ok(
+        homeContent.includes('Limites') && homeContent.includes('!activeFamilySpace'),
+        'Heading Limites deve existir no estado vazio de familiar'
+    );
+});

@@ -35,7 +35,17 @@ const ProfileContent = ({ onClose, theme, setTheme }) => {
     const [isManagingSub, setIsManagingSub] = useState(false);
 
     // Etapa 5: Gestão de espaço familiar e convites no perfil (apenas protótipo)
-    const { activeFamilySpace, familyMembers = [], familyInvites = [], updateSpaceName, createInvite, acceptInvite, revokeInvite } = usePrototypeFinancial();
+    const { 
+        activeFamilySpace, 
+        familyMembers = [], 
+        familyInvites = [], 
+        updateSpaceName, 
+        createInvite, 
+        acceptInvite, 
+        revokeInvite,
+        onboardingModel,
+        setOnboardingModel
+    } = usePrototypeFinancial();
     const [editingSpaceName, setEditingSpaceName] = useState(null);
     const [newInviteName, setNewInviteName] = useState('');
     const [newInviteEmail, setNewInviteEmail] = useState('');
@@ -301,6 +311,46 @@ const ProfileContent = ({ onClose, theme, setTheme }) => {
 
             {/* Quick Settings */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
+                {/* Organização Financeira (exclusivo do protótipo) */}
+                {isPrototype && (
+                    <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', opacity: 0.6 }}>
+                            <Users size={16} />
+                            <span style={{ fontSize: '0.8rem', fontWeight: '700', letterSpacing: '0.5px' }}>ORGANIZAÇÃO FINANCEIRA</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-color)', padding: '4px', borderRadius: '12px' }}>
+                            {[
+                                { key: 'individual', label: 'Individual' },
+                                { key: 'family', label: 'Familiar' },
+                                { key: 'both', label: 'Ambos' }
+                            ].map(option => (
+                                <button
+                                    key={option.key}
+                                    type="button"
+                                    onClick={() => {
+                                        haptic.light();
+                                        setOnboardingModel(option.key);
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '10px 8px',
+                                        borderRadius: 'var(--btn-radius)',
+                                        border: 'none',
+                                        fontSize: '0.85rem',
+                                        fontWeight: '700',
+                                        background: (onboardingModel || 'both') === option.key ? 'var(--primary-color)' : 'transparent',
+                                        color: (onboardingModel || 'both') === option.key ? 'white' : 'var(--text-muted)',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', opacity: 0.6 }}>
                         <Moon size={16} />
