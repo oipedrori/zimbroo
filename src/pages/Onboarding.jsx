@@ -3,16 +3,15 @@ import LoadingDots from '../components/LoadingDots';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
-import { Mic, TrendingUp, ShieldCheck, Sparkles, Globe, X, MessageSquare, Zap, Trash2, ArrowRight } from 'lucide-react';
+import { Mic, TrendingUp, ShieldCheck, Sparkles, Globe, X, MessageSquare, Zap, Trash2 } from 'lucide-react';
 
 const STORY_DURATION = 5000; // 5 segundos por story
 
 const Onboarding = () => {
-    const { loginWithGoogle, loginAnonymously } = useAuth();
+    const { loginWithGoogle } = useAuth();
     const { t, locale, changeLocale } = useI18n();
     const navigate = useNavigate();
     const [isLoggingIn, setIsLoggingIn] = useState(false);
-    const [isStartingAnonymous, setIsStartingAnonymous] = useState(false);
     const [loginError, setLoginError] = useState(null);
     const [currentStory, setCurrentStory] = useState(0);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -87,31 +86,6 @@ const Onboarding = () => {
             desc: t('ob_fast_desc')
         }
     ];
-
-    const handleStartNow = async () => {
-        if (!acceptedTerms) {
-            alert(t('ob_accept_error', { defaultValue: 'Por favor, aceite os termos e a política para continuar.' }));
-            return;
-        }
-        setIsStartingAnonymous(true);
-        setLoginError(null);
-        try {
-            await loginAnonymously();
-            // App.jsx redireciona para '/' assim que o AuthProvider atualizar o currentUser.
-        } catch (error) {
-            console.error("Falha ao iniciar sessão anônima:", error);
-            const errorMsg = error.message || error.code || "Erro desconhecido";
-            setIsStartingAnonymous(false);
-            if (error.code === 'auth/operation-not-allowed' || error.code === 'auth/admin-restricted-operation') {
-                const pendMsg = 'A autenticação anônima precisa ser habilitada no Firebase Console (Authentication > Sign-in method > Anônimo).';
-                setLoginError(pendMsg);
-                alert(pendMsg);
-            } else {
-                setLoginError(`Falha ao iniciar: ${errorMsg}`);
-                alert(`Falha ao iniciar: ${errorMsg}`);
-            }
-        }
-    };
 
     const handleLogin = async () => {
         if (!acceptedTerms) {
@@ -316,52 +290,23 @@ const Onboarding = () => {
                     </div>
                 </div>
 
-                {/* Botão Primário: Começar Agora (Autenticação Anônima) */}
-                <button
-                    onClick={handleStartNow}
-                    disabled={isStartingAnonymous || isLoggingIn || !acceptedTerms}
-                    style={{
-                        width: '100%', padding: '16px', backgroundColor: 'var(--surface-color)', color: 'var(--text-main)',
-                        borderRadius: 'var(--border-radius-lg)', fontSize: '1.05rem', fontWeight: '700',
-                        display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px',
-                        boxShadow: '0 8px 25px rgba(0,0,0,0.2)', transition: 'all 0.2s',
-                        opacity: !acceptedTerms ? 0.6 : 1,
-                        cursor: (!acceptedTerms || isStartingAnonymous || isLoggingIn) ? 'not-allowed' : 'pointer',
-                        border: 'none',
-                        zIndex: 10,
-                        marginBottom: '10px'
-                    }}
-                >
-                    {isStartingAnonymous ? <LoadingDots style={{ color: 'var(--text-main)' }} /> : (
-                        <>
-                            <span>{t('start_now', { defaultValue: 'Começar agora' })}</span>
-                            <ArrowRight size={20} />
-                        </>
-                    )}
-                </button>
-
-                {/* Botão Secundário: Continuar com Google */}
                 <button
                     onClick={handleLogin}
-                    disabled={isLoggingIn || isStartingAnonymous || !acceptedTerms}
+                    disabled={isLoggingIn || !acceptedTerms}
                     style={{
-                        width: '100%', padding: '14px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                        backdropFilter: 'blur(10px)',
-                        WebkitBackdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(255, 255, 255, 0.25)',
-                        color: 'var(--btn-text)',
-                        borderRadius: 'var(--border-radius-lg)', fontSize: '0.95rem', fontWeight: '600',
-                        display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px',
-                        transition: 'all 0.2s',
+                        width: '100%', padding: '18px', backgroundColor: 'var(--surface-color)', color: 'var(--text-main)',
+                        borderRadius: 'var(--border-radius-lg)', fontSize: '1.1rem', fontWeight: '700',
+                        display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.2)', transition: 'all 0.2s',
                         opacity: !acceptedTerms ? 0.6 : 1,
-                        cursor: (!acceptedTerms || isLoggingIn || isStartingAnonymous) ? 'not-allowed' : 'pointer',
+                        cursor: (!acceptedTerms || isLoggingIn) ? 'not-allowed' : 'pointer',
+                        border: 'none',
                         zIndex: 10
                     }}
                 >
-                    {isLoggingIn ? <LoadingDots style={{ color: 'var(--btn-text)' }} /> : (
+                    {isLoggingIn ? <LoadingDots style={{ color: 'var(--text-main)' }} /> : (
                         <>
-                            <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
