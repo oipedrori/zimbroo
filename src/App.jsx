@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { I18nProvider } from './contexts/I18nContext';
 import Layout from './components/Layout';
@@ -46,12 +46,26 @@ const PrivateRoute = ({ children }) => {
     );
   }
 
-  return currentUser ? children : <Navigate to="/onboarding" />;
+  return currentUser ? children : <Navigate to="/onboarding" replace />;
+};
+
+// Rota de Onboarding com redirecionamento quando já autenticado
+const OnboardingRoute = () => {
+  const { currentUser } = useAuth();
+  return currentUser ? <Navigate to="/" replace /> : <Onboarding />;
+};
+
+// Layout exclusivo do aplicativo principal que monta AuthProvider e NotificationHandler
+const MainAppLayout = () => {
+  return (
+    <AuthProvider>
+      <NotificationHandler />
+      <Outlet />
+    </AuthProvider>
+  );
 };
 
 const AppRoutes = () => {
-  const { currentUser } = useAuth();
-
   return (
     <React.Suspense fallback={
       <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'var(--bg-color)' }}>
@@ -59,21 +73,23 @@ const AppRoutes = () => {
       </div>
     }>
       <Routes>
-        <Route path="/onboarding" element={currentUser ? <Navigate to="/" /> : <Onboarding />} />
-
-        {/* Rota Pública do Protótipo (Isolada, sem login, armazenamento local) */}
+        {/* Rota Pública do Protótipo (Totalmente isolada, sem AuthProvider, sem Firebase, armazenamento local) */}
         <Route path="/prototipo" element={<PrototypeProvider><PrototypeContainer /></PrototypeProvider>}>
           <Route index element={<Home />} />
           <Route path="limits" element={<Limits />} />
           <Route path="wallet" element={<Wallet />} />
         </Route>
 
-        <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-          <Route index element={<Home />} />
-          <Route path="limits" element={<Limits />} />
-          <Route path="wallet" element={<Wallet />} />
-          <Route path="notion-callback" element={<Home />} />
-          <Route path="mic" element={<Home />} />
+        {/* Rotas do Aplicativo Principal (com Firebase Authentication, Firestore e Notificações) */}
+        <Route element={<MainAppLayout />}>
+          <Route path="/onboarding" element={<OnboardingRoute />} />
+          <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+            <Route index element={<Home />} />
+            <Route path="limits" element={<Limits />} />
+            <Route path="wallet" element={<Wallet />} />
+            <Route path="notion-callback" element={<Home />} />
+            <Route path="mic" element={<Home />} />
+          </Route>
         </Route>
       </Routes>
     </React.Suspense>
@@ -81,14 +97,10 @@ const AppRoutes = () => {
 };
 
 const AppContent = () => {
-  const location = useLocation();
-  const isPrototype = location.pathname.startsWith('/prototipo');
-
   return (
     <>
       <InstallPrompt />
       <CookieNotice />
-      {!isPrototype && <NotificationHandler />}
       <AppRoutes />
     </>
   );
@@ -96,16 +108,15 @@ const AppContent = () => {
 
 function App() {
   return (
-    <I18nProvider>
-      <AuthProvider>
+    <BrowserRouter>
+      <I18nProvider>
         <InstallProvider>
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
+          <AppContent />
         </InstallProvider>
-      </AuthProvider>
-    </I18nProvider>
+      </I18nProvider>
+    </BrowserRouter>
   );
 }
 
 export default App;
+

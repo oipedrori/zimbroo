@@ -1,5 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth, googleProvider } from '../config/firebase';
+import { auth, googleProvider, initFirebase } from '../config/firebase';
 import { 
     signInWithPopup, 
     signInWithRedirect,
@@ -7,33 +8,65 @@ import {
     getRedirectResult,
     signOut, 
     onAuthStateChanged, 
-    deleteUser 
+    deleteUser,
+    GoogleAuthProvider
 } from 'firebase/auth';
 import LoadingDots from '../components/LoadingDots';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export const useAuth = () => useContext(AuthContext);
+const PROTOTYPE_USER = {
+    uid: 'prototipo',
+    displayName: 'Avaliador',
+    email: 'avaliador@prototipo.local',
+    isAnonymous: false
+};
 
-// Detecta APENAS Android — iOS Safari funciona com popup (ITP bloqueia redirect no Safari)
-const isAndroid = () => /Android/i.test(navigator.userAgent);
+const PROTOTYPE_AUTH_VALUE = {
+    currentUser: PROTOTYPE_USER,
+    loading: false,
+    loginWithGoogle: async () => PROTOTYPE_USER,
+    loginAnonymously: async () => PROTOTYPE_USER,
+    logout: async () => {},
+    deleteAccount: async () => {}
+};
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    // Se invocado fora do AuthProvider (por exemplo, na rota /prototipo isolada),
+    // fornece fallback seguro do avaliador sem qualquer dependência do Firebase
+    if (!context) {
+        return PROTOTYPE_AUTH_VALUE;
+    }
+    return context;
+};
 
 export const AuthProvider = ({ children }) => {
-    const isPrototipoRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/prototipo');
     const [currentUser, setCurrentUser] = useState(null);
-    const [loading, setLoading] = useState(() => !isPrototipoRoute);
+    const [loading, setLoading] = useState(() => {
+        const fb = initFirebase();
+        return Boolean(fb?.auth || auth);
+    });
+
 
     // Login com Google: Redirect no mobile, Popup no desktop
     const loginWithGoogle = async () => {
+        const fb = initFirebase();
+        const activeAuth = fb?.auth || auth;
+        const activeProvider = fb?.googleProvider || googleProvider || new GoogleAuthProvider();
+        activeProvider.setCustomParameters?.({ prompt: 'select_account' });
+
+        if (!activeAuth) throw new Error("Firebase auth não inicializado.");
+
         try {
             // Tenta popup primeiro (funciona no Chrome moderno incluindo Android v100+)
-            const result = await signInWithPopup(auth, googleProvider);
+            const result = await signInWithPopup(activeAuth, activeProvider);
             return result.user;
         } catch (error) {
             if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
                 // Fallback: redirect (usado quando popup é bloqueado pelo browser)
                 console.log("Popup bloqueado, usando redirect como fallback...");
-                await signInWithRedirect(auth, googleProvider);
+                await signInWithRedirect(activeAuth, activeProvider);
             } else {
                 console.error("Erro no login com Google:", error);
                 throw error;
@@ -43,17 +76,19 @@ export const AuthProvider = ({ children }) => {
 
     // Login Anônimo: Inicia ou reutiliza uma sessão anônima no Firebase Auth
     const loginAnonymously = async () => {
-        if (!auth) throw new Error("Firebase auth não inicializado.");
+        const fb = initFirebase();
+        const activeAuth = fb?.auth || auth;
+        if (!activeAuth) throw new Error("Firebase auth não inicializado.");
 
         // Se já existe uma sessão ativa (seja anônima ou Google), reutiliza
-        if (auth.currentUser) {
-            console.log("ℹ️ Reutilizando sessão Firebase existente:", auth.currentUser.uid);
-            setCurrentUser(auth.currentUser);
-            return auth.currentUser;
+        if (activeAuth.currentUser) {
+            console.log("ℹ️ Reutilizando sessão Firebase existente:", activeAuth.currentUser.uid);
+            setCurrentUser(activeAuth.currentUser);
+            return activeAuth.currentUser;
         }
 
         try {
-            const result = await signInAnonymously(auth);
+            const result = await signInAnonymously(activeAuth);
             console.log("✅ Sessão anônima iniciada com sucesso:", result.user.uid);
             setCurrentUser(result.user);
             return result.user;
@@ -69,7 +104,11 @@ export const AuthProvider = ({ children }) => {
             if (currentUser) {
                 localStorage.removeItem(`zimbroo_txs_${currentUser.uid}`);
             }
-            await signOut(auth);
+            const fb = initFirebase();
+            const activeAuth = fb?.auth || auth;
+            if (activeAuth) {
+                await signOut(activeAuth);
+            }
         } catch (error) {
             console.error("Erro no logout:", error);
         }
@@ -87,8 +126,10 @@ export const AuthProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        if (!auth) {
-            setLoading(false);
+        const fb = initFirebase();
+        const activeAuth = fb?.auth || auth;
+
+        if (!activeAuth) {
             return;
         }
 
@@ -99,7 +140,7 @@ export const AuthProvider = ({ children }) => {
             // CRÍTICO: aguardar o resultado do redirect ANTES de configurar o listener.
             // Sem isso, onAuthStateChanged dispara com null e o app mostra o onboarding.
             try {
-                const result = await getRedirectResult(auth);
+                const result = await getRedirectResult(activeAuth);
                 if (result?.user) {
                     console.log("✅ Login via redirect:", result.user.email);
                 }
@@ -109,8 +150,8 @@ export const AuthProvider = ({ children }) => {
             }
 
             // Auth agora está estabilizado. Configura o listener.
-            unsubscribe = onAuthStateChanged(auth, (user) => {
-                console.log("👤 Auth state:", user ? user.email : "Não autenticado");
+            unsubscribe = onAuthStateChanged(activeAuth, (user) => {
+                console.log("👤 Auth state:", user ? (user.email || user.uid) : "Não autenticado");
                 setCurrentUser(user);
                 setLoading(false);
                 clearTimeout(timeout);
@@ -129,19 +170,16 @@ export const AuthProvider = ({ children }) => {
         };
     }, []);
 
-    const effectiveUser = isPrototipoRoute 
-        ? { uid: 'prototipo', displayName: 'Avaliador', email: 'avaliador@prototipo.local' } 
-        : currentUser;
     const value = { 
-        currentUser: effectiveUser, 
+        currentUser, 
         loginWithGoogle, 
         loginAnonymously, 
         logout, 
         deleteAccount, 
-        loading: isPrototipoRoute ? false : loading 
+        loading 
     };
 
-    if (loading && !isPrototipoRoute) {
+    if (loading) {
         return (
             <div style={{ 
                 position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
@@ -160,3 +198,4 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
+

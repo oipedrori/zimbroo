@@ -15,62 +15,94 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
-let app;
-let analytics;
-let auth;
-let googleProvider;
-let db;
-let messaging;
+// Exporta guard para identificar o ambiente do protótipo
+export const isPrototypeEnvironment = () => {
+  return typeof window !== 'undefined' && window.location.pathname.startsWith('/prototipo');
+};
 
-console.log("🔥 Initializing Firebase with config:", {
-  projectId: firebaseConfig.projectId,
-  apiKey: firebaseConfig.apiKey ? "PRESENT" : "MISSING"
-});
+// Initialize Firebase variables
+let app = null;
+let analytics = null;
+let auth = null;
+let googleProvider = null;
+let db = null;
+let messaging = null;
+let isInitializing = false;
 
-try {
-  if (!firebaseConfig.apiKey) {
-    throw new Error("Firebase API Key is missing from environment variables.");
+export function initFirebase() {
+  // Impede expressamente a inicialização do Firebase no ambiente do protótipo
+  if (isPrototypeEnvironment()) {
+    return null;
   }
 
-  app = initializeApp(firebaseConfig);
+  if (app) {
+    return { app, analytics, auth, googleProvider, db, messaging };
+  }
+
+  if (isInitializing) {
+    return { app, analytics, auth, googleProvider, db, messaging };
+  }
+
+  isInitializing = true;
 
   try {
-    analytics = getAnalytics(app);
-  } catch (e) {
-    console.warn("Analytics initialization failed (ignoring):", e);
-  }
-
-  auth = getAuth(app);
-  googleProvider = new GoogleAuthProvider();
-  googleProvider.setCustomParameters({
-    prompt: 'select_account'
-  });
-  db = getFirestore(app);
-
-  // Ativa persistência offline (multi-tab)
-  enableMultiTabIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-      // Múltiplas abas abertas, a persistência só pode ser ativada em uma por vez
-      console.warn('Persistência Firestore: Falha (múltiplas abas)');
-    } else if (err.code === 'unimplemented') {
-      // O navegador não suporta todas as funcionalidades necessárias
-      console.warn('Persistência Firestore: Não suportada pelo navegador');
+    if (!firebaseConfig.apiKey) {
+      throw new Error("Firebase API Key is missing from environment variables.");
     }
-  });
 
-  try {
-    messaging = getMessaging(app);
-    console.log("✅ FCM Messaging initialized");
-  } catch (e) {
-    console.warn("FCM Messaging initialization failed (likely not supported):", e);
+    console.log("🔥 Initializing Firebase with config:", {
+      projectId: firebaseConfig.projectId,
+      apiKey: firebaseConfig.apiKey ? "PRESENT" : "MISSING"
+    });
+
+    app = initializeApp(firebaseConfig);
+
+    try {
+      analytics = getAnalytics(app);
+    } catch (e) {
+      console.warn("Analytics initialization failed (ignoring):", e);
+    }
+
+    auth = getAuth(app);
+    googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({
+      prompt: 'select_account'
+    });
+    db = getFirestore(app);
+
+    // Ativa persistência offline (multi-tab)
+    enableMultiTabIndexedDbPersistence(db).catch((err) => {
+      if (err.code === 'failed-precondition') {
+        // Múltiplas abas abertas, a persistência só pode ser ativada em uma por vez
+        console.warn('Persistência Firestore: Falha (múltiplas abas)');
+      } else if (err.code === 'unimplemented') {
+        // O navegador não suporta todas as funcionalidades necessárias
+        console.warn('Persistência Firestore: Não suportada pelo navegador');
+      }
+    });
+
+    try {
+      messaging = getMessaging(app);
+      console.log("✅ FCM Messaging initialized");
+    } catch (e) {
+      console.warn("FCM Messaging initialization failed (likely not supported):", e);
+    }
+
+    console.log("✅ Firebase initialized successfully");
+  } catch (error) {
+    console.error("❌ Firebase initialization failed CRITICALLY:", error);
+    googleProvider = new GoogleAuthProvider();
+  } finally {
+    isInitializing = false;
   }
 
-  console.log("✅ Firebase initialized successfully");
-} catch (error) {
-  console.error("❌ Firebase initialization failed CRITICALLY:", error);
-  // We still export the variables as undefined, but let's at least have a provider
-  googleProvider = new GoogleAuthProvider();
+  return { app, analytics, auth, googleProvider, db, messaging };
+}
+
+// Inicializa automaticamente no carregamento do módulo SOMENTE se NÃO estiver no protótipo
+if (!isPrototypeEnvironment()) {
+  initFirebase();
 }
 
 export { app, analytics, auth, googleProvider, db, messaging };
+
