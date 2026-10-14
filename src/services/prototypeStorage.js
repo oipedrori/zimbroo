@@ -558,7 +558,9 @@ export const prototypeStorage = {
     },
 
     /**
-     * Remove um membro de um espaço familiar
+     * Remove um membro de um espaço familiar.
+     * - Se o membro tiver transações associadas, impede a remoção definitiva para preservar o histórico, orientando a desativação.
+     * - Se não houver transações associadas, permite a remoção conforme as regras de consistência de papéis.
      */
     removeFamilyMember(memberId) {
         if (!memberId) throw new Error('ID do membro é obrigatório.');
@@ -566,6 +568,16 @@ export const prototypeStorage = {
         const member = allMembers.find(m => m.id === memberId);
         if (!member) {
             throw new Error(`Membro com ID "${memberId}" não foi encontrado.`);
+        }
+
+        // Integridade referencial: Impede a remoção se houver transações vinculadas a este membro
+        const memberTransactions = this.getFamilyTransactions(member.familyId)
+            .filter(tx => tx.memberId === memberId);
+
+        if (memberTransactions.length > 0) {
+            throw new Error(
+                `Não é possível remover definitivamente o membro "${member.name}" pois existem ${memberTransactions.length} transação(ões) associada(s) ao seu histórico. Para manter a integridade das transações e do histórico, desative o membro alterando seu status para 'inactive'.`
+            );
         }
 
         // Validação de consistência: não permite remover o único responsável do espaço se houver outros integrantes
@@ -633,6 +645,9 @@ export const prototypeStorage = {
         }
         if (member.familyId !== data.familyId) {
             throw new Error(`Inconsistência de associação: o membro "${data.memberId}" pertence ao espaço "${member.familyId}", não a "${data.familyId}".`);
+        }
+        if (member.status === MEMBER_STATUS.INACTIVE) {
+            throw new Error(`Não é possível registrar transação para o membro "${member.name}" pois ele está inativo.`);
         }
 
         // Validação dos dados financeiros
@@ -822,16 +837,38 @@ export const prototypeStorage = {
     },
 
     /**
-     * Busca os limites compartilhados de um espaço familiar para um ano específico
+     * Busca os limites compartilhados de um espaço familiar.
+     * - Se year não for informado, retorna os limites gerais (settings.limits).
+     * - Se year for informado, prioriza os limites específicos de limits_YYYY e aplica
+     *   o fallback geral (settings.limits) para categorias não especificadas naquele ano.
      */
     getFamilyLimits(familyId, year = null) {
         const settings = this.getFamilySettings(familyId);
-        const fieldName = year ? `limits_${year}` : 'limits';
-        return settings[fieldName] || settings.limits || {};
+        const generalLimits = settings.limits && typeof settings.limits === 'object' ? settings.limits : {};
+
+        if (!year) {
+            return generalLimits;
+        }
+
+        const fieldName = `limits_${year}`;
+        const yearLimits = settings[fieldName];
+
+        // Se não houver limites específicos definidos para o ano, aplica o fallback dos limites gerais
+        if (!yearLimits || typeof yearLimits !== 'object') {
+            return generalLimits;
+        }
+
+        // Prioriza os valores específicos do ano e aplica o fallback geral para categorias não definidas no ano
+        return {
+            ...generalLimits,
+            ...yearLimits
+        };
     },
 
     /**
-     * Salva os limites compartilhados de um espaço familiar
+     * Salva os limites compartilhados de um espaço familiar mantendo a independência:
+     * - Se year for informado: armazena estritamente em limits_YYYY sem sobrescrever limits geral.
+     * - Se year não for informado: armazena estritamente em limits geral sem sobrescrever limits_YYYY.
      */
     saveFamilyLimits(familyId, newLimits, year = null) {
         if (!familyId) throw new Error('familyId é obrigatório.');
@@ -839,16 +876,25 @@ export const prototypeStorage = {
         if (!space) throw new Error(`Espaço familiar "${familyId}" não encontrado.`);
 
         const settings = this.getFamilySettings(familyId);
-        const fieldName = year ? `limits_${year}` : 'limits';
+        const safeLimits = newLimits && typeof newLimits === 'object' ? newLimits : {};
         
-        const updatedSettings = {
-            ...settings,
-            [fieldName]: newLimits,
-            limits: newLimits
-        };
+        let updatedSettings;
+        if (year) {
+            const fieldName = `limits_${year}`;
+            updatedSettings = {
+                ...settings,
+                [fieldName]: safeLimits
+            };
+        } else {
+            updatedSettings = {
+                ...settings,
+                limits: safeLimits
+            };
+        }
 
         return this.saveFamilySettings(familyId, updatedSettings);
     },
+
 
     // ==========================================
     // 7. Limpeza e Isolamento

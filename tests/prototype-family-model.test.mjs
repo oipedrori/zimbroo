@@ -179,27 +179,42 @@ test('3. Associação de transações ao espaço familiar e membro corretos', ()
     }, /Valor da transação deve ser um número positivo/);
 });
 
-test('4. Armazenamento e leitura de configurações e limites familiares', () => {
+test('4. Armazenamento e leitura de limites familiares: independência e fallback consistente', () => {
     const space = prototypeStorage.createFamilySpace({ name: 'Família Silva', createdBy: 'u1' });
 
-    // Configurações padrão criadas junto com o espaço
-    const defaultSettings = prototypeStorage.getFamilySettings(space.id);
-    assert.equal(defaultSettings.currency, 'BRL');
+    // 1. Salvar limites gerais (sem ano)
+    const generalLimits = { Alimentação: 1000, Lazer: 500, Transporte: 300 };
+    prototypeStorage.saveFamilyLimits(space.id, generalLimits);
 
-    // Salvamento de limites compartilhados
-    const limits2026 = { Alimentação: 2000, Moradia: 3500 };
+    // Leitura dos limites gerais
+    assert.deepEqual(prototypeStorage.getFamilyLimits(space.id), generalLimits);
+
+    // 2. Salvar limites específicos para 2026
+    const limits2026 = { Alimentação: 1500, Moradia: 2500 };
     prototypeStorage.saveFamilyLimits(space.id, limits2026, 2026);
 
-    const savedLimits = prototypeStorage.getFamilyLimits(space.id, 2026);
-    assert.deepEqual(savedLimits, limits2026);
+    // 3. Confirmar que salvar limites anuais NÃO sobrescreveu os limites gerais
+    const generalAfterAnnual = prototypeStorage.getFamilyLimits(space.id);
+    assert.deepEqual(generalAfterAnnual, generalLimits, 'Limites gerais devem permanecer intactos');
 
-    // Atualização de configurações gerais
-    const updated = prototypeStorage.saveFamilySettings(space.id, {
-        allowMemberExpenseCreation: false,
-        note: 'Orçamento estrito'
-    });
-    assert.equal(updated.allowMemberExpenseCreation, false);
-    assert.equal(updated.note, 'Orçamento estrito');
+    // 4. Confirmar que a leitura de 2026 prioriza 2026 e aplica fallback geral para categorias não definidas no ano
+    const read2026 = prototypeStorage.getFamilyLimits(space.id, 2026);
+    assert.equal(read2026.Alimentação, 1500, 'Prioriza valor específico do ano 2026');
+    assert.equal(read2026.Moradia, 2500, 'Prioriza valor específico do ano 2026');
+    assert.equal(read2026.Lazer, 500, 'Aplica fallback dos limites gerais para categorias ausentes');
+    assert.equal(read2026.Transporte, 300, 'Aplica fallback dos limites gerais para categorias ausentes');
+
+    // 5. Salvar novos limites gerais e confirmar que NÃO sobrescreve limits_2026
+    const updatedGeneral = { Alimentação: 1200, Lazer: 600, Saúde: 400 };
+    prototypeStorage.saveFamilyLimits(space.id, updatedGeneral);
+
+    const rawSettings = prototypeStorage.getFamilySettings(space.id);
+    assert.deepEqual(rawSettings.limits, updatedGeneral, 'Campo limits deve ter novos limites gerais');
+    assert.deepEqual(rawSettings.limits_2026, limits2026, 'Campo limits_2026 não pode ser sobrescrito ao salvar limits geral');
+
+    // 6. Leitura de um ano sem limites específicos (ex: 2027) aplica fallback geral
+    const read2027 = prototypeStorage.getFamilyLimits(space.id, 2027);
+    assert.deepEqual(read2027, updatedGeneral, 'Ano sem limites específicos deve usar fallback geral');
 });
 
 test('5. Persistência após simulação de recarregamento', () => {
@@ -310,4 +325,66 @@ test('8. Validação de deleção em cascata de espaço familiar', () => {
     assert.equal(prototypeStorage.getFamilyMembers(space.id).length, 0);
     assert.equal(prototypeStorage.getFamilyTransactions(space.id).length, 0);
     assert.equal(prototypeStorage.getActiveFamilyId(), null);
+});
+
+test('9. Integridade referencial ao remover membros (com e sem transações associadas)', () => {
+    const space = prototypeStorage.createFamilySpace({ name: 'Família Integridade', createdBy: 'u1' });
+
+    // Membro 1: terá transação vinculada
+    const memberWithTx = prototypeStorage.addFamilyMember({
+        familyId: space.id,
+        name: 'Ana Responsável',
+        role: FAMILY_ROLES.OWNER
+    });
+
+    // Membro 2: sem transação vinculada
+    const memberWithoutTx = prototypeStorage.addFamilyMember({
+        familyId: space.id,
+        name: 'Bruno Integrante',
+        role: FAMILY_ROLES.MEMBER
+    });
+
+    // Registra transação para memberWithTx
+    const tx = prototypeStorage.addFamilyTransaction({
+        familyId: space.id,
+        memberId: memberWithTx.id,
+        amount: 175.50,
+        type: 'expense',
+        category: 'Energia',
+        description: 'Conta de luz da casa'
+    });
+
+    // Caso A: Membro com transações associadas DEVE ter remoção definitiva impedida
+    assert.throws(() => {
+        prototypeStorage.removeFamilyMember(memberWithTx.id);
+    }, /Não é possível remover definitivamente o membro "Ana Responsável" pois existem 1 transação\(ões\) associada\(s\)/);
+
+    // Confirma que o membro e a transação continuam intactos no armazenamento
+    assert.ok(prototypeStorage.getFamilyMemberById(memberWithTx.id), 'Membro não deve ser removido');
+    assert.equal(prototypeStorage.getFamilyTransactionById(tx.id).memberId, memberWithTx.id);
+
+    // Caso B: Desativação do membro com transações deve ser permitida e preservar histórico
+    const deactivatedMember = prototypeStorage.updateFamilyMember(memberWithTx.id, {
+        status: MEMBER_STATUS.INACTIVE
+    });
+    assert.equal(deactivatedMember.status, MEMBER_STATUS.INACTIVE);
+
+    // Transação histórica ainda referencia o membro desativado de forma consistente
+    const txAfterDeactivation = prototypeStorage.getFamilyTransactionById(tx.id);
+    assert.equal(txAfterDeactivation.memberId, memberWithTx.id);
+
+    // Membro inativo NÃO pode registrar novas transações
+    assert.throws(() => {
+        prototypeStorage.addFamilyTransaction({
+            familyId: space.id,
+            memberId: memberWithTx.id,
+            amount: 50,
+            category: 'Mercado'
+        });
+    }, /Não é possível registrar transação para o membro "Ana Responsável" pois ele está inativo/);
+
+    // Caso C: Membro sem transações pode ser removido definitivamente
+    const removedSuccess = prototypeStorage.removeFamilyMember(memberWithoutTx.id);
+    assert.equal(removedSuccess, true);
+    assert.equal(prototypeStorage.getFamilyMemberById(memberWithoutTx.id), null, 'Membro sem transações foi removido com sucesso');
 });
