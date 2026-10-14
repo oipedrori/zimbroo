@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { I18nProvider } from './contexts/I18nContext';
 import Layout from './components/Layout';
@@ -80,16 +80,27 @@ const AppRoutes = () => {
   );
 };
 
+const AppContent = () => {
+  const location = useLocation();
+  const isPrototype = location.pathname.startsWith('/prototipo');
+
+  return (
+    <>
+      <InstallPrompt />
+      <CookieNotice />
+      {!isPrototype && <NotificationHandler />}
+      <AppRoutes />
+    </>
+  );
+};
+
 function App() {
   return (
     <I18nProvider>
       <AuthProvider>
         <InstallProvider>
-          <InstallPrompt />
-          <CookieNotice />
-          <NotificationHandler />
           <BrowserRouter>
-            <AppRoutes />
+            <AppContent />
           </BrowserRouter>
         </InstallProvider>
       </AuthProvider>

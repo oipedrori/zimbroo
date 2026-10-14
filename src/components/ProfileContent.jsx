@@ -115,11 +115,13 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
         }
     };
 
-    const [notificationsEnabled, setNotificationsEnabled] = useState(
-        localStorage.getItem('zimbroo_notifications_enabled') === 'true' && Notification.permission === 'granted'
-    );
+    const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+        if (isPrototype) return false;
+        return typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted' && localStorage.getItem('zimbroo_notifications_enabled') === 'true';
+    });
 
     const handleToggleNotifications = async () => {
+        if (isPrototype) return;
         haptic.medium();
 
         if (!notificationsEnabled) {
@@ -401,38 +403,40 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                     </div>
                 </div>
 
-                <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Bell size={18} style={{ opacity: 0.6 }} />
-                        <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)' }}>NOTIFICAÇÕES</span>
-                    </div>
+                {!isPrototype && (
+                    <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '20px', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Bell size={18} style={{ opacity: 0.6 }} />
+                            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)' }}>NOTIFICAÇÕES</span>
+                        </div>
 
-                    <div
-                        onClick={handleToggleNotifications}
-                        style={{
-                            width: '56px',
-                            height: '32px',
-                            background: notificationsEnabled ? 'var(--primary-color)' : 'var(--bg-color)',
-                            borderRadius: '10px', // Quadrado com cantos arredondados
-                            border: '1px solid var(--glass-border)',
-                            position: 'relative',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1)'
-                        }}
-                    >
-                        <div style={{
-                            position: 'absolute',
-                            top: '4px',
-                            left: notificationsEnabled ? '28px' : '4px',
-                            width: '22px',
-                            height: '22px',
-                            background: 'white',
-                            borderRadius: '6px', // Mantendo o estilo quadrado arredondado
-                            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1)'
-                        }} />
+                        <div
+                            onClick={handleToggleNotifications}
+                            style={{
+                                width: '56px',
+                                height: '32px',
+                                background: notificationsEnabled ? 'var(--primary-color)' : 'var(--bg-color)',
+                                borderRadius: '10px', // Quadrado com cantos arredondados
+                                border: '1px solid var(--glass-border)',
+                                position: 'relative',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1)'
+                            }}
+                        >
+                            <div style={{
+                                position: 'absolute',
+                                top: '4px',
+                                left: notificationsEnabled ? '28px' : '4px',
+                                width: '22px',
+                                height: '22px',
+                                background: 'white',
+                                borderRadius: '6px', // Mantendo o estilo quadrado arredondado
+                                boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1)'
+                            }} />
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* PWA Install Action */}

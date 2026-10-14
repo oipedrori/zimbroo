@@ -3,7 +3,10 @@ import { messaging } from '../config/firebase';
 import { getToken, onMessage } from 'firebase/messaging';
 
 export const requestNotificationPermission = async () => {
-  if (!messaging) return;
+  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/prototipo')) {
+    return null;
+  }
+  if (!messaging) return null;
 
   try {
     const permission = await Notification.requestPermission();
@@ -27,6 +30,9 @@ export const requestNotificationPermission = async () => {
 
 const NotificationHandler = () => {
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/prototipo')) {
+      return;
+    }
     // No iOS, não pedimos automaticamente no mount, apenas via clique
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const notificationsEnabledPref = localStorage.getItem('zimbroo_notifications_enabled') !== 'false';
