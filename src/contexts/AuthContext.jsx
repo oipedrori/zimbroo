@@ -129,7 +129,9 @@ export const AuthProvider = ({ children }) => {
         };
     }, []);
 
-    const effectiveUser = currentUser || (isPrototipoRoute ? { uid: 'prototipo', displayName: 'Avaliador', email: 'avaliador@prototipo.local' } : null);
+    const effectiveUser = isPrototipoRoute 
+        ? { uid: 'prototipo', displayName: 'Avaliador', email: 'avaliador@prototipo.local' } 
+        : currentUser;
     const value = { 
         currentUser: effectiveUser, 
         loginWithGoogle, 

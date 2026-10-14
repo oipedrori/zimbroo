@@ -479,9 +479,6 @@ const ProfileContent = ({ onOpenNotion, onClose, theme, setTheme }) => {
                 <button
                     onClick={() => {
                         if (isPrototype) {
-                            if (currentUser?.isAnonymous) {
-                                logout();
-                            }
                             resetPrototype();
                             onClose?.();
                             return;

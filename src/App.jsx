@@ -46,13 +46,11 @@ const PrivateRoute = ({ children }) => {
     );
   }
 
-  // Apenas contas reais (Google) acessam o app principal; sessões anônimas pertencem exclusivamente a /prototipo.
-  return (currentUser && !currentUser.isAnonymous) ? children : <Navigate to="/onboarding" />;
+  return currentUser ? children : <Navigate to="/onboarding" />;
 };
 
 const AppRoutes = () => {
   const { currentUser } = useAuth();
-  const isMainUser = currentUser && !currentUser.isAnonymous;
 
   return (
     <React.Suspense fallback={
@@ -61,7 +59,7 @@ const AppRoutes = () => {
       </div>
     }>
       <Routes>
-        <Route path="/onboarding" element={isMainUser ? <Navigate to="/" /> : <Onboarding />} />
+        <Route path="/onboarding" element={currentUser ? <Navigate to="/" /> : <Onboarding />} />
 
         {/* Rota Pública do Protótipo (Isolada, sem login, armazenamento local) */}
         <Route path="/prototipo" element={<PrototypeProvider><PrototypeContainer /></PrototypeProvider>}>

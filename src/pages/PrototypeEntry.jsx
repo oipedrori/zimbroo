@@ -1,31 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
-import { useAuth } from '../contexts/AuthContext';
-import LoadingDots from '../components/LoadingDots';
 
 const PrototypeEntry = ({ onStart }) => {
     const { changeLocale } = useI18n();
-    const { loginAnonymously } = useAuth();
-    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         changeLocale('pt');
     }, [changeLocale]);
-
-    const handleStart = async () => {
-        setIsLoading(true);
-        try {
-            if (loginAnonymously) {
-                await loginAnonymously();
-            }
-        } catch (error) {
-            console.warn("Autenticação anônima no protótipo:", error);
-        } finally {
-            setIsLoading(false);
-            onStart();
-        }
-    };
 
     return (
         <div style={{
@@ -120,8 +102,7 @@ const PrototypeEntry = ({ onStart }) => {
                 gap: '12px'
             }}>
                 <button
-                    onClick={handleStart}
-                    disabled={isLoading}
+                    onClick={onStart}
                     style={{
                         width: '100%',
                         padding: '18px',
@@ -136,17 +117,12 @@ const PrototypeEntry = ({ onStart }) => {
                         gap: '12px',
                         boxShadow: '0 8px 25px rgba(0,0,0,0.2)',
                         transition: 'all 0.2s',
-                        cursor: isLoading ? 'not-allowed' : 'pointer',
-                        border: 'none',
-                        opacity: isLoading ? 0.7 : 1
+                        cursor: 'pointer',
+                        border: 'none'
                     }}
                 >
-                    {isLoading ? <LoadingDots style={{ color: 'var(--text-main)' }} /> : (
-                        <>
-                            <span>Começar agora</span>
-                            <ArrowRight size={20} />
-                        </>
-                    )}
+                    <span>Começar agora</span>
+                    <ArrowRight size={20} />
                 </button>
             </div>
         </div>

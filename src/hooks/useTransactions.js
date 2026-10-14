@@ -43,10 +43,7 @@ export const useTransactions = (currentMonth) => { // format 'YYYY-MM'
     }, [isPrototype, currentMonth]);
 
     useEffect(() => {
-        if (!currentUser) {
-            setLoading(false);
-            return;
-        }
+        if (isPrototype || !currentUser) return;
 
         // Se já temos cache, desativamos o loading visual pesado (opcional)
         // mas mantemos o loading para sincronizar.

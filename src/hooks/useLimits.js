@@ -36,10 +36,7 @@ export const useLimits = (year) => {
     }, [isPrototype, year]);
 
     useEffect(() => {
-        if (!currentUser) {
-            setLoading(false);
-            return;
-        }
+        if (isPrototype || !currentUser) return;
 
         const docRef = doc(db, 'userSettings', currentUser.uid);
         const fieldName = year ? `limits_${year}` : 'limits';
