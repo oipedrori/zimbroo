@@ -68,9 +68,9 @@ test('3. ProfileContent possui menu de ORGANIZAÇÃO FINANCEIRA no estilo do tem
 
     // Menu exclusivo do protótipo
     assert.ok(profileContent.includes('ORGANIZAÇÃO FINANCEIRA'), 'Deve conter o rótulo ORGANIZAÇÃO FINANCEIRA');
-    assert.ok(profileContent.includes("key: 'individual', label: 'Individual'"), 'Opção Individual deve existir');
-    assert.ok(profileContent.includes("key: 'family', label: 'Familiar'"), 'Opção Familiar deve existir');
-    assert.ok(profileContent.includes("key: 'both', label: 'Ambos'"), 'Opção Ambos deve existir');
+    assert.ok(profileContent.includes("key: 'individual', label: 'INDIVIDUAL'"), 'Opção INDIVIDUAL deve existir');
+    assert.ok(profileContent.includes("key: 'family', label: 'FAMILIAR'"), 'Opção FAMILIAR deve existir');
+    assert.ok(profileContent.includes("key: 'both', label: 'AMBOS'"), 'Opção AMBOS deve existir');
     assert.ok(profileContent.includes('setOnboardingModel'), 'Deve invocar setOnboardingModel');
 });
 

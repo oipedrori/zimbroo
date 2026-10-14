@@ -320,9 +320,9 @@ const ProfileContent = ({ onClose, theme, setTheme }) => {
                         </div>
                         <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-color)', padding: '4px', borderRadius: '12px' }}>
                             {[
-                                { key: 'individual', label: 'Individual' },
-                                { key: 'family', label: 'Familiar' },
-                                { key: 'both', label: 'Ambos' }
+                                { key: 'individual', label: 'INDIVIDUAL' },
+                                { key: 'family', label: 'FAMILIAR' },
+                                { key: 'both', label: 'AMBOS' }
                             ].map(option => (
                                 <button
                                     key={option.key}
