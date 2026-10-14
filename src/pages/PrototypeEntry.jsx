@@ -10,7 +10,7 @@ const PrototypeEntry = ({ onStart }) => {
     
     // Configurações do espaço familiar
     const [spaceName, setSpaceName] = useState('Família Silva');
-    const [creatorName, setCreatorName] = useState('Avaliador');
+    const [creatorName, setCreatorName] = useState('José');
     const [partnerName, setPartnerName] = useState('Mariana');
     const [partnerEmail, setPartnerEmail] = useState('mariana@exemplo.com');
     const [includeInvite, setIncludeInvite] = useState(true);
@@ -377,7 +377,7 @@ const PrototypeEntry = ({ onStart }) => {
                                     type="text"
                                     value={creatorName}
                                     onChange={(e) => setCreatorName(e.target.value)}
-                                    placeholder="Ex: Avaliador"
+                                    placeholder="Ex: José"
                                     style={{
                                         width: '100%',
                                         padding: '14px 16px',

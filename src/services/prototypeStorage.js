@@ -570,7 +570,7 @@ export const prototypeStorage = {
     /**
      * Garante que haja um espaço familiar ativo configurado.
      * Se houver espaços existentes, ativa o primeiro caso nenhum esteja ativo.
-     * Se nenhum existir, cria um espaço familiar inicial "Família" com criador "Avaliador".
+     * Se nenhum existir, cria um espaço familiar inicial "Família" com criador "José".
      */
     ensureActiveFamilySpace() {
         if (typeof window === 'undefined') return null;
@@ -581,7 +581,7 @@ export const prototypeStorage = {
         const defaultSpace = this.createFamilySpace({
             name: 'Família',
             createdBy: 'prototipo',
-            creatorName: 'Avaliador'
+            creatorName: 'José'
         });
         this.setActiveFamilyId(defaultSpace.id);
         return defaultSpace.id;

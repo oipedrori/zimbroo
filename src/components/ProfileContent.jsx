@@ -768,7 +768,7 @@ const ProfileContent = ({ onClose, theme, setTheme }) => {
                                         const newSpace = prototypeStorage.createFamilySpace({
                                             name,
                                             createdBy: 'prototipo',
-                                            creatorName: 'Avaliador'
+                                            creatorName: 'José'
                                         });
                                         prototypeStorage.setActiveFamilyId(newSpace.id);
                                         setNewSpaceNameInput('');
