@@ -142,3 +142,25 @@ test('10. Estatísticas: título dinâmico e Balanço Mensal em grid 3x4', () =>
     assert.ok(homeContent.includes("gridTemplateColumns: 'repeat(3, 1fr)'"), 'Balanço mensal deve usar grid de 3 colunas');
     assert.ok(homeContent.includes("const monthLabels = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ']"), 'Deve conter os meses abreviados em caixa alta');
 });
+
+test('11. Onboarding demonstrativo na Home com passo do seletor em modo Ambos', () => {
+    const onboardingContent = fs.readFileSync(path.resolve('src/components/Onboarding.jsx'), 'utf-8');
+    const homeContent = fs.readFileSync(path.resolve('src/pages/Home.jsx'), 'utf-8');
+
+    // Onboarding suporta passo do seletor condicionado a showSelectorStep
+    assert.ok(onboardingContent.includes('onboarding-context-selector'), 'Deve conter id do passo do seletor');
+    assert.ok(onboardingContent.includes('showSelectorStep'), 'Deve aceitar prop showSelectorStep');
+    assert.ok(onboardingContent.includes('storageKey'), 'Deve aceitar storageKey customizado');
+    assert.ok(onboardingContent.includes('Alterne entre suas finanças individuais e familiares'), 'Texto instrutivo do seletor deve estar presente');
+
+    // Home possui o id no seletor e passa showSelectorStep condicionado a Ambos
+    assert.ok(homeContent.includes('id="onboarding-context-selector"'), 'Container do seletor na Home deve conter id onboarding-context-selector');
+    assert.ok(homeContent.includes("showSelectorStep={isPrototype && (onboardingModel || 'both') === 'both'}"), 'Home deve passar showSelectorStep apenas quando modelo for Ambos');
+    assert.ok(homeContent.includes('tourStorageKey'), 'Home deve isolar a chave de tour do protótipo da chave do app principal');
+
+    // Reset limpa a chave do tour
+    localStorage.setItem(PROTOTYPE_STORAGE_KEYS.HAS_COMPLETED_TOUR, 'true');
+    prototypeStorage.clearAllPrototypeData();
+    assert.equal(localStorage.getItem(PROTOTYPE_STORAGE_KEYS.HAS_COMPLETED_TOUR), null);
+});
+

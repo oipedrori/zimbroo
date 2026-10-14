@@ -28,6 +28,7 @@ import PaywallModal from '../components/PaywallModal';
 import { usePrototype } from '../contexts/PrototypeContext';
 import { usePrototypeFinancial } from '../contexts/PrototypeFinancialContext';
 import PrototypeContextSelector from '../components/PrototypeContextSelector';
+import { PROTOTYPE_STORAGE_KEYS } from '../services/prototypeStorage';
 
 const Home = () => {
     const { currentUser, logout, deleteAccount } = useAuth();
@@ -109,16 +110,14 @@ const Home = () => {
     const [showPaywall, setShowPaywall] = useState(false);
     const [showValues, setShowValues] = useState(localStorage.getItem('zimbroo_default_show_values') !== 'false');
 
+    const tourStorageKey = isPrototype ? PROTOTYPE_STORAGE_KEYS.HAS_COMPLETED_TOUR : 'hasCompletedOnboarding';
+
     useEffect(() => {
-        const hasCompleted = localStorage.getItem('hasCompletedOnboarding');
+        const hasCompleted = localStorage.getItem(tourStorageKey);
         if (hasCompleted !== 'true') {
-            if (isPrototype) {
-                localStorage.setItem('hasCompletedOnboarding', 'true');
-            } else {
-                setShowOnboarding(true);
-            }
+            setShowOnboarding(true);
         }
-    }, [isPrototype]);
+    }, [isPrototype, tourStorageKey]);
 
     useEffect(() => {
         if (setIsBottomNavHidden) {
@@ -634,7 +633,7 @@ const Home = () => {
 
                         {/* 2. Seletor Individual / Familiar (exclusivo do protótipo e apenas se o modelo for 'both') */}
                         {isPrototype && (onboardingModel || 'both') === 'both' && (
-                            <div style={{ width: '100%' }}>
+                            <div id="onboarding-context-selector" style={{ width: '100%' }}>
                                 <PrototypeContextSelector />
                             </div>
                         )}
@@ -1472,7 +1471,12 @@ const Home = () => {
             {/* Onboarding Overlay */}
             <AnimatePresence>
                 {showOnboarding && (
-                    <Onboarding key="onboarding" onComplete={() => setShowOnboarding(false)} />
+                    <Onboarding 
+                        key="onboarding" 
+                        onComplete={() => setShowOnboarding(false)} 
+                        storageKey={tourStorageKey}
+                        showSelectorStep={isPrototype && (onboardingModel || 'both') === 'both'}
+                    />
                 )}
             </AnimatePresence>
 

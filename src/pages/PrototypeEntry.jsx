@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, User, Users, Split, ChevronLeft, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
-import { prototypeStorage, FINANCIAL_CONTEXTS } from '../services/prototypeStorage';
+import { prototypeStorage, FINANCIAL_CONTEXTS, PROTOTYPE_STORAGE_KEYS } from '../services/prototypeStorage';
 
 const PrototypeEntry = ({ onStart }) => {
     const { changeLocale } = useI18n();
@@ -82,6 +82,13 @@ const PrototypeEntry = ({ onStart }) => {
     };
 
     const finishOnboarding = (model, familyId) => {
+        // Permite exibir o tour demonstrativo ao entrar na tela inicial
+        try {
+            localStorage.removeItem(PROTOTYPE_STORAGE_KEYS.HAS_COMPLETED_TOUR);
+        } catch (e) {
+            // ignore
+        }
+
         // Persiste escolha de modelo
         prototypeStorage.setOnboardingModel(model);
 

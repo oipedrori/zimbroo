@@ -30,28 +30,48 @@ const ONBOARDING_STEPS = [
   }
 ];
 
-const Onboarding = ({ onComplete }) => {
+const Onboarding = ({ 
+  onComplete, 
+  storageKey = 'hasCompletedOnboarding', 
+  showSelectorStep = false 
+}) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [targetRect, setTargetRect] = useState(null);
   const { t } = useI18n();
   const [isVisible, setIsVisible] = useState(false);
 
+  const steps = useMemo(() => {
+    if (showSelectorStep) {
+      return [
+        {
+          id: 'onboarding-context-selector',
+          text: "Alterne entre suas finanças individuais e familiares. Toque no seletor para escolher qual visão deseja acompanhar ou gerenciar no momento."
+        },
+        ...ONBOARDING_STEPS
+      ];
+    }
+    return ONBOARDING_STEPS;
+  }, [showSelectorStep]);
+
   // Check if already completed
   useEffect(() => {
-    const completed = localStorage.getItem('hasCompletedOnboarding');
+    const completed = localStorage.getItem(storageKey);
     if (completed === 'true') {
       onComplete?.();
     } else {
       setIsVisible(true);
     }
-  }, [onComplete]);
+  }, [onComplete, storageKey]);
 
   // Update rect on step change or resize
   useEffect(() => {
     if (!isVisible) return;
+    let retries = 0;
+    let timer = null;
 
     const findTarget = () => {
-      const step = ONBOARDING_STEPS[currentStep];
+      const step = steps[currentStep];
+      if (!step) return;
       const element = document.getElementById(step.id);
       if (element) {
         const rect = element.getBoundingClientRect();
@@ -62,21 +82,24 @@ const Onboarding = ({ onComplete }) => {
             y: isBalance ? rect.top - 8 : rect.top, // Adjustment: move up if balance card
             width: rect.width,
             height: rect.height,
-            padding: step.id === 'onboarding-ai-fab' ? 20 : 8
+            padding: step.id === 'onboarding-ai-fab' ? 20 : (step.id === 'onboarding-context-selector' ? 6 : 8)
           });
-        } else {
-          skipNext();
+          return;
         }
+      }
+      if (retries < 3) {
+        retries++;
+        timer = setTimeout(findTarget, 60);
       } else {
         skipNext();
       }
     };
 
     const skipNext = () => {
-      if (currentStep < ONBOARDING_STEPS.length - 1) {
+      if (currentStep < steps.length - 1) {
         setCurrentStep(prev => prev + 1);
       } else {
-        localStorage.setItem('hasCompletedOnboarding', 'true');
+        localStorage.setItem(storageKey, 'true');
         setIsVisible(false);
         onComplete?.();
       }
@@ -87,22 +110,24 @@ const Onboarding = ({ onComplete }) => {
     window.addEventListener('scroll', findTarget, true);
 
     return () => {
+      if (timer) clearTimeout(timer);
       window.removeEventListener('resize', findTarget);
       window.removeEventListener('scroll', findTarget, true);
     };
-  }, [currentStep, isVisible]);
+  }, [currentStep, isVisible, steps, storageKey]);
 
   const handleNext = () => {
     haptic.light();
-    if (currentStep < ONBOARDING_STEPS.length - 1) {
+    if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      localStorage.setItem('hasCompletedOnboarding', 'true');
+      localStorage.setItem(storageKey, 'true');
+      setIsVisible(false);
       onComplete?.();
     }
   };
 
-  if (!targetRect) return null;
+  if (!targetRect || !steps[currentStep]) return null;
 
   // Visual cohesion: display card near the spotlight
   // If there's space below, show it below. Otherwise show it above.
@@ -110,7 +135,7 @@ const Onboarding = ({ onComplete }) => {
   let padding = 20;
 
   // Custom padding for FAB
-  if (ONBOARDING_STEPS[currentStep].id === 'onboarding-ai-fab') {
+  if (steps[currentStep]?.id === 'onboarding-ai-fab') {
     padding = 80; // Push tooltip significantly higher for FAB
   }
 
@@ -192,10 +217,10 @@ const Onboarding = ({ onComplete }) => {
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary-color)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              Passo {currentStep + 1} de {ONBOARDING_STEPS.length}
+              Passo {currentStep + 1} de {steps.length}
             </span>
             <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.5', fontWeight: '500' }}>
-              {ONBOARDING_STEPS[currentStep].text}
+              {steps[currentStep]?.text}
             </p>
             
             {currentStep === 0 && (

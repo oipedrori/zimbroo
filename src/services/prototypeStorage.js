@@ -23,7 +23,8 @@ export const PROTOTYPE_STORAGE_KEYS = {
     ACTIVE_FINANCIAL_CONTEXT: `${PROTOTYPE_STORAGE_PREFIX}active_financial_context_v1`,
     // Etapa 5: Escolha de modelo no onboarding e convites simulados
     ONBOARDING_MODEL: `${PROTOTYPE_STORAGE_PREFIX}onboarding_model_v1`,
-    FAMILY_INVITES: `${PROTOTYPE_STORAGE_PREFIX}family_invites_v1`
+    FAMILY_INVITES: `${PROTOTYPE_STORAGE_PREFIX}family_invites_v1`,
+    HAS_COMPLETED_TOUR: `${PROTOTYPE_STORAGE_PREFIX}has_completed_tour_v1`
 };
 const KEYS = PROTOTYPE_STORAGE_KEYS;
 
@@ -1294,6 +1295,7 @@ export const prototypeStorage = {
         // Limpeza dos dados de contexto e modelo de onboarding
         localStorage.removeItem(KEYS.ACTIVE_FINANCIAL_CONTEXT);
         localStorage.removeItem(KEYS.ONBOARDING_MODEL);
+        localStorage.removeItem(KEYS.HAS_COMPLETED_TOUR);
 
         notify(PROTOTYPE_EVENTS.TXS_CHANGED);
         notify(PROTOTYPE_EVENTS.LIMITS_CHANGED);
