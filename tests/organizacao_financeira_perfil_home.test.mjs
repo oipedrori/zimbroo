@@ -29,6 +29,7 @@ const {
     PROTOTYPE_STORAGE_KEYS,
     PROTOTYPE_EVENTS
 } = await import('../src/services/prototypeStorage.js');
+const { prepareMonthlyTransactions } = await import('../src/utils/transactionUtils.js');
 
 test.beforeEach(() => {
     storage.clear();
@@ -204,6 +205,97 @@ test('13. FAB com botão + no meio (fundo verde), avisos de IA e modal sem DESTI
     assert.ok(modalContent.includes('Adicionar Movimentação Individual'), 'Deve conter título Adicionar Movimentação Individual');
     assert.ok(modalContent.includes('Adicionar Movimentação Familiar'), 'Deve conter título Adicionar Movimentação Familiar');
 });
+
+test('14. Carga padrão de demonstração: receitas em todos os meses, despesas fixas, móveis e parceladas no individual e familiar', () => {
+    // Limpeza prévia
+    prototypeStorage.clearAllPrototypeData();
+    assert.equal(prototypeStorage.getTransactions().length, 0);
+    assert.equal(prototypeStorage.getFamilyTransactions().length, 0);
+
+    // Executa a carga demonstrativa
+    const result = prototypeStorage.seedDefaultTransactionsIfEmpty();
+    assert.ok(result.individualCount > 0, 'Deve ter criado transações individuais');
+    assert.ok(result.familyCount > 0, 'Deve ter criado transações familiares');
+
+    const indTxs = prototypeStorage.getTransactions();
+    const famTxs = prototypeStorage.getFamilyTransactions();
+
+    // 1. Validações Individuais
+    // (a) Receitas em todos os meses através da projeção
+    const currentYear = new Date().getFullYear() || 2026;
+    for (let m = 1; m <= 12; m++) {
+        const monthPrefix = `${currentYear}-${String(m).padStart(2, '0')}`;
+        const monthTxs = prepareMonthlyTransactions(indTxs, monthPrefix);
+        const monthIncomes = monthTxs.filter(t => t.type === 'income');
+        assert.ok(monthIncomes.length >= 1, `Mês ${monthPrefix} deve conter pelo menos uma receita no Individual`);
+    }
+
+    // (b) Despesas fixas (recorrentes)
+    const fixedInd = indTxs.filter(t => t.type === 'expense' && t.repeatType === 'recurring');
+    assert.ok(fixedInd.length >= 4, 'Deve conter pelo menos 4 despesas fixas recorrentes no Individual');
+    assert.ok(fixedInd.some(t => t.category === 'moradia'), 'Deve conter despesa de moradia/aluguel');
+    assert.ok(fixedInd.some(t => t.category === 'assinaturas'), 'Deve conter assinaturas');
+
+    // (c) Despesas móveis / variáveis (repeatType: 'none')
+    const varInd = indTxs.filter(t => t.type === 'expense' && t.repeatType === 'none');
+    assert.ok(varInd.length >= 12, 'Deve conter despesas variáveis distribuídas ao longo dos meses');
+    assert.ok(varInd.some(t => t.category === 'alimentacao'), 'Deve conter alimentação');
+    assert.ok(varInd.some(t => t.category === 'transporte'), 'Deve conter transporte');
+
+    // (d) Despesas parceladas (repeatType: 'installment' no cartão de crédito)
+    const instInd = indTxs.filter(t => t.type === 'expense' && t.repeatType === 'installment');
+    assert.ok(instInd.length >= 2, 'Deve conter compras parceladas no Individual');
+    assert.ok(instInd.every(t => t.paymentMethod === 'credit'), 'Parceladas devem ser no cartão de crédito');
+    assert.ok(instInd.some(t => t.installments >= 6), 'Deve conter parcelamento longo');
+
+    // 2. Validações Familiares
+    const activeFamilyId = prototypeStorage.getActiveFamilyId();
+    assert.ok(activeFamilyId, 'Deve existir um espaço familiar ativo');
+    const members = prototypeStorage.getFamilyMembers(activeFamilyId);
+    assert.ok(members.length >= 2, 'Deve conter pelo menos José e Mariana no espaço familiar');
+
+    // (a) Receitas em todos os meses na família
+    for (let m = 1; m <= 12; m++) {
+        const monthPrefix = `${currentYear}-${String(m).padStart(2, '0')}`;
+        const monthTxs = prepareMonthlyTransactions(famTxs, monthPrefix);
+        const monthIncomes = monthTxs.filter(t => t.type === 'income');
+        assert.ok(monthIncomes.length >= 1, `Mês ${monthPrefix} deve conter pelo menos uma receita na Família`);
+    }
+
+    // (b) Despesas fixas familiares
+    const fixedFam = famTxs.filter(t => t.type === 'expense' && t.repeatType === 'recurring');
+    assert.ok(fixedFam.length >= 4, 'Deve conter despesas fixas na Família');
+    assert.ok(fixedFam.some(t => t.category === 'moradia'), 'Deve conter moradia familiar');
+    assert.ok(fixedFam.some(t => t.category === 'educacao'), 'Deve conter escola/educação');
+
+    // (c) Despesas móveis familiares
+    const varFam = famTxs.filter(t => t.type === 'expense' && t.repeatType === 'none');
+    assert.ok(varFam.length >= 12, 'Deve conter despesas móveis na Família');
+
+    // (d) Despesas parceladas familiares
+    const instFam = famTxs.filter(t => t.type === 'expense' && t.repeatType === 'installment');
+    assert.ok(instFam.length >= 2, 'Deve conter despesas parceladas na Família');
+    assert.ok(instFam.every(t => t.paymentMethod === 'credit'), 'Parceladas familiares devem ser no cartão de crédito');
+
+    // (e) Membros vinculados nas movimentações familiares
+    const joseMember = members.find(m => m.name.toLowerCase().includes('josé') || m.name.toLowerCase().includes('jose'));
+    const marianaMember = members.find(m => m.name.toLowerCase().includes('mariana'));
+    assert.ok(famTxs.some(t => t.memberId === joseMember.id), 'Deve ter transação vinculada a José');
+    assert.ok(famTxs.some(t => t.memberId === marianaMember.id), 'Deve ter transação vinculada a Mariana');
+
+    // 3. Idempotência: nova chamada sem force não duplica
+    const secondResult = prototypeStorage.seedDefaultTransactionsIfEmpty();
+    assert.equal(secondResult.individualCount, 0, 'Não deve re-semear dados individuais se já existirem');
+    assert.equal(secondResult.familyCount, 0, 'Não deve re-semear dados familiares se já existirem');
+    assert.equal(prototypeStorage.getTransactions().length, indTxs.length, 'Total de transações individuais inalterado');
+    assert.equal(prototypeStorage.getFamilyTransactions().length, famTxs.length, 'Total de transações familiares inalterado');
+
+    // 4. Limpeza limpa tudo perfeitamente
+    prototypeStorage.clearAllPrototypeData();
+    assert.equal(prototypeStorage.getTransactions().length, 0);
+    assert.equal(prototypeStorage.getFamilyTransactions().length, 0);
+});
+
 
 
 

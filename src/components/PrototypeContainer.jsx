@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePrototype } from '../contexts/PrototypeContext';
 import { PrototypeFinancialProvider, usePrototypeFinancial } from '../contexts/PrototypeFinancialContext';
+import { prototypeStorage } from '../services/prototypeStorage';
 import PrototypeEntry from '../pages/PrototypeEntry';
 import Layout from './Layout';
 
@@ -19,6 +20,12 @@ const PrototypeThemedContent = () => {
 
 const PrototypeContainer = () => {
     const { isStarted, startPrototype } = usePrototype();
+
+    useEffect(() => {
+        if (isStarted) {
+            prototypeStorage.seedDefaultTransactionsIfEmpty();
+        }
+    }, [isStarted]);
 
     if (!isStarted) {
         return <PrototypeEntry onStart={startPrototype} />;

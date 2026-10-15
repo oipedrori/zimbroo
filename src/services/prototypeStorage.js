@@ -1306,5 +1306,983 @@ export const prototypeStorage = {
         notify(PROTOTYPE_EVENTS.FINANCIAL_CONTEXT_CHANGED);
         notify(PROTOTYPE_EVENTS.FAMILY_INVITES_CHANGED);
         notify(PROTOTYPE_EVENTS.ONBOARDING_MODEL_CHANGED);
+    },
+
+    // ==========================================
+    // 8. Carga Inicial de Demonstração (Seed Data)
+    // ==========================================
+
+    /**
+     * Inicializa movimentações demonstrativas realistas (receitas em todos os meses,
+     * despesas fixas recorrentes, despesas móveis variáveis e compras parceladas no cartão de crédito)
+     * tanto no contexto Individual quanto no Familiar.
+     * Não executa se já existirem transações gravadas, a menos que force = true.
+     */
+    seedDefaultTransactionsIfEmpty(targetFamilyId = null, force = false) {
+        if (typeof window === 'undefined') return { individualCount: 0, familyCount: 0 };
+
+        const currentYear = new Date().getFullYear() || 2026;
+        const now = new Date().toISOString();
+        let individualCount = 0;
+        let familyCount = 0;
+
+        // 1. Dados Demonstrativos Individuais
+        const existingIndiv = safeGetJson(KEYS.TRANSACTIONS, []);
+        if (force || !Array.isArray(existingIndiv) || existingIndiv.length === 0) {
+            const indTxs = [];
+            const genIndId = (prefix, idx) => `proto-seed-${prefix}-${idx}-${Math.random().toString(36).substring(2, 6)}`;
+
+            // (A) Receitas Mensais
+            // Salário recorrente dia 05 em todos os meses
+            indTxs.push({
+                id: genIndId('inc', 1),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 6800.00,
+                type: 'income',
+                category: 'salario',
+                description: 'Salário Mensal',
+                date: `${currentYear}-01-05`,
+                repeatType: 'recurring',
+                installments: 1,
+                currentInstallment: 1,
+                paymentMethod: 'pix',
+                totalAmount: null,
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+
+            // Receitas adicionais/variadas em meses específicos
+            indTxs.push({
+                id: genIndId('inc', 2),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 2400.00,
+                type: 'income',
+                category: 'freela',
+                description: 'Projeto Freelance UX/UI',
+                date: `${currentYear}-03-16`,
+                repeatType: 'none',
+                installments: 1,
+                currentInstallment: 1,
+                paymentMethod: 'pix',
+                totalAmount: null,
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+            indTxs.push({
+                id: genIndId('inc', 3),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 1750.00,
+                type: 'income',
+                category: 'investimento',
+                description: 'Restituição IRPF / Rendimentos',
+                date: `${currentYear}-06-20`,
+                repeatType: 'none',
+                installments: 1,
+                currentInstallment: 1,
+                paymentMethod: 'pix',
+                totalAmount: null,
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+            indTxs.push({
+                id: genIndId('inc', 4),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 3400.00,
+                type: 'income',
+                category: 'salario',
+                description: '13º Salário (1ª Parcela)',
+                date: `${currentYear}-11-28`,
+                repeatType: 'none',
+                installments: 1,
+                currentInstallment: 1,
+                paymentMethod: 'pix',
+                totalAmount: null,
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+            indTxs.push({
+                id: genIndId('inc', 5),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 3400.00,
+                type: 'income',
+                category: 'salario',
+                description: '13º Salário (2ª Parcela)',
+                date: `${currentYear}-12-18`,
+                repeatType: 'none',
+                installments: 1,
+                currentInstallment: 1,
+                paymentMethod: 'pix',
+                totalAmount: null,
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+
+            // (B) Despesas Fixas (Recorrentes)
+            indTxs.push({
+                id: genIndId('fix', 1),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 1650.00,
+                type: 'expense',
+                category: 'moradia',
+                description: 'Aluguel Studio & Condomínio',
+                date: `${currentYear}-01-10`,
+                repeatType: 'recurring',
+                installments: 1,
+                currentInstallment: 1,
+                paymentMethod: 'debit',
+                totalAmount: null,
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+            indTxs.push({
+                id: genIndId('fix', 2),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 149.90,
+                type: 'expense',
+                category: 'assinaturas',
+                description: 'Internet Fibra 600 Mega',
+                date: `${currentYear}-01-12`,
+                repeatType: 'recurring',
+                installments: 1,
+                currentInstallment: 1,
+                paymentMethod: 'debit',
+                totalAmount: null,
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+            indTxs.push({
+                id: genIndId('fix', 3),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 129.90,
+                type: 'expense',
+                category: 'saude',
+                description: 'Mensalidade Academia',
+                date: `${currentYear}-01-08`,
+                repeatType: 'recurring',
+                installments: 1,
+                currentInstallment: 1,
+                paymentMethod: 'debit',
+                totalAmount: null,
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+            indTxs.push({
+                id: genIndId('fix', 4),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 79.90,
+                type: 'expense',
+                category: 'comunicacao',
+                description: 'Plano Celular 5G',
+                date: `${currentYear}-01-15`,
+                repeatType: 'recurring',
+                installments: 1,
+                currentInstallment: 1,
+                paymentMethod: 'debit',
+                totalAmount: null,
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+            indTxs.push({
+                id: genIndId('fix', 5),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 55.90,
+                type: 'expense',
+                category: 'assinaturas',
+                description: 'Streaming & Música',
+                date: `${currentYear}-01-20`,
+                repeatType: 'recurring',
+                installments: 1,
+                currentInstallment: 1,
+                paymentMethod: 'credit',
+                totalAmount: null,
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+
+            // (C) Despesas Parceladas (Cartão de Crédito)
+            // Notebook Dell Inspiron 10x de 429,90 (Fev a Nov)
+            indTxs.push({
+                id: genIndId('inst', 1),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 429.90,
+                totalAmount: 4299.00,
+                type: 'expense',
+                category: 'equipamentos',
+                description: 'Notebook Dell Inspiron',
+                date: `${currentYear}-02-14`,
+                repeatType: 'installment',
+                installments: 10,
+                currentInstallment: 1,
+                paymentMethod: 'credit',
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+            // Smartphone 6x de 380,00 (Abr a Set)
+            indTxs.push({
+                id: genIndId('inst', 2),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 380.00,
+                totalAmount: 2280.00,
+                type: 'expense',
+                category: 'comunicacao',
+                description: 'Smartphone 5G',
+                date: `${currentYear}-04-08`,
+                repeatType: 'installment',
+                installments: 6,
+                currentInstallment: 1,
+                paymentMethod: 'credit',
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+            // Passagens Férias 4x de 1.450,00 (Jan a Abr)
+            indTxs.push({
+                id: genIndId('inst', 3),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 1450.00,
+                totalAmount: 5800.00,
+                type: 'expense',
+                category: 'lazer',
+                description: 'Passagens Aéreas Férias',
+                date: `${currentYear}-01-15`,
+                repeatType: 'installment',
+                installments: 4,
+                currentInstallment: 1,
+                paymentMethod: 'credit',
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+
+            // (D) Despesas Móveis / Variáveis (distribuídas nos 12 meses)
+            // Em fevereiro, adicionamos IPVA e Seguro Anual que farão o mês ficar abaixo de zero
+            indTxs.push({
+                id: genIndId('var', 'feb-ipva'),
+                userId: 'prototipo',
+                scope: 'individual',
+                amount: 4200.00,
+                type: 'expense',
+                category: 'impostos',
+                description: 'IPVA Anual + Licenciamento',
+                date: `${currentYear}-02-18`,
+                repeatType: 'none',
+                installments: 1,
+                currentInstallment: 1,
+                paymentMethod: 'pix',
+                totalAmount: null,
+                originalTransactionId: null,
+                obligationSettled: false,
+                excludedMonths: [],
+                createdAt: now
+            });
+
+            // Gastos variáveis mensais para cada mês de 01 a 12
+            const monthlyVariableData = [
+                { m: '01', sup: 580, trans: 210, laz: 180, farm: 95 },
+                { m: '02', sup: 540, trans: 195, laz: 220, farm: 60 },
+                { m: '03', sup: 610, trans: 230, laz: 250, farm: 110 },
+                { m: '04', sup: 590, trans: 220, laz: 190, farm: 85 },
+                { m: '05', sup: 640, trans: 240, laz: 310, farm: 130 },
+                { m: '06', sup: 570, trans: 185, laz: 210, farm: 75 },
+                { m: '07', sup: 680, trans: 260, laz: 380, farm: 120 },
+                { m: '08', sup: 595, trans: 215, laz: 200, farm: 90 },
+                { m: '09', sup: 620, trans: 225, laz: 230, farm: 105 },
+                { m: '10', sup: 605, trans: 240, laz: 260, farm: 80 },
+                { m: '11', sup: 710, trans: 255, laz: 340, farm: 115 },
+                { m: '12', sup: 890, trans: 280, laz: 520, farm: 140 },
+            ];
+
+            monthlyVariableData.forEach(({ m, sup, trans, laz, farm }) => {
+                indTxs.push({
+                    id: genIndId('var', `${m}-sup`),
+                    userId: 'prototipo',
+                    scope: 'individual',
+                    amount: sup,
+                    type: 'expense',
+                    category: 'alimentacao',
+                    description: 'Supermercado Mensal',
+                    date: `${currentYear}-${m}-11`,
+                    repeatType: 'none',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'debit',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now
+                });
+                indTxs.push({
+                    id: genIndId('var', `${m}-trn`),
+                    userId: 'prototipo',
+                    scope: 'individual',
+                    amount: trans,
+                    type: 'expense',
+                    category: 'transporte',
+                    description: 'Combustível / Uber',
+                    date: `${currentYear}-${m}-17`,
+                    repeatType: 'none',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'pix',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now
+                });
+                indTxs.push({
+                    id: genIndId('var', `${m}-laz`),
+                    userId: 'prototipo',
+                    scope: 'individual',
+                    amount: laz,
+                    type: 'expense',
+                    category: 'lazer',
+                    description: 'Restaurante / Fim de Semana',
+                    date: `${currentYear}-${m}-22`,
+                    repeatType: 'none',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'credit',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now
+                });
+                indTxs.push({
+                    id: genIndId('var', `${m}-frm`),
+                    userId: 'prototipo',
+                    scope: 'individual',
+                    amount: farm,
+                    type: 'expense',
+                    category: 'saude',
+                    description: 'Farmácia & Higiene',
+                    date: `${currentYear}-${m}-26`,
+                    repeatType: 'none',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'debit',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now
+                });
+            });
+
+            safeSetJson(KEYS.TRANSACTIONS, indTxs);
+            individualCount = indTxs.length;
+            notify(PROTOTYPE_EVENTS.TXS_CHANGED);
+        }
+
+        // 2. Dados Demonstrativos Familiares
+        const existingFam = safeGetJson(KEYS.FAMILY_TRANSACTIONS, []);
+        if (force || !Array.isArray(existingFam) || existingFam.length === 0) {
+            let familyId = targetFamilyId || this.getActiveFamilyId();
+            if (!familyId) {
+                familyId = this.ensureActiveFamilySpace();
+            }
+
+            if (familyId) {
+                // Garantir membros José e Mariana
+                const members = this.getFamilyMembers(familyId);
+                let jose = members.find(m => m.name.toLowerCase().includes('josé') || m.name.toLowerCase().includes('jose'));
+                if (!jose && members.length > 0) {
+                    jose = members[0];
+                }
+                if (!jose) {
+                    jose = this.addFamilyMember({
+                        familyId,
+                        name: 'José',
+                        role: FAMILY_ROLES.OWNER,
+                        status: MEMBER_STATUS.ACTIVE
+                    });
+                }
+
+                let mariana = members.find(m => m.name.toLowerCase().includes('mariana'));
+                if (!mariana) {
+                    const invites = this.getFamilyInvites(familyId);
+                    const marianaInvite = invites.find(i => i.inviteeName.toLowerCase().includes('mariana'));
+                    if (marianaInvite) {
+                        try {
+                            this.acceptFamilyInvite(marianaInvite.id);
+                        } catch {
+                            // Ignora erro se já aceito
+                        }
+                        mariana = this.getFamilyMembers(familyId).find(m => m.name.toLowerCase().includes('mariana'));
+                    }
+                    if (!mariana) {
+                        mariana = this.addFamilyMember({
+                            familyId,
+                            name: 'Mariana',
+                            role: FAMILY_ROLES.MEMBER,
+                            status: MEMBER_STATUS.ACTIVE
+                        });
+                    }
+                }
+
+                const joseId = jose.id;
+                const marianaId = mariana.id;
+                const famTxs = [];
+                const genFamId = (prefix, idx) => `ftx-seed-${prefix}-${idx}-${Math.random().toString(36).substring(2, 6)}`;
+
+                // (A) Receitas Mensais Familiares
+                // Salário José recorrente
+                famTxs.push({
+                    id: genFamId('inc', 'jose'),
+                    familyId,
+                    memberId: joseId,
+                    scope: 'family',
+                    amount: 8400.00,
+                    type: 'income',
+                    category: 'salario',
+                    description: 'Salário Mensal José',
+                    date: `${currentYear}-01-05`,
+                    repeatType: 'recurring',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'pix',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                // Salário Mariana recorrente
+                famTxs.push({
+                    id: genFamId('inc', 'mari'),
+                    familyId,
+                    memberId: marianaId,
+                    scope: 'family',
+                    amount: 6800.00,
+                    type: 'income',
+                    category: 'salario',
+                    description: 'Salário Mensal Mariana',
+                    date: `${currentYear}-01-05`,
+                    repeatType: 'recurring',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'pix',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                // Entradas pontuais adicionais
+                famTxs.push({
+                    id: genFamId('inc', 'bonus-mari'),
+                    familyId,
+                    memberId: marianaId,
+                    scope: 'family',
+                    amount: 3200.00,
+                    type: 'income',
+                    category: 'salario',
+                    description: 'Bônus Semestral Mariana',
+                    date: `${currentYear}-04-15`,
+                    repeatType: 'none',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'pix',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                famTxs.push({
+                    id: genFamId('inc', 'rend-jose'),
+                    familyId,
+                    memberId: joseId,
+                    scope: 'family',
+                    amount: 1950.00,
+                    type: 'income',
+                    category: 'investimento',
+                    description: 'Rendimentos de Aplicações',
+                    date: `${currentYear}-07-20`,
+                    repeatType: 'none',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'pix',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                famTxs.push({
+                    id: genFamId('inc', '13-jose'),
+                    familyId,
+                    memberId: joseId,
+                    scope: 'family',
+                    amount: 4200.00,
+                    type: 'income',
+                    category: 'salario',
+                    description: '13º Salário José (1ª Parcela)',
+                    date: `${currentYear}-11-28`,
+                    repeatType: 'none',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'pix',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                famTxs.push({
+                    id: genFamId('inc', '13-mari'),
+                    familyId,
+                    memberId: marianaId,
+                    scope: 'family',
+                    amount: 3400.00,
+                    type: 'income',
+                    category: 'salario',
+                    description: '13º Salário Mariana (1ª Parcela)',
+                    date: `${currentYear}-11-28`,
+                    repeatType: 'none',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'pix',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                famTxs.push({
+                    id: genFamId('inc', '13-2-jose'),
+                    familyId,
+                    memberId: joseId,
+                    scope: 'family',
+                    amount: 4200.00,
+                    type: 'income',
+                    category: 'salario',
+                    description: '13º Salário José (2ª Parcela)',
+                    date: `${currentYear}-12-18`,
+                    repeatType: 'none',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'pix',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                famTxs.push({
+                    id: genFamId('inc', '13-2-mari'),
+                    familyId,
+                    memberId: marianaId,
+                    scope: 'family',
+                    amount: 3400.00,
+                    type: 'income',
+                    category: 'salario',
+                    description: '13º Salário Mariana (2ª Parcela)',
+                    date: `${currentYear}-12-18`,
+                    repeatType: 'none',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'pix',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+
+                // (B) Despesas Fixas Familiares (Recorrentes)
+                famTxs.push({
+                    id: genFamId('fix', 1),
+                    familyId,
+                    memberId: joseId,
+                    scope: 'family',
+                    amount: 3400.00,
+                    type: 'expense',
+                    category: 'moradia',
+                    description: 'Aluguel Casa & Condomínio',
+                    date: `${currentYear}-01-10`,
+                    repeatType: 'recurring',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'debit',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                famTxs.push({
+                    id: genFamId('fix', 2),
+                    familyId,
+                    memberId: marianaId,
+                    scope: 'family',
+                    amount: 1650.00,
+                    type: 'expense',
+                    category: 'educacao',
+                    description: 'Escola das Crianças',
+                    date: `${currentYear}-01-08`,
+                    repeatType: 'recurring',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'debit',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                famTxs.push({
+                    id: genFamId('fix', 3),
+                    familyId,
+                    memberId: marianaId,
+                    scope: 'family',
+                    amount: 480.00,
+                    type: 'expense',
+                    category: 'moradia',
+                    description: 'Energia Elétrica & Água',
+                    date: `${currentYear}-01-12`,
+                    repeatType: 'recurring',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'debit',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                famTxs.push({
+                    id: genFamId('fix', 4),
+                    familyId,
+                    memberId: joseId,
+                    scope: 'family',
+                    amount: 230.00,
+                    type: 'expense',
+                    category: 'assinaturas',
+                    description: 'Internet Fibra 1Gb + TV',
+                    date: `${currentYear}-01-15`,
+                    repeatType: 'recurring',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'debit',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                famTxs.push({
+                    id: genFamId('fix', 5),
+                    familyId,
+                    memberId: joseId,
+                    scope: 'family',
+                    amount: 980.00,
+                    type: 'expense',
+                    category: 'saude',
+                    description: 'Plano de Saúde Familiar',
+                    date: `${currentYear}-01-20`,
+                    repeatType: 'recurring',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'debit',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                famTxs.push({
+                    id: genFamId('fix', 6),
+                    familyId,
+                    memberId: marianaId,
+                    scope: 'family',
+                    amount: 290.00,
+                    type: 'expense',
+                    category: 'seguro',
+                    description: 'Seguro Automóvel Família',
+                    date: `${currentYear}-01-25`,
+                    repeatType: 'recurring',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'debit',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+
+                // (C) Despesas Parceladas Familiares (Cartão de Crédito)
+                famTxs.push({
+                    id: genFamId('inst', 1),
+                    familyId,
+                    memberId: joseId,
+                    scope: 'family',
+                    amount: 680.00,
+                    totalAmount: 6800.00,
+                    type: 'expense',
+                    category: 'moradia',
+                    description: 'Reforma da Cozinha Planejada',
+                    date: `${currentYear}-01-18`,
+                    repeatType: 'installment',
+                    installments: 10,
+                    currentInstallment: 1,
+                    paymentMethod: 'credit',
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                famTxs.push({
+                    id: genFamId('inst', 2),
+                    familyId,
+                    memberId: marianaId,
+                    scope: 'family',
+                    amount: 420.00,
+                    totalAmount: 3360.00,
+                    type: 'expense',
+                    category: 'moradia',
+                    description: 'Sofá Retrátil para Sala',
+                    date: `${currentYear}-02-10`,
+                    repeatType: 'installment',
+                    installments: 8,
+                    currentInstallment: 1,
+                    paymentMethod: 'credit',
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                famTxs.push({
+                    id: genFamId('inst', 3),
+                    familyId,
+                    memberId: joseId,
+                    scope: 'family',
+                    amount: 560.00,
+                    totalAmount: 3360.00,
+                    type: 'expense',
+                    category: 'equipamentos',
+                    description: 'Geladeira Frost Free Inverter',
+                    date: `${currentYear}-04-05`,
+                    repeatType: 'installment',
+                    installments: 6,
+                    currentInstallment: 1,
+                    paymentMethod: 'credit',
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+                famTxs.push({
+                    id: genFamId('inst', 4),
+                    familyId,
+                    memberId: marianaId,
+                    scope: 'family',
+                    amount: 1450.00,
+                    totalAmount: 7250.00,
+                    type: 'expense',
+                    category: 'lazer',
+                    description: 'Pacote Férias Família Praia',
+                    date: `${currentYear}-06-15`,
+                    repeatType: 'installment',
+                    installments: 5,
+                    currentInstallment: 1,
+                    paymentMethod: 'credit',
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+
+                // (D) Despesas Móveis / Variáveis Familiares
+                // Em janeiro, incluímos despesa anual de IPTU + Material Escolar gerando saldo negativo controlado
+                famTxs.push({
+                    id: genFamId('var', 'iptu-mat'),
+                    familyId,
+                    memberId: joseId,
+                    scope: 'family',
+                    amount: 8900.00,
+                    type: 'expense',
+                    category: 'impostos',
+                    description: 'IPTU Anual Cota Única + Material Escolar',
+                    date: `${currentYear}-01-22`,
+                    repeatType: 'none',
+                    installments: 1,
+                    currentInstallment: 1,
+                    paymentMethod: 'pix',
+                    totalAmount: null,
+                    originalTransactionId: null,
+                    obligationSettled: false,
+                    excludedMonths: [],
+                    createdAt: now,
+                    updatedAt: now
+                });
+
+                const famMonthlyVar = [
+                    { m: '01', sup: 1950, trn: 480, laz: 420, pet: 210 },
+                    { m: '02', sup: 1880, trn: 450, laz: 390, pet: 195 },
+                    { m: '03', sup: 2100, trn: 520, laz: 480, pet: 240 },
+                    { m: '04', sup: 1990, trn: 470, laz: 430, pet: 215 },
+                    { m: '05', sup: 2250, trn: 540, laz: 560, pet: 260 },
+                    { m: '06', sup: 2050, trn: 490, laz: 460, pet: 220 },
+                    { m: '07', sup: 2380, trn: 560, laz: 640, pet: 280 },
+                    { m: '08', sup: 2120, trn: 510, laz: 490, pet: 230 },
+                    { m: '09', sup: 2180, trn: 530, laz: 510, pet: 245 },
+                    { m: '10', sup: 2240, trn: 540, laz: 530, pet: 250 },
+                    { m: '11', sup: 2450, trn: 580, laz: 620, pet: 290 },
+                    { m: '12', sup: 2980, trn: 650, laz: 890, pet: 340 },
+                ];
+
+                famMonthlyVar.forEach(({ m, sup, trn, laz, pet }) => {
+                    famTxs.push({
+                        id: genFamId('var', `${m}-sup`),
+                        familyId,
+                        memberId: marianaId,
+                        scope: 'family',
+                        amount: sup,
+                        type: 'expense',
+                        category: 'alimentacao',
+                        description: 'Supermercado & Feira Família',
+                        date: `${currentYear}-${m}-10`,
+                        repeatType: 'none',
+                        installments: 1,
+                        currentInstallment: 1,
+                        paymentMethod: 'debit',
+                        totalAmount: null,
+                        originalTransactionId: null,
+                        obligationSettled: false,
+                        excludedMonths: [],
+                        createdAt: now,
+                        updatedAt: now
+                    });
+                    famTxs.push({
+                        id: genFamId('var', `${m}-trn`),
+                        familyId,
+                        memberId: joseId,
+                        scope: 'family',
+                        amount: trn,
+                        type: 'expense',
+                        category: 'transporte',
+                        description: 'Combustível / Estacionamento',
+                        date: `${currentYear}-${m}-16`,
+                        repeatType: 'none',
+                        installments: 1,
+                        currentInstallment: 1,
+                        paymentMethod: 'credit',
+                        totalAmount: null,
+                        originalTransactionId: null,
+                        obligationSettled: false,
+                        excludedMonths: [],
+                        createdAt: now,
+                        updatedAt: now
+                    });
+                    famTxs.push({
+                        id: genFamId('var', `${m}-laz`),
+                        familyId,
+                        memberId: joseId,
+                        scope: 'family',
+                        amount: laz,
+                        type: 'expense',
+                        category: 'lazer',
+                        description: 'Passeio em Família / Restaurante',
+                        date: `${currentYear}-${m}-21`,
+                        repeatType: 'none',
+                        installments: 1,
+                        currentInstallment: 1,
+                        paymentMethod: 'credit',
+                        totalAmount: null,
+                        originalTransactionId: null,
+                        obligationSettled: false,
+                        excludedMonths: [],
+                        createdAt: now,
+                        updatedAt: now
+                    });
+                    famTxs.push({
+                        id: genFamId('var', `${m}-pet`),
+                        familyId,
+                        memberId: marianaId,
+                        scope: 'family',
+                        amount: pet,
+                        type: 'expense',
+                        category: 'pet',
+                        description: 'Pet Shop & Ração',
+                        date: `${currentYear}-${m}-27`,
+                        repeatType: 'none',
+                        installments: 1,
+                        currentInstallment: 1,
+                        paymentMethod: 'pix',
+                        totalAmount: null,
+                        originalTransactionId: null,
+                        obligationSettled: false,
+                        excludedMonths: [],
+                        createdAt: now,
+                        updatedAt: now
+                    });
+                });
+
+                safeSetJson(KEYS.FAMILY_TRANSACTIONS, famTxs);
+                familyCount = famTxs.length;
+                notify(PROTOTYPE_EVENTS.FAMILY_TXS_CHANGED);
+            }
+        }
+
+        return { individualCount, familyCount };
     }
 };
