@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
-import { User, Users, LogOut, Trash2, Moon, Globe, DollarSign, ArrowRight, RefreshCcw, X, Sparkles, Bell, Eye, PlusSquare } from 'lucide-react';
+import { User, Users, LogOut, Trash2, Moon, Globe, DollarSign, ArrowRight, RefreshCcw, X, Sparkles, Bell, Eye } from 'lucide-react';
 import { requestNotificationPermission } from './NotificationHandler';
 import { deleteAllUserTransactions } from '../services/transactionService';
 import { haptic } from '../utils/haptic';
 import ConfirmDialog from './ConfirmDialog';
 import LoadingDots from './LoadingDots';
-import { useInstall } from '../contexts/InstallContext';
 import { useSubscription } from '../hooks/useSubscription';
 import { usePrototype } from '../contexts/PrototypeContext';
 import { prototypeStorage } from '../services/prototypeStorage';
@@ -18,7 +17,6 @@ const ProfileContent = ({ onClose, theme, setTheme }) => {
     const { currentUser, logout, deleteAccount } = useAuth();
     const { isPrototype, resetPrototype } = usePrototype();
     const { t } = useI18n();
-    const { isInstallable, isStandalone, promptInstall } = useInstall();
 
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -490,45 +488,6 @@ const ProfileContent = ({ onClose, theme, setTheme }) => {
                     </div>
                 )}
             </div>
-
-            {/* PWA Install Action */}
-            {isInstallable && !isStandalone && (
-                <div style={{ marginBottom: '32px' }}>
-                    <button
-                        onClick={() => {
-                            haptic.medium();
-                            promptInstall();
-                        }}
-                        style={{
-                            width: '100%',
-                            padding: '16px 20px',
-                            background: 'var(--surface-color)',
-                            border: '1px solid var(--primary-color)',
-                            borderRadius: '20px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            boxShadow: '0 4px 12px rgba(var(--primary-rgb), 0.1)'
-                        }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{
-                                width: '36px', height: '36px', borderRadius: '10px',
-                                background: 'var(--primary-color)', color: 'white',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}>
-                                <PlusSquare size={20} />
-                            </div>
-                            <span style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--text-main)' }}>
-                                {t('install_btn')}
-                            </span>
-                        </div>
-                        <ArrowRight size={18} color="var(--primary-color)" />
-                    </button>
-                </div>
-            )}
 
             {/* Etapa 5: Gestão do Espaço Familiar no Protótipo */}
             {isPrototype && (
