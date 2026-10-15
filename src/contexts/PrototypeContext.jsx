@@ -40,6 +40,7 @@ export const PrototypeProvider = ({ children }) => {
     const startPrototype = () => {
         prototypeStorage.setActive(true);
         prototypeStorage.seedDefaultTransactionsIfEmpty();
+        prototypeStorage.seedDefaultLimitsIfEmpty();
         setIsStarted(true);
     };
 

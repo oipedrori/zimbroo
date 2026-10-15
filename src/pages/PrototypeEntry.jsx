@@ -104,8 +104,9 @@ const PrototypeEntry = ({ onStart }) => {
             }
         }
 
-        // Inicializa movimentações demonstrativas se ainda não existirem
+        // Inicializa movimentações e limites demonstrativos se ainda não existirem
         prototypeStorage.seedDefaultTransactionsIfEmpty(familyId);
+        prototypeStorage.seedDefaultLimitsIfEmpty(familyId);
 
         // Ativa o protótipo e notifica
         onStart();

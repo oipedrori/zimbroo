@@ -296,6 +296,62 @@ test('14. Carga padrão de demonstração: receitas em todos os meses, despesas 
     assert.equal(prototypeStorage.getFamilyTransactions().length, 0);
 });
 
+test('15. Carga padrão de limites demonstrativos no individual e no familiar', () => {
+    // Limpeza prévia
+    prototypeStorage.clearAllPrototypeData();
+    assert.deepEqual(prototypeStorage.getLimits(), {});
+
+    // Executa a carga demonstrativa de limites
+    const result = prototypeStorage.seedDefaultLimitsIfEmpty();
+    assert.ok(result.individualLimitsCount >= 4, 'Deve inicializar pelo menos 4 categorias com limite no individual');
+    assert.ok(result.familyLimitsCount >= 4, 'Deve inicializar pelo menos 4 categorias com limite no familiar');
+
+    // 1. Limites Individuais
+    const currentYear = new Date().getFullYear() || 2026;
+    const indLimitsGeneral = prototypeStorage.getLimits();
+    const indLimitsYear = prototypeStorage.getLimits(currentYear);
+
+    assert.equal(indLimitsGeneral.alimentacao, 800, 'Limite individual de alimentação deve ser 800');
+    assert.equal(indLimitsGeneral.transporte, 350, 'Limite individual de transporte deve ser 350');
+    assert.equal(indLimitsGeneral.lazer, 450, 'Limite individual de lazer deve ser 450');
+    assert.equal(indLimitsGeneral.saude, 300, 'Limite individual de saúde deve ser 300');
+    assert.equal(indLimitsGeneral.assinaturas, 250, 'Limite individual de assinaturas deve ser 250');
+
+    assert.equal(indLimitsYear.alimentacao, 800, 'Limite anual de alimentação deve ser 800');
+    assert.equal(indLimitsYear.transporte, 350, 'Limite anual de transporte deve ser 350');
+
+    // 2. Limites Familiares
+    const activeFamilyId = prototypeStorage.getActiveFamilyId();
+    assert.ok(activeFamilyId, 'Deve haver um espaço familiar ativo');
+
+    const famLimitsGeneral = prototypeStorage.getFamilyLimits(activeFamilyId);
+    const famLimitsYear = prototypeStorage.getFamilyLimits(activeFamilyId, currentYear);
+
+    assert.equal(famLimitsGeneral.alimentacao, 2800, 'Limite familiar de alimentação deve ser 2800');
+    assert.equal(famLimitsGeneral.moradia, 4200, 'Limite familiar de moradia deve ser 4200');
+    assert.equal(famLimitsGeneral.educacao, 2000, 'Limite familiar de educação deve ser 2000');
+    assert.equal(famLimitsGeneral.saude, 1200, 'Limite familiar de saúde deve ser 1200');
+    assert.equal(famLimitsGeneral.lazer, 800, 'Limite familiar de lazer deve ser 800');
+    assert.equal(famLimitsGeneral.transporte, 700, 'Limite familiar de transporte deve ser 700');
+    assert.equal(famLimitsGeneral.pet, 350, 'Limite familiar de pet deve ser 350');
+
+    assert.equal(famLimitsYear.alimentacao, 2800, 'Limite anual familiar de alimentação deve ser 2800');
+    assert.equal(famLimitsYear.moradia, 4200, 'Limite anual familiar de moradia deve ser 4200');
+
+    // 3. Idempotência: não duplica/sobrescreve se já definidos
+    const customIndividual = { ...indLimitsGeneral, alimentacao: 950 };
+    prototypeStorage.saveLimits(customIndividual);
+    const secondResult = prototypeStorage.seedDefaultLimitsIfEmpty();
+    assert.equal(secondResult.individualLimitsCount, 0, 'Não deve sobrescrever limites individuais já existentes');
+    assert.equal(prototypeStorage.getLimits().alimentacao, 950, 'Deve manter o valor customizado');
+
+    // 4. Limpeza remove os limites do protótipo
+    prototypeStorage.clearAllPrototypeData();
+    assert.deepEqual(prototypeStorage.getLimits(), {});
+    assert.deepEqual(prototypeStorage.getFamilyLimits(activeFamilyId), {});
+});
+
+
 
 
 

@@ -2283,6 +2283,72 @@ export const prototypeStorage = {
             }
         }
 
-        return { individualCount, familyCount };
+        // 3. Inicializa também limites demonstrativos se ainda não definidos
+        const limitsResult = this.seedDefaultLimitsIfEmpty(targetFamilyId || (this.getFamilySpaces()[0]?.id || null), force);
+
+        return {
+            individualCount,
+            familyCount,
+            individualLimitsCount: limitsResult.individualLimitsCount,
+            familyLimitsCount: limitsResult.familyLimitsCount
+        };
+    },
+
+    /**
+     * Inicializa limites de gastos demonstrativos tanto para o contexto Individual quanto Familiar.
+     * Não executa se já existirem limites configurados no escopo correspondente, a menos que force = true.
+     */
+    seedDefaultLimitsIfEmpty(targetFamilyId = null, force = false) {
+        if (typeof window === 'undefined') return { individualLimitsCount: 0, familyLimitsCount: 0 };
+
+        const currentYear = new Date().getFullYear() || 2026;
+        let individualLimitsCount = 0;
+        let familyLimitsCount = 0;
+
+        // 1. Limites Demonstrativos Individuais
+        const existingIndLimitsRaw = safeGetJson(KEYS.LIMITS, {});
+        const indGeneral = existingIndLimitsRaw.limits && typeof existingIndLimitsRaw.limits === 'object' ? existingIndLimitsRaw.limits : {};
+        const hasIndLimits = Object.keys(indGeneral).length > 0 || Object.keys(existingIndLimitsRaw).some(k => k.startsWith('limits_') && Object.keys(existingIndLimitsRaw[k] || {}).length > 0);
+
+        if (force || !hasIndLimits) {
+            const defaultIndLimits = {
+                alimentacao: 800,
+                transporte: 350,
+                lazer: 450,
+                saude: 300,
+                assinaturas: 250
+            };
+            this.saveLimits(defaultIndLimits);
+            this.saveLimits(defaultIndLimits, currentYear);
+            individualLimitsCount = Object.keys(defaultIndLimits).length;
+        }
+
+        // 2. Limites Demonstrativos Familiares
+        let familyId = targetFamilyId || this.getActiveFamilyId();
+        if (!familyId) {
+            familyId = this.ensureActiveFamilySpace();
+        }
+
+        if (familyId) {
+            const existingFamLimits = this.getFamilyLimits(familyId, currentYear);
+            const hasFamLimits = existingFamLimits && typeof existingFamLimits === 'object' && Object.keys(existingFamLimits).length > 0;
+
+            if (force || !hasFamLimits) {
+                const defaultFamLimits = {
+                    alimentacao: 2800,
+                    moradia: 4200,
+                    educacao: 2000,
+                    saude: 1200,
+                    lazer: 800,
+                    transporte: 700,
+                    pet: 350
+                };
+                this.saveFamilyLimits(familyId, defaultFamLimits);
+                this.saveFamilyLimits(familyId, defaultFamLimits, currentYear);
+                familyLimitsCount = Object.keys(defaultFamLimits).length;
+            }
+        }
+
+        return { individualLimitsCount, familyLimitsCount };
     }
 };

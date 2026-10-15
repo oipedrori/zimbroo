@@ -24,6 +24,7 @@ const PrototypeContainer = () => {
     useEffect(() => {
         if (isStarted) {
             prototypeStorage.seedDefaultTransactionsIfEmpty();
+            prototypeStorage.seedDefaultLimitsIfEmpty();
         }
     }, [isStarted]);
 
