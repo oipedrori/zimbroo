@@ -18,7 +18,7 @@ const ONBOARDING_STEPS = [
   },
   {
     id: 'onboarding-ai-fab',
-    text: "Seu assistente pessoal! Fale com a IA do Zimbroo para adicionar movimentações, tirar dúvidas financeiras ou obter conselhos. Você também pode adicionar tudo manualmente."
+    text: "Adicione movimentações facilmente pelo botão (+). Registre tanto despesas quanto receitas — sejam fixas, móveis do dia a dia ou compras parceladas."
   },
   {
     id: 'onboarding-stats-btn',

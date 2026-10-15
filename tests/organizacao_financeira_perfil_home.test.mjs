@@ -163,6 +163,12 @@ test('11. Onboarding demonstrativo na Home com passo do seletor em modo Ambos', 
     localStorage.setItem(PROTOTYPE_STORAGE_KEYS.HAS_COMPLETED_TOUR, 'true');
     prototypeStorage.clearAllPrototypeData();
     assert.equal(localStorage.getItem(PROTOTYPE_STORAGE_KEYS.HAS_COMPLETED_TOUR), null);
+
+    // Passo 5 de 7 (FAB): instrução sobre adição de despesas/receitas (fixas, móveis, parceladas)
+    assert.ok(onboardingContent.includes('Adicione movimentações facilmente pelo botão (+)'), 'Deve conter instrução de adição de movimentação');
+    assert.ok(onboardingContent.includes('despesas quanto receitas'), 'Deve citar despesas e receitas');
+    assert.ok(onboardingContent.includes('fixas, móveis') && onboardingContent.includes('parceladas'), 'Deve citar fixas, móveis e parceladas');
+    assert.ok(!onboardingContent.includes('Fale com a IA do Zimbroo'), 'Não deve mais conter o texto antigo da IA do Zimbroo');
 });
 
 test('12. Balanço Mensal com seletor (card/gráfico), gráfico de linha e valores reduzidos', () => {
